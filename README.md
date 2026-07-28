@@ -42,10 +42,9 @@ open it with ctrl + space then just start typing
 
 ```bash
 gnome-extensions install ~/Downloads/spotlight@ninx.zip
+#then log out and back in if you are on wayland
 gnome-extensions enable spotlight@ninx
 ```
-
-then log out and back in if you are on wayland
 
 or install manually
 
