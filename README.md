@@ -42,7 +42,7 @@ open it with ctrl + space then just start typing
 ## install
 
 ```bash
-#Install GNOME Shell Extension Manager via distro package manager, e.g. sudo apt install gnome-shell-extension-manager
+#Install [GNOME Shell Extension Manager](https://mattjakeman.com/apps/extension-manager/)
 gnome-extensions install ~/Downloads/spotlight@ninx.zip
 # then log out and back in if you are on wayland
 gnome-extensions enable spotlight@ninx
