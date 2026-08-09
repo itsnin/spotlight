@@ -3,7 +3,7 @@
 A compact, macOS Spotlight–inspired launcher for GNOME Shell 45 through 50.
 
 **Repository:** https://github.com/itsnin/spotlight
-**Version:** 30.7.2026
+**Version:** 09.08.2026
 
 ## Keyboard Shortcut
 
