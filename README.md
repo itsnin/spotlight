@@ -17,13 +17,13 @@ A compact, macOS Spotlight–inspired launcher for GNOME Shell 45 through 50.
 
 ## Overview
 
-Spotlight is a keyboard-driven launcher that surfaces results the moment you begin typing. It searches installed applications using GNOME Shell's native search algorithm, evaluates arithmetic expressions, exposes system power actions, navigates GNOME Settings panels, and falls back to web search when no local result matches. The popup is anchored at the center of the primary monitor, grows downward as results accumulate, and dismisses the instant you click elsewhere, press `Esc`, or toggle the shortcut again.
+Spotlight is a keyboard-driven launcher that surfaces results the moment you begin typing. It searches installed applications with fuzzy matching, evaluates arithmetic expressions, exposes system power actions, navigates GNOME Settings panels, and falls back to web search when no local result matches. The popup is anchored at the center of the primary monitor, grows downward as results accumulate, and dismisses the instant you click elsewhere, press `Esc`, or toggle the shortcut again.
 
 ## Search Priority
 
 Results are aggregated in the following order. Each category is rendered under its own section header, and web search appears only when every preceding category returned nothing.
 
-1. **Applications** — Searched using GNOME Shell's native app search which prioritizes prefix matches. Typing `chro` surfaces Chrome first; `gimp` surfaces GIMP. Results are sorted by match quality then by usage frequency sourced from `Shell.AppUsage`, so frequently launched applications rise to the top.
+1. **Applications** — Fuzzy-matched against every installed `.desktop` entry. Typing `ffx` surfaces Firefox; `gimp` surfaces GIMP. Ranking combines match score with usage frequency sourced from `Shell.AppUsage`, so frequently launched applications rise to the top.
 2. **Calculator** — A recursive-descent arithmetic parser evaluates the input live. Pressing `Enter` copies the result to the clipboard. Supports `+`, `-`, `*`, `/`, `%`, parentheses, and unary negation.
 3. **System Actions** — Lock, suspend, restart, shut down, log out, and switch user. These are routed through GNOME Shell's built-in `SystemActions` singleton, which handles policy and permission checks internally.
 4. **GNOME Settings** — Direct navigation to any Settings panel (Wi-Fi, Bluetooth, Displays, Sound, Power, Keyboard, etc.) via `gnome-control-center`.
@@ -75,7 +75,7 @@ Configurable options:
 
 ## Architecture
 
-The codebase comprises 21 modular JavaScript files: 17 at the root level for the GNOME Shell process and 4 inside `prefs/` for the preferences (GTK4/Adwaita) process. This flat-root structure is a requirement of the GNOME Extensions website, which locates `extension.js` at the archive root. The preferences files reside in their own subdirectory to enforce process isolation — they execute in a separate GTK process and must never import shell-only libraries such as `St`, `Clutter`, `Meta`, or `Shell`.
+The codebase comprises 22 modular JavaScript files: 18 at the root level for the GNOME Shell process and 4 inside `prefs/` for the preferences (GTK4/Adwaita) process. This flat-root structure is a requirement of the GNOME Extensions website, which locates `extension.js` at the archive root. The preferences files reside in their own subdirectory to enforce process isolation — they execute in a separate GTK process and must never import shell-only libraries such as `St`, `Clutter`, `Meta`, or `Shell`.
 
 | File | Responsibility |
 |---|---|
@@ -88,7 +88,7 @@ The codebase comprises 21 modular JavaScript files: 17 at the root level for the
 | `sectionHeader.js` | Section header label |
 | `sectionTitles.js` | Maps result types to human-readable titles |
 | `noResults.js` | Empty-state widget |
-| `appSearch.js` | Application search via `Shell.AppSystem.search()` using GNOME's native algorithm |
+| `appSearch.js` | Fuzzy application search via `Shell.AppSystem` |
 | `calculatorSearch.js` | Arithmetic evaluation and clipboard copy |
 | `systemActionsSearch.js` | System actions via `Shell.SystemActions` singleton |
 | `settingsSearch.js` | GNOME Settings panel search |
@@ -96,6 +96,7 @@ The codebase comprises 21 modular JavaScript files: 17 at the root level for the
 | `searchController.js` | Orchestrates all providers and merges results by priority |
 | `keybinding.js` | Keybinding manager using `Meta.Display.grab_accelerator` |
 | `calculator.js` | Recursive-descent arithmetic parser |
+| `fuzzyMatcher.js` | Fuzzy string matching with positional scoring |
 | `prefs/shortcutPage.js` | Keyboard shortcut configuration |
 | `prefs/appearancePage.js` | Popup width and result limit controls |
 | `prefs/webSearchPage.js` | Search engine selection |

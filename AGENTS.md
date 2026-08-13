@@ -79,6 +79,7 @@ spotlight@nin/
     searchController.js       orchestrates all providers
     keybinding.js             keybinding manager
     calculator.js             arithmetic parser
+    fuzzyMatcher.js           fuzzy matching
     stylesheet.css            spotlight styling
     metadata.json             extension metadata
     schemas/                  gsettings schema

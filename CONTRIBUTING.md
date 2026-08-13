@@ -75,6 +75,7 @@ Each search type lives in its own file and exports a function that accepts a que
 Pure functions with no side effects:
 
 - **`calculator.js`** — Recursive-descent arithmetic parser.
+- **`fuzzyMatcher.js`** — Fuzzy string matching with positional scoring.
 
 ### Preference Pages
 
