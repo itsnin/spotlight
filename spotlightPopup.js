@@ -113,7 +113,6 @@ class SpotlightPopup extends St.BoxLayout {
         Main.layoutManager.addChrome(this._backdrop);
         this._backdrop.show();
 
-        this._reposition();
         this.show();
 
         this._entry.set_text('');
@@ -121,6 +120,16 @@ class SpotlightPopup extends St.BoxLayout {
         this._resultsBox.destroy_all_children();
         this._resultsScroll.hide();
         this._entry.grab_key_focus();
+
+        // defer positioning until the actor is fully mapped and sized
+        // this prevents race conditions where get_preferred_height() returns
+        // an incorrect value before the layout pass completes
+        const mapId = this.connect('notify::mapped', () => {
+            this.disconnect(mapId);
+            if (!this.mapped)
+                return;
+            this._reposition();
+        });
 
         // defer the focus-loss handler until after the initial grab_key_focus
         // settles otherwise the notify::key-focus signal fires immediately
