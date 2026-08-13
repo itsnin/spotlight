@@ -2,7 +2,8 @@
 
 A compact, macOS Spotlight–inspired launcher for GNOME Shell 45 through 50.
 
-**Repository:** https://github.com/itsnin/spotlight
+[Repository](https://github.com/itsnin/spotlight) • [GNOME Extensions](https://extensions.gnome.org/extension/10666/spotlight/)
+
 **Version:** 2026.08.09
 
 ## Keyboard Shortcut
@@ -45,7 +46,9 @@ Open the popup with `Ctrl + Space` and begin typing. Navigation is entirely keyb
 
 ## Installation
 
-### Install [GNOME Shell Extension Manager](https://mattjakeman.com/apps/extension-manager/)
+### [Install from GNOME Extensions](https://extensions.gnome.org/extension/10666/spotlight/)
+
+### [Install GNOME Shell Extension Manager](https://mattjakeman.com/apps/extension-manager/)
 
 
 
