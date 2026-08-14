@@ -113,8 +113,9 @@ class SpotlightPopup extends St.BoxLayout {
         // create and show the backdrop first so it sits behind the popup
         this._backdrop = this._createBackdrop();
         Main.layoutManager.addChrome(this._backdrop);
-        // raise popup above backdrop so clicks reach result rows not the backdrop
-        this.raise();
+        // lower backdrop below popup so clicks reach result rows not the backdrop
+        // raise() on hidden actors is unreliable within the chrome layer
+        this._backdrop.lower();
         this._backdrop.show();
 
         // queue a layout pass then position before showing
