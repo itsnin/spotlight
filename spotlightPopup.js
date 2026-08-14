@@ -43,6 +43,7 @@ class SpotlightPopup extends St.BoxLayout {
         this._selectedIndex = -1;
         this._searchIdleId = 0;
         this._focusIdleId = 0;
+        this._positionIdleId = 0;
         this._backdrop = null;
         this._keyFocusId = 0;
 
@@ -113,8 +114,20 @@ class SpotlightPopup extends St.BoxLayout {
         Main.layoutManager.addChrome(this._backdrop);
         this._backdrop.show();
 
-        this._reposition();
-        this.show();
+        // queue a layout pass then position before showing
+        // ensures get_preferred_height returns correct values
+        // otherwise css may not be applied and height is wrong
+        const popupWidth = this._settings.get_int('popup-width');
+        this.set_width(popupWidth);
+        this.queue_relayout();
+        this._positionIdleId = GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
+            this._positionIdleId = 0;
+            if (!this._backdrop)
+                return GLib.SOURCE_REMOVE;
+            this._reposition();
+            this.show();
+            return GLib.SOURCE_REMOVE;
+        });
 
         this._entry.set_text('');
         this._selectedIndex = -1;
@@ -156,6 +169,11 @@ class SpotlightPopup extends St.BoxLayout {
         if (this._focusIdleId) {
             GLib.source_remove(this._focusIdleId);
             this._focusIdleId = 0;
+        }
+
+        if (this._positionIdleId) {
+            GLib.source_remove(this._positionIdleId);
+            this._positionIdleId = 0;
         }
 
         if (this._searchIdleId) {
