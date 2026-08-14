@@ -59,7 +59,7 @@ These files construct the visual elements of the popup:
 
 Each search type lives in its own file and exports a function that accepts a query string and returns an array of result objects. Every result object must contain `type`, `title`, `icon`, and `activate` properties.
 
-- **`appSearch.js`** — Fuzzy application search via `Shell.AppSystem`.
+- **`appSearch.js`** — GNOME-style application search via `Shell.AppSystem`.
 - **`calculatorSearch.js`** — Arithmetic evaluation and clipboard copy.
 - **`systemActionsSearch.js`** — System actions (lock, suspend, restart, etc.) via `Shell.SystemActions` singleton.
 - **`settingsSearch.js`** — GNOME Settings panel navigation.
@@ -75,7 +75,6 @@ Each search type lives in its own file and exports a function that accepts a que
 Pure functions with no side effects:
 
 - **`calculator.js`** — Recursive-descent arithmetic parser.
-- **`fuzzyMatcher.js`** — Fuzzy string matching with positional scoring.
 
 ### Preference Pages
 
