@@ -46,6 +46,7 @@ class SpotlightPopup extends St.BoxLayout {
         this._positionIdleId = 0;
         this._backdrop = null;
         this._keyFocusId = 0;
+        this._lastKeyEventSerial = 0;
 
         const {entryBox, entry} = buildSearchEntry();
         this._entryBox = entryBox;
@@ -112,6 +113,8 @@ class SpotlightPopup extends St.BoxLayout {
         // create and show the backdrop first so it sits behind the popup
         this._backdrop = this._createBackdrop();
         Main.layoutManager.addChrome(this._backdrop);
+        // raise popup above backdrop so clicks reach result rows not the backdrop
+        this.raise();
         this._backdrop.show();
 
         // queue a layout pass then position before showing
@@ -303,6 +306,13 @@ class SpotlightPopup extends St.BoxLayout {
     }
 
     _onKeyPress(_, event) {
+        // guard against double-processing from st entry wrapper
+        // without this arrow keys skip items because the handler fires twice
+        const serial = event.get_serial();
+        if (serial === this._lastKeyEventSerial)
+            return Clutter.EVENT_STOP;
+        this._lastKeyEventSerial = serial;
+
         switch (event.get_key_symbol()) {
         case Clutter.KEY_Escape:
             this.close();
