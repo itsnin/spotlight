@@ -67,7 +67,9 @@ class SpotlightPopup extends St.BoxLayout {
         this.add_child(this._entryBox);
         this.add_child(this._resultsScroll);
 
-        Main.layoutManager.addChrome(this);
+        // popup is added to chrome in open() after the backdrop
+        // this ensures it naturally sits above the backdrop without needing
+        // raise() or lower() calls which are unreliable on hidden actors
     }
 
     // position the popup at the center of the primary monitor
@@ -110,13 +112,17 @@ class SpotlightPopup extends St.BoxLayout {
         if (this.visible)
             return;
 
-        // create and show the backdrop first so it sits behind the popup
+        // create and add backdrop first then popup
+        // later addition to chrome means higher in the stacking order
+        // so popup naturally sits above the backdrop
         this._backdrop = this._createBackdrop();
         Main.layoutManager.addChrome(this._backdrop);
-        // lower backdrop below popup so clicks reach result rows not the backdrop
-        // raise() on hidden actors is unreliable within the chrome layer
-        this._backdrop.lower();
         this._backdrop.show();
+
+        // add popup to chrome if not already there
+        // first open adds it subsequent opens reuse the existing chrome actor
+        if (!this.get_parent())
+            Main.layoutManager.addChrome(this);
 
         // queue a layout pass then position before showing
         // ensures get_preferred_height returns correct values
