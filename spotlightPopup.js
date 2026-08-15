@@ -335,8 +335,12 @@ class SpotlightPopup extends St.BoxLayout {
     }
 
     _onKeyPress(_, event) {
-        // captured-event receives all event types get_key_symbol returns
-        // 0 for non-key events which falls through to the default case
+        // captured-event receives all event types we only act on key press
+        // events ignoring key release and auto-repeat to prevent multi-step
+        // jumps where a single arrow press moves the selection by 2 or more
+        if (event.type() !== Clutter.EventType.KEY_PRESS)
+            return Clutter.EVENT_PROPAGATE;
+
         const key = event.get_key_symbol();
 
         // safety guards since we capture at stage level
