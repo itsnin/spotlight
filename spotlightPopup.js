@@ -43,8 +43,11 @@ class SpotlightPopup extends St.BoxLayout {
         this._selectedIndex = -1;
         this._searchIdleId = 0;
         this._focusIdleId = 0;
+        this._positionIdleId = 0;
         this._backdrop = null;
         this._keyFocusId = 0;
+        this._stageKeyId = 0;
+        this._keyboardNavSuppressUntil = 0;
 
         const {entryBox, entry} = buildSearchEntry();
         this._entryBox = entryBox;
@@ -54,7 +57,6 @@ class SpotlightPopup extends St.BoxLayout {
         clutterText.set_x_expand(true);
         clutterText.connectObject(
             'text-changed', this._onTextChanged.bind(this),
-            'key-press-event', this._onKeyPress.bind(this),
             this,
         );
 
@@ -65,7 +67,9 @@ class SpotlightPopup extends St.BoxLayout {
         this.add_child(this._entryBox);
         this.add_child(this._resultsScroll);
 
-        Main.layoutManager.addChrome(this);
+        // popup is added to chrome in open() after the backdrop
+        // this ensures it naturally sits above the backdrop without needing
+        // raise() or lower() calls which are unreliable on hidden actors
     }
 
     // position the popup at the center of the primary monitor
@@ -108,22 +112,49 @@ class SpotlightPopup extends St.BoxLayout {
         if (this.visible)
             return;
 
-        // create and show the backdrop first so it sits behind the popup
+        // create and add backdrop first then popup
+        // later addition to chrome means higher in the stacking order
+        // so popup naturally sits above the backdrop
         this._backdrop = this._createBackdrop();
         Main.layoutManager.addChrome(this._backdrop);
         this._backdrop.show();
 
-        this._reposition();
-        this.show();
+        // always re-add popup to chrome to guarantee correct stacking order
+        // if popup was left in chrome from a previous close remove it first
+        if (this.get_parent())
+            Main.layoutManager.removeChrome(this);
+        Main.layoutManager.addChrome(this);
+
+        // queue a layout pass then position before showing
+        // ensures get_preferred_height returns correct values
+        // otherwise css may not be applied and height is wrong
+        const popupWidth = this._settings.get_int('popup-width');
+        this.set_width(popupWidth);
+        this.queue_relayout();
+        this._positionIdleId = GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
+            this._positionIdleId = 0;
+            if (!this._backdrop)
+                return GLib.SOURCE_REMOVE;
+            this._reposition();
+            this.show();
+            // grab focus only after the popup is visible
+            // grabbing focus on a hidden actor fails silently
+            this._entry.grab_key_focus();
+            // capture key events at the stage level during capture phase
+            // this guarantees we see enter/esc/arrows before st entry can
+            // consume them which was the root cause of keyboard not working
+            this._stageKeyId = global.stage.connect('captured-event',
+                this._onKeyPress.bind(this));
+            return GLib.SOURCE_REMOVE;
+        });
 
         this._entry.set_text('');
         this._selectedIndex = -1;
         this._resultsBox.destroy_all_children();
         this._resultsScroll.hide();
-        this._entry.grab_key_focus();
 
-        // defer the focus-loss handler until after the initial grab_key_focus
-        // settles otherwise the notify::key-focus signal fires immediately
+        // defer the focus-loss handler until after the popup is shown and
+        // focus is grabbed otherwise notify::key-focus fires immediately
         // during the open call and closes the popup right away
         this._focusIdleId = GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
             this._focusIdleId = 0;
@@ -148,6 +179,11 @@ class SpotlightPopup extends St.BoxLayout {
         if (!this.visible)
             return;
 
+        if (this._stageKeyId) {
+            global.stage.disconnect(this._stageKeyId);
+            this._stageKeyId = 0;
+        }
+
         if (this._keyFocusId) {
             global.stage.disconnect(this._keyFocusId);
             this._keyFocusId = 0;
@@ -156,6 +192,11 @@ class SpotlightPopup extends St.BoxLayout {
         if (this._focusIdleId) {
             GLib.source_remove(this._focusIdleId);
             this._focusIdleId = 0;
+        }
+
+        if (this._positionIdleId) {
+            GLib.source_remove(this._positionIdleId);
+            this._positionIdleId = 0;
         }
 
         if (this._searchIdleId) {
@@ -221,7 +262,13 @@ class SpotlightPopup extends St.BoxLayout {
             this._resultsBox.add_child(
                 buildResultRow(result, rowIndex,
                     (r) => { r.activate(); this.close(); },
-                    (idx) => { this._applySelection(idx); }
+                    (idx) => {
+                        // ignore hover selection briefly after keyboard nav
+                        // prevents scroll-induced enter-events from jumping selection
+                        if (GLib.get_monotonic_time() < this._keyboardNavSuppressUntil)
+                            return;
+                        this._applySelection(idx);
+                    }
                 )
             );
             rowIndex++;
@@ -281,11 +328,26 @@ class SpotlightPopup extends St.BoxLayout {
             newIndex = this._results.length - 1;
         if (newIndex >= this._results.length)
             newIndex = 0;
+        // suppress hover selection briefly after keyboard navigation
+        // prevents scroll-induced enter-events from overwriting the selection
+        this._keyboardNavSuppressUntil = GLib.get_monotonic_time() + 150000;
         this._applySelection(newIndex);
     }
 
     _onKeyPress(_, event) {
-        switch (event.get_key_symbol()) {
+        // captured-event receives all event types get_key_symbol returns
+        // 0 for non-key events which falls through to the default case
+        const key = event.get_key_symbol();
+
+        // safety guards since we capture at stage level
+        if (!this.visible)
+            return Clutter.EVENT_PROPAGATE;
+
+        const focus = global.stage.get_key_focus();
+        if (!focus || !this.contains(focus))
+            return Clutter.EVENT_PROPAGATE;
+
+        switch (key) {
         case Clutter.KEY_Escape:
             this.close();
             return Clutter.EVENT_STOP;
