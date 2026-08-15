@@ -47,8 +47,6 @@ class SpotlightPopup extends St.BoxLayout {
         this._backdrop = null;
         this._keyFocusId = 0;
         this._stageKeyId = 0;
-        this._lastKeyTime = 0;
-        this._lastKeyValue = 0;
         this._keyboardNavSuppressUntil = 0;
 
         const {entryBox, entry} = buildSearchEntry();
@@ -265,7 +263,7 @@ class SpotlightPopup extends St.BoxLayout {
                 buildResultRow(result, rowIndex,
                     (r) => { r.activate(); this.close(); },
                     (idx) => {
-                        // suppress hover selection briefly after keyboard nav
+                        // ignore hover selection briefly after keyboard nav
                         // prevents scroll-induced enter-events from jumping selection
                         if (GLib.get_monotonic_time() < this._keyboardNavSuppressUntil)
                             return;
@@ -348,15 +346,6 @@ class SpotlightPopup extends St.BoxLayout {
         const focus = global.stage.get_key_focus();
         if (!focus || !this.contains(focus))
             return Clutter.EVENT_PROPAGATE;
-
-        // captured-event delivers the same key event multiple times on some setups
-        // duplicates arrive within microseconds deduplicate using time + key value
-        // if same key arrives within 5ms treat as duplicate
-        const now = GLib.get_monotonic_time();
-        if (key === this._lastKeyValue && (now - this._lastKeyTime) < 5000)
-            return Clutter.EVENT_STOP;
-        this._lastKeyTime = now;
-        this._lastKeyValue = key;
 
         switch (key) {
         case Clutter.KEY_Escape:
