@@ -1,0 +1,6 @@
+version: 2
+updates:
+  - package-ecosistics: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
