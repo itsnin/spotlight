@@ -8,7 +8,7 @@ import Clutter from 'gi://Clutter';
 export function buildResultRow(result, resultIndex, onActivate, onHover) {
     const hbox = new St.BoxLayout({
         style_class: 'spotlight-result',
-        orientation: Clutter.Orientation.HORIZONTAL,
+        vertical: false,
         reactive: true,
         can_focus: true,
         track_hover: true,
@@ -31,7 +31,7 @@ export function buildResultRow(result, resultIndex, onActivate, onHover) {
 
     const text = new St.BoxLayout({
         style_class: 'spotlight-result-content',
-        orientation: Clutter.Orientation.VERTICAL,
+        vertical: true,
         y_align: Clutter.ActorAlign.CENTER,
         x_expand: true,
     });

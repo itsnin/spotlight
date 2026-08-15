@@ -14,7 +14,7 @@ export function buildResultsContainer() {
         x_expand: true,
     });
     const resultsBox = new St.BoxLayout({
-        orientation: Clutter.Orientation.VERTICAL,
+        vertical: true,
         x_expand: true,
         y_expand: true,
     });
