@@ -48,6 +48,8 @@ class SpotlightPopup extends St.BoxLayout {
         this._keyFocusId = 0;
         this._stageKeyId = 0;
         this._keyboardNavSuppressUntil = 0;
+        this._lastNavKey = 0;
+        this._lastNavKeyTime = 0;
 
         const {entryBox, entry} = buildSearchEntry();
         this._entryBox = entryBox;
@@ -336,8 +338,7 @@ class SpotlightPopup extends St.BoxLayout {
 
     _onKeyPress(_, event) {
         // captured-event receives all event types we only act on key press
-        // events ignoring key release and auto-repeat to prevent multi-step
-        // jumps where a single arrow press moves the selection by 2 or more
+        // events ignoring key release to prevent double-processing
         if (event.type() !== Clutter.EventType.KEY_PRESS)
             return Clutter.EVENT_PROPAGATE;
 
@@ -350,6 +351,22 @@ class SpotlightPopup extends St.BoxLayout {
         const focus = global.stage.get_key_focus();
         if (!focus || !this.contains(focus))
             return Clutter.EVENT_PROPAGATE;
+
+        // only deduplicate navigation keys not character keys
+        // some systems fire two key_press events for a single physical tap
+        // before the key_release this causes arrow navigation to jump by 2
+        // we track the last nav key and time and ignore repeats within 50ms
+        // character keys are never deduplicated so fast typing works normally
+        const isNavKey = key === Clutter.KEY_Up || key === Clutter.KEY_Down ||
+                         key === Clutter.KEY_Return || key === Clutter.KEY_KP_Enter ||
+                         key === Clutter.KEY_Escape;
+        if (isNavKey) {
+            const time = event.get_time();
+            if (key === this._lastNavKey && time - this._lastNavKeyTime < 50)
+                return Clutter.EVENT_STOP;
+            this._lastNavKey = key;
+            this._lastNavKeyTime = time;
+        }
 
         switch (key) {
         case Clutter.KEY_Escape:

@@ -1,0 +1,116 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check metadata.json is valid JSON
+        run: |
+          python3 -c "import json; json.load(open('metadata.json'))"
+          echo "metadata.json is valid JSON"
+
+      - name: Check all JS files parse as ES modules
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq nodejs
+          for f in *.js prefs/*.js; do
+            node --check "$f" || { echo "SYNTAX ERROR in $f"; exit 1; }
+          done
+          echo "All JS files parse successfully"
+
+      - name: Check gschema.xml compiles
+        run: |
+          sudo apt-get install -y -qq libglib2.0-dev
+          glib-compile-schemas schemas/
+          echo "Schema compiles successfully"
+
+      - name: Check no spotlight@ninx references
+        run: |
+          if grep -r "spotlight@ninx" . --exclude-dir=.git --exclude-dir=.github; then
+            echo "ERROR: found spotlight@ninx references"
+            exit 1
+          fi
+          echo "No old UUID references found"
+
+      - name: Check version-name length
+        run: |
+          VERSION=$(python3 -c "import json; print(json.load(open('metadata.json'))['version-name'])")
+          LEN=${#VERSION}
+          if [ "$LEN" -gt 16 ]; then
+            echo "ERROR: version-name '$VERSION' is $LEN chars, max is 16"
+            exit 1
+          fi
+          echo "version-name '$VERSION' is valid ($LEN chars)"
+
+      - name: Check shell-version entries
+        run: |
+          python3 -c "
+          import json
+          m = json.load(open('metadata.json'))
+          sv = m['shell-version']
+          valid = {'45','46','47','48','49','50'}
+          for v in sv:
+              if v not in valid:
+                  print(f'WARNING: unusual shell-version entry: {v}')
+          print(f'shell-version: {sv}')
+          "
+
+      - name: Check no try/catch in shell code
+        run: |
+          if grep -rn 'try\s*{' *.js; then
+            echo "WARNING: found try/catch in shell code (review needed)"
+          else
+            echo "No try/catch in shell code"
+          fi
+
+      - name: Check no optional chaining
+        run: |
+          if grep -rnE '\?\.' *.js prefs/*.js; then
+            echo "ERROR: found optional chaining"
+            exit 1
+          fi
+          echo "No optional chaining found"
+
+      - name: Check no deprecated modules
+        run: |
+          if grep -rn "imports.misc.lang\|imports.misc.mainloop\|imports.misc.byteArray" *.js prefs/*.js; then
+            echo "ERROR: found deprecated module imports"
+            exit 1
+          fi
+          echo "No deprecated module imports"
+
+      - name: Check process isolation
+        run: |
+          echo "Checking prefs don't import shell-only libs..."
+          if grep -rn "from 'gi://St'\|from 'gi://Clutter'\|from 'gi://Meta'\|from 'gi://Shell'" prefs/ prefs.js; then
+            echo "ERROR: prefs files import shell-only libraries"
+            exit 1
+          fi
+          echo "Checking shell files don't import GTK-only libs..."
+          if grep -rn "from 'gi://Gtk'\|from 'gi://Gdk'\|from 'gi://Adw'" *.js | grep -v "^prefs"; then
+            echo "ERROR: shell files import GTK-only libraries"
+            exit 1
+          fi
+          echo "Process isolation verified"
+
+      - name: Check CSS uses only /* */ comments
+        run: |
+          if grep -rn '^\s*//' stylesheet.css; then
+            echo "ERROR: CSS uses // comments (St only supports /* */)"
+            exit 1
+          fi
+          echo "CSS comments are valid"
+
+      - name: Summary
+        run: |
+          echo "=== CI Summary ==="
+          echo "JS files: $(ls *.js prefs/*.js | wc -l)"
+          echo "Total files: $(find . -type f -not -path './.git/*' | wc -l)"
+          echo "All checks passed"
