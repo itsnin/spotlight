@@ -7,7 +7,7 @@ import Clutter from 'gi://Clutter';
 // creates the empty state widget shown when search returns nothing
 export function buildNoResults(query) {
     const box = new St.BoxLayout({
-        orientation: Clutter.Orientation.VERTICAL,
+        vertical: true,
         style_class: 'spotlight-no-results',
     });
     box.add_child(new St.Label({

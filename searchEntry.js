@@ -7,7 +7,7 @@ import Clutter from 'gi://Clutter';
 // builds the search entry box with icon and text field
 export function buildSearchEntry() {
     const entryBox = new St.BoxLayout({
-        orientation: Clutter.Orientation.HORIZONTAL,
+        vertical: false,
         x_expand: true,
         style_class: 'spotlight-entry-box',
     });

@@ -30,13 +30,15 @@ export const SpotlightPopup = GObject.registerClass(
 class SpotlightPopup extends St.BoxLayout {
     _init(extension) {
         super._init({
-            orientation: Clutter.Orientation.VERTICAL,
             style_class: 'spotlight-container',
             reactive: true,
             can_focus: true,
             visible: false,
             width: extension._settings.get_int('popup-width'),
         });
+        // orientation set after init for gnome 45/46 compatibility
+        // the Clutter.Orientation enum property was added in gnome 47
+        this.set_vertical(true);
 
         this._settings = extension._settings;
         this._results = [];
