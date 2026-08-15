@@ -47,7 +47,8 @@ class SpotlightPopup extends St.BoxLayout {
         this._backdrop = null;
         this._keyFocusId = 0;
         this._stageKeyId = 0;
-        this._lastKeyEventSerial = 0;
+        this._lastKeyTime = 0;
+        this._lastKeyValue = 0;
         this._keyboardNavSuppressUntil = 0;
 
         const {entryBox, entry} = buildSearchEntry();
@@ -348,12 +349,14 @@ class SpotlightPopup extends St.BoxLayout {
         if (!focus || !this.contains(focus))
             return Clutter.EVENT_PROPAGATE;
 
-        // captured-event delivers the same key event 4-5 times on some setups
-        // deduplicate by event serial - each physical event has a unique serial
-        const serial = event.get_serial();
-        if (serial === this._lastKeyEventSerial)
+        // captured-event delivers the same key event multiple times on some setups
+        // duplicates arrive within microseconds deduplicate using time + key value
+        // if same key arrives within 5ms treat as duplicate
+        const now = GLib.get_monotonic_time();
+        if (key === this._lastKeyValue && (now - this._lastKeyTime) < 5000)
             return Clutter.EVENT_STOP;
-        this._lastKeyEventSerial = serial;
+        this._lastKeyTime = now;
+        this._lastKeyValue = key;
 
         switch (key) {
         case Clutter.KEY_Escape:
