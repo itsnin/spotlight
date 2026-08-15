@@ -119,10 +119,11 @@ class SpotlightPopup extends St.BoxLayout {
         Main.layoutManager.addChrome(this._backdrop);
         this._backdrop.show();
 
-        // add popup to chrome if not already there
-        // first open adds it subsequent opens reuse the existing chrome actor
-        if (!this.get_parent())
-            Main.layoutManager.addChrome(this);
+        // always re-add popup to chrome to guarantee correct stacking order
+        // if popup was left in chrome from a previous close remove it first
+        if (this.get_parent())
+            Main.layoutManager.removeChrome(this);
+        Main.layoutManager.addChrome(this);
 
         // queue a layout pass then position before showing
         // ensures get_preferred_height returns correct values
@@ -136,6 +137,9 @@ class SpotlightPopup extends St.BoxLayout {
                 return GLib.SOURCE_REMOVE;
             this._reposition();
             this.show();
+            // grab focus only after the popup is visible
+            // grabbing focus on a hidden actor fails silently
+            this._entry.grab_key_focus();
             return GLib.SOURCE_REMOVE;
         });
 
@@ -143,10 +147,9 @@ class SpotlightPopup extends St.BoxLayout {
         this._selectedIndex = -1;
         this._resultsBox.destroy_all_children();
         this._resultsScroll.hide();
-        this._entry.grab_key_focus();
 
-        // defer the focus-loss handler until after the initial grab_key_focus
-        // settles otherwise the notify::key-focus signal fires immediately
+        // defer the focus-loss handler until after the popup is shown and
+        // focus is grabbed otherwise notify::key-focus fires immediately
         // during the open call and closes the popup right away
         this._focusIdleId = GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
             this._focusIdleId = 0;
