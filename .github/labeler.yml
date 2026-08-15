@@ -1,0 +1,49 @@
+search providers:
+  - changed-files:
+      - any-glob-to-any-file:
+          - appSearch.js
+          - calculatorSearch.js
+          - systemActionsSearch.js
+          - settingsSearch.js
+          - webSearch.js
+          - searchController.js
+          - calculator.js
+
+popup ui:
+  - changed-files:
+      - any-glob-to-any-file:
+          - spotlightPopup.js
+          - searchEntry.js
+          - resultsContainer.js
+          - resultRow.js
+          - sectionHeader.js
+          - sectionTitles.js
+          - noResults.js
+          - stylesheet.css
+
+preferences:
+  - changed-files:
+      - any-glob-to-any-file:
+          - prefs.js
+          - prefs/**
+
+keybinding:
+  - changed-files:
+      - any-glob-to-any-file:
+          - keybinding.js
+
+metadata and schema:
+  - changed-files:
+      - any-glob-to-any-file:
+          - metadata.json
+          - schemas/**
+
+documentation:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "**/*.md"
+
+ci and github config:
+  - changed-files:
+      - any-glob-to-any-file:
+          - .github/**
