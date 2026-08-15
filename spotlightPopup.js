@@ -47,7 +47,6 @@ class SpotlightPopup extends St.BoxLayout {
         this._backdrop = null;
         this._keyFocusId = 0;
         this._stageKeyId = 0;
-        this._keyboardNavSuppressUntil = 0;
 
         const {entryBox, entry} = buildSearchEntry();
         this._entryBox = entryBox;
@@ -262,13 +261,7 @@ class SpotlightPopup extends St.BoxLayout {
             this._resultsBox.add_child(
                 buildResultRow(result, rowIndex,
                     (r) => { r.activate(); this.close(); },
-                    (idx) => {
-                        // ignore hover selection briefly after keyboard nav
-                        // prevents scroll-induced enter-events from jumping selection
-                        if (GLib.get_monotonic_time() < this._keyboardNavSuppressUntil)
-                            return;
-                        this._applySelection(idx);
-                    }
+                    () => { /* visual hover handled by css only selection changes via keyboard */ }
                 )
             );
             rowIndex++;
@@ -328,9 +321,6 @@ class SpotlightPopup extends St.BoxLayout {
             newIndex = this._results.length - 1;
         if (newIndex >= this._results.length)
             newIndex = 0;
-        // suppress hover selection briefly after keyboard navigation
-        // prevents scroll-induced enter-events from overwriting the selection
-        this._keyboardNavSuppressUntil = GLib.get_monotonic_time() + 150000;
         this._applySelection(newIndex);
     }
 
