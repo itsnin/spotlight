@@ -46,6 +46,7 @@ class SpotlightPopup extends St.BoxLayout {
         this._positionIdleId = 0;
         this._backdrop = null;
         this._keyFocusId = 0;
+        this._stageKeyId = 0;
 
         const {entryBox, entry} = buildSearchEntry();
         this._entryBox = entryBox;
@@ -55,16 +56,6 @@ class SpotlightPopup extends St.BoxLayout {
         clutterText.set_x_expand(true);
         clutterText.connectObject(
             'text-changed', this._onTextChanged.bind(this),
-            this,
-        );
-
-        // handle key events at the popup container level
-        // st entry consumes alphanumeric keys internally and returns event_stop
-        // so they never bubble up keys like enter escape and up/down arrows
-        // which st entry does not consume bubble up to us and we handle them
-        // this also means each event arrives exactly once no double-processing
-        this.connectObject(
-            'key-press-event', this._onKeyPress.bind(this),
             this,
         );
 
@@ -148,6 +139,11 @@ class SpotlightPopup extends St.BoxLayout {
             // grab focus only after the popup is visible
             // grabbing focus on a hidden actor fails silently
             this._entry.grab_key_focus();
+            // capture key events at the stage level during capture phase
+            // this guarantees we see enter/esc/arrows before st entry can
+            // consume them which was the root cause of keyboard not working
+            this._stageKeyId = global.stage.connect('captured-event',
+                this._onKeyPress.bind(this));
             return GLib.SOURCE_REMOVE;
         });
 
@@ -181,6 +177,11 @@ class SpotlightPopup extends St.BoxLayout {
     close() {
         if (!this.visible)
             return;
+
+        if (this._stageKeyId) {
+            global.stage.disconnect(this._stageKeyId);
+            this._stageKeyId = 0;
+        }
 
         if (this._keyFocusId) {
             global.stage.disconnect(this._keyFocusId);
@@ -324,7 +325,19 @@ class SpotlightPopup extends St.BoxLayout {
     }
 
     _onKeyPress(_, event) {
-        switch (event.get_key_symbol()) {
+        // captured-event receives all event types get_key_symbol returns
+        // 0 for non-key events which falls through to the default case
+        const key = event.get_key_symbol();
+
+        // safety guards since we capture at stage level
+        if (!this.visible)
+            return Clutter.EVENT_PROPAGATE;
+
+        const focus = global.stage.get_key_focus();
+        if (!focus || !this.contains(focus))
+            return Clutter.EVENT_PROPAGATE;
+
+        switch (key) {
         case Clutter.KEY_Escape:
             this.close();
             return Clutter.EVENT_STOP;
