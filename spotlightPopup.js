@@ -46,7 +46,6 @@ class SpotlightPopup extends St.BoxLayout {
         this._positionIdleId = 0;
         this._backdrop = null;
         this._keyFocusId = 0;
-        this._lastKeyEventSerial = 0;
 
         const {entryBox, entry} = buildSearchEntry();
         this._entryBox = entryBox;
@@ -56,6 +55,15 @@ class SpotlightPopup extends St.BoxLayout {
         clutterText.set_x_expand(true);
         clutterText.connectObject(
             'text-changed', this._onTextChanged.bind(this),
+            this,
+        );
+
+        // handle key events at the popup container level
+        // st entry consumes alphanumeric keys internally and returns event_stop
+        // so they never bubble up keys like enter escape and up/down arrows
+        // which st entry does not consume bubble up to us and we handle them
+        // this also means each event arrives exactly once no double-processing
+        this.connectObject(
             'key-press-event', this._onKeyPress.bind(this),
             this,
         );
@@ -316,13 +324,6 @@ class SpotlightPopup extends St.BoxLayout {
     }
 
     _onKeyPress(_, event) {
-        // guard against double-processing from st entry wrapper
-        // without this arrow keys skip items because the handler fires twice
-        const serial = event.get_serial();
-        if (serial === this._lastKeyEventSerial)
-            return Clutter.EVENT_STOP;
-        this._lastKeyEventSerial = serial;
-
         switch (event.get_key_symbol()) {
         case Clutter.KEY_Escape:
             this.close();
