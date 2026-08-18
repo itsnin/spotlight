@@ -48,9 +48,9 @@ spotlight is tested on wayland only the keybinding uses `global.display.grab_acc
 
 ### version-specific api notes
 
-the codebase uses `orientation: Clutter.Orientation.VERTICAL` instead of `vertical: true` for st box layouts because gnome shell 48 deprecated the `vertical` property see https://gjs.guide/extensions/upgrading/gnome-shell-48.html#st-widgets-orientation
+the codebase calls `set_vertical(true)` after `_init()` for st box layouts not `orientation: Clutter.Orientation.VERTICAL` inside the constructor the `orientation` property is not reliably settable on gnome shell 45 and 46 a real user report (issue #5 gnome shell 46.0 on ubuntu 24.04.4) hit `Error: No property orientation on Gjs_spotlight_nin_spotlightPopup_SpotlightPopup` when the constructor tried to set it
 
-the `orientation` property works on all supported versions 45 through 50 so no version check is needed
+`vertical` and `set_vertical()` are confirmed to exist across the full 45 through 50 range so this is the correct choice do not switch back to `orientation` in the constructor without first confirming it against the actual minimum supported version not just the newest one
 
 ### single package for all versions
 
@@ -111,10 +111,13 @@ all signal connections on gobjects use `connectObject` and `disconnectObject` no
 
 in `disable()` or `destroy()` we call `disconnectObject(this)` which removes every signal connected with `this` as the owner this prevents signal leaks if you forget to disconnect one manually
 
-the only exceptions use plain `connect` because the source is not a gobject that supports `connectObject`
+a few connections use plain `connect` with manual disconnect instead of `connectObject`
 
 - `global.display.connect('accelerator-activated')` in `keybinding.js` disconnected manually in `disable()`
 - `global.stage.connect('notify::key-focus')` in `spotlightPopup.js` for focus-loss detection disconnected manually in `close()`
+- `global.stage.connect('captured-event')` in `spotlightPopup.js` for stage-level key capture disconnected manually in `close()`
+
+each of these tracks its own handler id in an instance field and disconnects it explicitly rather than relying on `disconnectObject(this)` if you add a new connection on `global.display` or `global.stage` follow the same pattern track the id and disconnect it manually do not assume `connectObject` covers it without checking first
 
 ### popup positioning
 

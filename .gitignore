@@ -1,8 +1,10 @@
-```
 # Logs and temp files
 *.log
 *.tmp
 *.swp
+
+# GNOME extension build artifacts
+schemas/gschemas.compiled
 
 # Environment
 .env
@@ -68,4 +70,3 @@ htmlcov/
 *.tar.bz2
 *.tar.xz
 *.tar.zst
-```

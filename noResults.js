@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import St from 'gi://St';
-import Clutter from 'gi://Clutter';
 
 // creates the empty state widget shown when search returns nothing
 export function buildNoResults(query) {
