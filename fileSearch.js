@@ -2,22 +2,49 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
-import Tsparql from 'gi://Tsparql-3.0';
 // searches the user's files using tracker, the same system that powers
 // gnome overview file search. connects to the tracker miner fs d-bus
 // endpoint and runs a sparql query matching file names.
+//
+// tsparql is imported dynamically because it may not be available on all
+// systems (minimal installs, etc.). if it's missing we simply return no
+// file results rather than crashing the whole extension.
 //
 // result activation uses gio.appinfo.launch_default_for_uri which is
 // exactly what the gnome overview uses. on stock gnome this opens
 // folders with nautilus and files with their default application.
 // nautilus is part of core gnome - without it gnome would be broken, so
 // we safely assume it exists and do not add fallback handling.
+// tsparql is loaded on demand because it may not be available on all
+// systems (minimal installs, etc.). if it's missing we simply return no
+// file results rather than crashing the whole extension.
 let _connection = null;
+let _tsparql = null;
+let _tsparqlLoading = false;
+function _loadTsparql() {
+    if (_tsparql !== null || _tsparqlLoading)
+        return;
+    _tsparqlLoading = true;
+    // dynamic import - runs async, results available on next call
+    import('gi://Tsparql-3.0')
+        .then((module) => {
+            _tsparql = module.default;
+        })
+        .catch(() => {
+            _tsparql = false;
+        })
+        .finally(() => {
+            _tsparqlLoading = false;
+        });
+}
 function _getConnection() {
     if (_connection)
         return _connection;
+    // tsparql still loading or unavailable - caller handles null gracefully
+    if (!_tsparql)
+        return null;
     try {
-        _connection = Tsparql.SparqlConnection.bus_new(
+        _connection = _tsparql.SparqlConnection.bus_new(
             'org.freedesktop.Tracker3.Miner.Files',
             null, null,
         );
@@ -75,6 +102,10 @@ export function searchFiles(text, maxResults) {
     const trimmed = text.trim();
     if (trimmed.length < 2)
         return [];
+    // try to load tsparql on first call - if it succeeds, results will be
+    // available on subsequent calls. if it fails, we silently skip file search.
+    if (_tsparql === null && !_tsparqlLoading)
+        _loadTsparql();
     const conn = _getConnection();
     if (!conn)
         return [];
@@ -83,8 +114,12 @@ export function searchFiles(text, maxResults) {
     try {
         cursor = conn.query(_buildQuery(trimmed, maxResults), null);
         while (cursor.next(null)) {
-            const url = cursor.get_string(0)[0];
-            const name = cursor.get_string(1)[0];
+            // get_string may return either a plain string or a [string, length] tuple
+            // depending on gjs version and introspection annotations - handle both
+            const urlVal = cursor.get_string(0);
+            const nameVal = cursor.get_string(1);
+            const url = Array.isArray(urlVal) ? urlVal[0] : urlVal;
+            const name = Array.isArray(nameVal) ? nameVal[0] : nameVal;
             if (!url || !name)
                 continue;
             // skip the search entry itself if it somehow matches
