@@ -110,10 +110,6 @@ The codebase comprises 21 modular JavaScript files: 17 at the root level for the
 - **Fixed anchor.** The popup is positioned once at open time and grows downward from that anchor. It never drifts upward when results appear.
 - **Instant.** No fade-in, no slide animation. The popup appears the same frame the shortcut is registered.
 
-## Clipboard Access
-
-This extension writes to the clipboard **only** when the user explicitly activates a calculator result by pressing `Enter` on a valid arithmetic expression. No clipboard data is ever read. No clipboard content is transmitted to any third party. This behavior is declared in `metadata.json` and is strictly user-initiated.
-
 ## License
 
 GPL-3.0-or-later. See the [LICENSE](LICENSE) file for the full text.
