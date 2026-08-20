@@ -19,9 +19,11 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
-/* tint layer - translucent color drawn on top of the blurred background
-   this and the blur widget together create frosted glass */
-.spotlight-tint {
+/* surface widget - blur effect + translucent tint in one layer
+   Shell.BlurEffect BACKGROUND mode blurs pixels beneath this widget
+   css background-color provides the tint on top of the blurred pixels
+   together they create frosted glass */
+.spotlight-surface {
   background-color: rgba(28, 28, 30, 0.78);
   border-radius: 24px;
 }
