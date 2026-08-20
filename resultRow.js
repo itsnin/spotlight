@@ -17,7 +17,7 @@ export function buildResultRow(result, resultIndex, onActivate, onHover) {
     const iconParams = {
         fallback_icon_name: 'application-x-executable',
         style_class: 'spotlight-result-icon',
-        icon_size: 28,
+        icon_size: 40,
     };
 
     if (result.type === 'app' && result.app)

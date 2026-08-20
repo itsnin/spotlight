@@ -1,7 +1,7 @@
 {
   "uuid": "spotlight@nin",
   "name": "Spotlight",
-  "description": "A compact macOS Spotlight-inspired launcher for GNOME Shell. Press a shortcut, type, and results appear instantly - apps ranked by match quality and usage, an inline calculator that copies results to the clipboard, system actions like lock and suspend, GNOME Settings panels, and a web search fallback when nothing else matches.\n\nOpen with Ctrl+Space (configurable in preferences). Click outside or press Esc to close.",
+  "description": "A compact macOS Spotlight-inspired launcher for GNOME Shell. Press a shortcut, type, and results appear instantly - apps and files ranked by match quality and usage, an inline calculator that copies results to the clipboard, system actions like lock and suspend, GNOME Settings panels, and a web search fallback when nothing else matches.\n\nOpen with Ctrl+Space (configurable in preferences). Click outside or press Esc to close.",
   "shell-version": [
     "45",
     "46",
@@ -12,5 +12,5 @@
   ],
   "url": "https://github.com/itsnin/spotlight",
   "settings-schema": "org.gnome.shell.extensions.spotlight",
-  "version-name": "2026.08.17"
+  "version-name": "2026.08.20"
 }
