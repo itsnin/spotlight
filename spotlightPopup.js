@@ -117,9 +117,9 @@ class SpotlightPopup extends St.BoxLayout {
     }
 
     close() {
-        if (!this.visible)
-            return;
-
+        // no visible guard - must clean up even if called during the partially-open
+        // window between open() and the idle callback that actually calls show()
+        // every operation below is individually guarded and safe to call repeatedly
         this._stageKeyCapture.stop();
         this._focusWatcher.stop();
         this._positioner.stop();

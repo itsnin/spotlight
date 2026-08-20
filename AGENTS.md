@@ -14,7 +14,7 @@ the goal is to feel like macos spotlight not look like a gnome shell extension t
 
 ### minimal ui no chrome
 
-the popup has no title bar no close button no backdrop overlay clicking outside or pressing escape closes it the popup floats above all windows via the chrome layer it does not steal focus from the desktop in a destructive way it uses a modal grab to capture keyboard input while open and releases it on close
+the popup has no title bar no close button no backdrop overlay clicking outside or pressing escape closes it the popup floats above all windows via the chrome layer it does not steal focus from the desktop in a destructive way keyboard input is captured via grab_key_focus on the entry and stage level captured-event while open and released on close
 
 ### dark not black
 

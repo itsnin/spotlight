@@ -75,13 +75,20 @@ Configurable options:
 
 ## Architecture
 
-The codebase comprises 21 modular JavaScript files: 17 at the root level for the GNOME Shell process and 4 inside `prefs/` for the preferences (GTK4/Adwaita) process. This flat-root structure is a requirement of the GNOME Extensions website, which locates `extension.js` at the archive root. The preferences files reside in their own subdirectory to enforce process isolation — they execute in a separate GTK process and must never import shell-only libraries such as `St`, `Clutter`, `Meta`, or `Shell`.
+The codebase comprises 28 modular JavaScript files: 24 at the root level for the GNOME Shell process and 4 inside `prefs/` for the preferences (GTK4/Adwaita) process. This flat-root structure is a requirement of the GNOME Extensions website, which locates `extension.js` at the archive root. The preferences files reside in their own subdirectory to enforce process isolation — they execute in a separate GTK process and must never import shell-only libraries such as `St`, `Clutter`, `Meta`, or `Shell`.
 
 | File | Responsibility |
 |---|---|
 | `extension.js` | Entry point — constructs the popup and registers the keybinding |
 | `prefs.js` | Preferences window entry point |
-| `spotlightPopup.js` | Popup widget — open/close, search rendering, keyboard navigation, click-outside dismissal |
+| `spotlightPopup.js` | Popup lifecycle — open/close/destroy, wires all modules together |
+| `stageKeyCapture.js` | Connects/disconnects stage-level `captured-event` key capture |
+| `popupKeyHandler.js` | Key logic — navigation, Enter/Escape, hover suppression window |
+| `selectionManager.js` | Selection state — tracks selected index, scrolls into view |
+| `resultsRenderer.js` | Search debouncing, result row rendering, section headers |
+| `popupBackdrop.js` | Transparent click-outside detection via chrome layer |
+| `focusLossWatcher.js` | Detects focus leaving the popup via `notify::key-focus` |
+| `popupPositioner.js` | Sizes, centers, and shows the popup via deferred idle callback |
 | `searchEntry.js` | Search input with magnifying-glass icon |
 | `resultsContainer.js` | Scrollable results area |
 | `resultRow.js` | Single result row with icon, title, and interaction handling |
