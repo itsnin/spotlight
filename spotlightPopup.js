@@ -6,6 +6,7 @@ import St from 'gi://St';
 import Shell from 'gi://Shell';
 import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
+import Clutter from 'gi://Clutter';
 import {buildSearchEntry} from './searchEntry.js';
 import {buildResultsContainer} from './resultsContainer.js';
 import {SelectionManager} from './selectionManager.js';
@@ -16,53 +17,46 @@ import {FocusLossWatcher} from './focusLossWatcher.js';
 import {StageKeyCapture} from './stageKeyCapture.js';
 import {PopupPositioner} from './popupPositioner.js';
 
-// the popup widget - a vertical box with a search entry and scrollable results
-// added to gnome's chrome layer so it floats above all windows
+// popup structure matches search-light's approach:
+//   outer St.Widget (this)  -> added to chrome, handles positioning
+//   inner St.BoxLayout      -> holds entry + results, has blur and styling
 //
-// single unified window design: entry and results share one continuous
-// background. Shell.BlurEffect in BACKGROUND mode blurs the pixels beneath
-// the popup, and the translucent css background-color tints the result to
-// create frosted glass. blur is applied directly to the container which
-// also has the rounded translucent background from css.
+// this two-layer structure separates chrome concerns (position, stacking,
+// lifetime) from content concerns (layout, styling, effects). the outer
+// widget uses Clutter.BinLayout so the inner box fills it completely.
+//
+// Shell.BlurEffect in BACKGROUND mode blurs pixels beneath the content box.
+// css background-color provides the tint on top, creating frosted glass.
+// blur samples a rectangle regardless of border-radius, so the tint is made
+// opaque enough that corner pixels are visually negligible. the box-shadow
+// following the same large radius defines the visual boundary.
 //
 // shell version detection picks the right blur property name:
-//   gnome 45: sigma property (gaussian sigma value)
+//   gnome 45: sigma property
 //   gnome 46+: radius property (radius = sigma * 2)
-// both get equal treatment - neither is a fallback
-//
-// to capture clicks outside the popup we do not use Main.pushModal because a
-// modal grab swallows pointer events before they reach the stage instead we
-// place a transparent full-screen reactive backdrop actor behind the popup
-// any click on the backdrop closes the popup clicks on the popup itself are
-// received normally because the popup sits above the backdrop in the chrome
-//
-// keyboard input is captured via grab_key_focus on the entry which receives
-// all key events while it has focus the escape key closes the popup
-//
-// this class owns the lifecycle (open/close/destroy) and holds a
-// SelectionManager, a ResultsRenderer, and a PopupKeyHandler which each own
-// one slice of what used to all live in this file directly
+// both paths equal - neither is a fallback
 export const SpotlightPopup = GObject.registerClass(
-class SpotlightPopup extends St.BoxLayout {
+class SpotlightPopup extends St.Widget {
     _init(extension) {
         super._init({
-            style_class: 'spotlight-container',
+            layout_manager: new Clutter.BinLayout(),
             reactive: true,
             can_focus: true,
             visible: false,
-            width: extension._settings.get_int('popup-width'),
         });
-        // orientation set after init for gnome 45/46 compatibility
-        // the Clutter.Orientation enum property was added in gnome 47
-        this.set_vertical(true);
         this._settings = extension._settings;
         this._backdrop = null;
         this._focusWatcher = new FocusLossWatcher(this);
         this._positioner = new PopupPositioner(this, this._settings);
 
-        // blur effect applied directly to the container
-        // background mode blurs pixels beneath this actor
-        // css background-color provides the tint on top
+        // inner content box - this is what the user actually sees
+        // blur effect, background tint, rounded corners, and shadow all live here
+        this._content = new St.BoxLayout({
+            style_class: 'spotlight-container',
+            vertical: true,
+            width: this._settings.get_int('popup-width'),
+        });
+
         this._blurEffect = new Shell.BlurEffect({
             mode: Shell.BlurMode.BACKGROUND,
             brightness: 0.9,
@@ -73,7 +67,9 @@ class SpotlightPopup extends St.BoxLayout {
             this._blurEffect.radius = 24;
         else
             this._blurEffect.sigma = 12;
-        this.add_effect(this._blurEffect);
+        this._content.add_effect(this._blurEffect);
+
+        this.add_child(this._content);
 
         const {entryBox, entry} = buildSearchEntry();
         this._entryBox = entryBox;
@@ -89,8 +85,8 @@ class SpotlightPopup extends St.BoxLayout {
         this._resultsScroll = resultsScroll;
         this._resultsBox = resultsBox;
 
-        this.add_child(this._entryBox);
-        this.add_child(this._resultsScroll);
+        this._content.add_child(this._entryBox);
+        this._content.add_child(this._resultsScroll);
 
         this._selection = new SelectionManager(resultsBox, resultsScroll);
         this._keyHandler = new PopupKeyHandler(this, this._selection);
@@ -106,26 +102,18 @@ class SpotlightPopup extends St.BoxLayout {
                 this._selection.applySelection(idx);
             }
         );
-        // popup is added to chrome in open() after the backdrop
-        // this ensures it naturally sits above the backdrop without needing
-        // raise() or lower() calls which are unreliable on hidden actors
     }
     open() {
         if (this.visible)
             return;
-        // create and show backdrop first then popup - later addition to
-        // chrome means higher in the stacking order so popup naturally
-        // sits above the backdrop
+        // backdrop first, then popup - later addition to chrome means higher
+        // in stacking order, so popup naturally sits above the backdrop
         this._backdrop = new PopupBackdrop(() => this.close());
         this._backdrop.show();
-        // always re-add popup to chrome to guarantee correct stacking order
-        // if popup was left in chrome from a previous close remove it first
         if (this.get_parent())
             Main.layoutManager.removeChrome(this);
         Main.layoutManager.addChrome(this);
         this._positioner.showCentered(() => {
-            // grab focus only after the popup is visible
-            // grabbing focus on a hidden actor fails silently
             this._entry.grab_key_focus();
             this._stageKeyCapture.start();
         });
@@ -134,9 +122,7 @@ class SpotlightPopup extends St.BoxLayout {
         this._focusWatcher.start();
     }
     close() {
-        // no visible guard - must clean up even if called during the partially-open
-        // window between open() and the idle callback that actually calls show()
-        // every operation below is individually guarded and safe to call repeatedly
+        // no visible guard - safe to call repeatedly during partial open
         this._stageKeyCapture.stop();
         this._focusWatcher.stop();
         this._positioner.stop();
@@ -147,13 +133,13 @@ class SpotlightPopup extends St.BoxLayout {
         }
         this.hide();
     }
-    // overridden so that disable() -> destroy() tears down everything cleanly:
-    // closes the popup which removes the backdrop and focus handler then
-    // removes us from the chrome layer and chains up to the parent destroy
     destroy() {
         this.close();
         Main.layoutManager.removeChrome(this);
-        this.remove_effect(this._blurEffect);
+        if (this._content) {
+            this._content.remove_effect(this._blurEffect);
+            this._content = null;
+        }
         this._blurEffect = null;
         this._settings = null;
         super.destroy();

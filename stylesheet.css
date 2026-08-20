@@ -13,14 +13,14 @@
 
 /* container - single unified window with frosted glass */
 /* blur is applied via Shell.BlurEffect in javascript */
-/* background-color tints the blurred result - made opaque enough that */
-/* the rectangular blur sampling is not visible at the rounded corners */
+/* background-color tints the blurred result - made very opaque so that */
+/* the rectangular blur sampling is invisible at the extreme rounded corners */
 /* border-radius and box-shadow define the rounded visual boundary */
 .spotlight-container {
-  background-color: rgba(28, 28, 30, 0.88);
-  border-radius: 28px;
-  padding: 8px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  background-color: rgba(28, 28, 30, 0.92);
+  border-radius: 36px;
+  padding: 10px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
 }
 
 /* search icon on the left side of the entry */
