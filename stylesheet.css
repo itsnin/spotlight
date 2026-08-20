@@ -1,6 +1,6 @@
 /* spotlight - stylesheet */
 /* single unified window - entry and results share one continuous background */
-/* blur effect applied to outer container via Shell.BlurEffect BACKGROUND mode */
+/* blur effect applied directly to the container via Shell.BlurEffect */
 /* colors: background #1c1c1e text #f5f5f7 selection rgba(255,255,255,0.12) */
 
 /* global reset for spotlight widgets - kill any inherited focus outline or */
@@ -11,40 +11,30 @@
   outline: none;
 }
 
-/* outer container - layout only, no background
-   border-radius here is for the box-shadow to follow rounded shape */
+/* container - single unified window with frosted glass */
+/* blur is applied via Shell.BlurEffect in javascript */
+/* background-color tints the blurred result - made opaque enough that */
+/* the rectangular blur sampling is not visible at the rounded corners */
+/* border-radius and box-shadow define the rounded visual boundary */
 .spotlight-container {
-  border-radius: 24px;
-  padding: 0;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-}
-
-/* surface widget - blur effect + translucent tint in one layer
-   Shell.BlurEffect BACKGROUND mode blurs pixels beneath this widget
-   css background-color provides the tint on top of the blurred pixels
-   together they create frosted glass */
-.spotlight-surface {
-  background-color: rgba(28, 28, 30, 0.78);
-  border-radius: 24px;
-}
-
-/* content area padding - entry and results sit inside this */
-.spotlight-content {
+  background-color: rgba(28, 28, 30, 0.88);
+  border-radius: 28px;
   padding: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 /* search icon on the left side of the entry */
 .spotlight-search-icon {
-  icon-size: 20px;
-  padding: 0 14px 0 16px;
+  icon-size: 18px;
+  padding: 0 12px 0 14px;
   color: #98989d;
 }
 
 /* entry box - no separate background, part of unified window */
 .spotlight-entry-box {
   background-color: transparent;
-  border-radius: 16px;
-  padding: 4px 4px 4px 0;
+  border-radius: 14px;
+  padding: 2px 4px 2px 0;
 }
 
 /* the actual entry inside the entry box */
@@ -52,9 +42,9 @@
   background-color: transparent;
   color: #f5f5f7;
   border: none;
-  border-radius: 16px;
-  padding: 14px 16px 14px 0;
-  font-size: 20px;
+  border-radius: 14px;
+  padding: 12px 14px 12px 0;
+  font-size: 18px;
   font-weight: 400;
   caret-color: #ffffff;
   selection-background-color: #0a84ff;
@@ -72,9 +62,9 @@
 /* results list - no separate background, part of unified window */
 .spotlight-results {
   background-color: transparent;
-  border-radius: 16px;
+  border-radius: 14px;
   padding: 2px;
-  max-height: 400px;
+  max-height: 360px;
   margin-top: 2px;
 }
 
@@ -85,16 +75,16 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 1px;
-  padding: 8px 14px 2px 14px;
+  padding: 6px 12px 2px 12px;
 }
 
-/* single result row */
+/* single result row - compact */
 .spotlight-result {
-  padding: 10px 12px;
-  border-radius: 14px;
+  padding: 8px 10px;
+  border-radius: 12px;
   color: #f5f5f7;
   transition-duration: 100ms;
-  spacing: 14px;
+  spacing: 12px;
 }
 
 /* selection uses a blackish overlay not blue */
@@ -106,7 +96,7 @@
 }
 
 .spotlight-result-icon {
-  padding-right: 4px;
+  padding-right: 2px;
 }
 
 .spotlight-result-content {
@@ -114,15 +104,15 @@
 }
 
 .spotlight-result-title {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
   color: inherit;
 }
 
 .spotlight-result-description {
-  font-size: 12px;
+  font-size: 11px;
   color: #98989d;
-  padding-top: 2px;
+  padding-top: 1px;
 }
 
 .spotlight-result:hover .spotlight-result-description,
@@ -133,14 +123,14 @@
 
 /* no results empty state */
 .spotlight-no-results {
-  padding: 28px 24px;
+  padding: 24px 20px;
   color: #98989d;
-  font-size: 14px;
+  font-size: 13px;
   text-align: center;
 }
 
 .spotlight-no-results-title {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   color: #f5f5f7;
   padding-bottom: 4px;

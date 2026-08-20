@@ -2,41 +2,56 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
+
 // searches the user's files using tracker, the same system that powers
 // gnome overview file search. connects to the tracker miner fs d-bus
 // endpoint and runs a sparql query matching file names.
 //
-// tsparql is imported dynamically because it may not be available on all
-// systems (minimal installs, etc.). if it's missing we simply return no
-// file results rather than crashing the whole extension.
+// tsparql/tracker is imported dynamically at module load time because it
+// may not be available on all systems (minimal installs, etc.). if it's
+// missing we simply return no file results rather than crashing the whole
+// extension. we try both the new tsparql namespace and the legacy tracker
+// namespace for maximum compatibility.
 //
 // result activation uses gio.appinfo.launch_default_for_uri which is
 // exactly what the gnome overview uses. on stock gnome this opens
 // folders with nautilus and files with their default application.
 // nautilus is part of core gnome - without it gnome would be broken, so
 // we safely assume it exists and do not add fallback handling.
-// tsparql is loaded on demand because it may not be available on all
-// systems (minimal installs, etc.). if it's missing we simply return no
-// file results rather than crashing the whole extension.
+
 let _connection = null;
 let _tsparql = null;
 let _tsparqlLoading = false;
-function _loadTsparql() {
+
+// start loading immediately at module import time
+// by the time the user types their first keystroke it should be resolved
+(function _loadTsparql() {
     if (_tsparql !== null || _tsparqlLoading)
         return;
     _tsparqlLoading = true;
-    // dynamic import - runs async, results available on next call
+
+    // try new namespace first, fall back to legacy namespace
     import('gi://Tsparql-3.0')
         .then((module) => {
             _tsparql = module.default;
         })
         .catch(() => {
+            // tsparql not available - try legacy tracker namespace
+            return import('gi://Tracker-3.0');
+        })
+        .then((module) => {
+            if (!_tsparql && module)
+                _tsparql = module.default;
+        })
+        .catch(() => {
+            // neither namespace available - disable file search
             _tsparql = false;
         })
         .finally(() => {
             _tsparqlLoading = false;
         });
-}
+})();
+
 function _getConnection() {
     if (_connection)
         return _connection;
@@ -54,6 +69,7 @@ function _getConnection() {
     }
     return _connection;
 }
+
 // builds a sparql query that matches files by name
 // simple substring match on file name - works reliably across all
 // tracker versions without requiring fts configuration
@@ -71,6 +87,7 @@ function _buildQuery(text, limit) {
         LIMIT ${limit}
     `;
 }
+
 // extract just the filename from a file:// uri for the description line
 function _uriToPath(uri) {
     if (!uri.startsWith('file://'))
@@ -78,6 +95,7 @@ function _uriToPath(uri) {
     const path = decodeURIComponent(uri.slice(7));
     return path;
 }
+
 // shorten a path for display - show home as ~ and truncate middle if too long
 function _formatDescription(path) {
     const home = GLib.get_home_dir();
@@ -91,6 +109,7 @@ function _formatDescription(path) {
     }
     return display;
 }
+
 // icon for file results - we can't stat without blocking the main loop
 // so we use a generic document icon. tracker doesn't expose folder vs
 // regular file in a way we can query cheaply here, and guessing from
@@ -98,14 +117,11 @@ function _formatDescription(path) {
 // Dockerfile, .bashrc etc. a generic icon is always correct even if
 // less informative.
 const FILE_ICON = 'text-x-generic';
+
 export function searchFiles(text, maxResults) {
     const trimmed = text.trim();
     if (trimmed.length < 2)
         return [];
-    // try to load tsparql on first call - if it succeeds, results will be
-    // available on subsequent calls. if it fails, we silently skip file search.
-    if (_tsparql === null && !_tsparqlLoading)
-        _loadTsparql();
     const conn = _getConnection();
     if (!conn)
         return [];

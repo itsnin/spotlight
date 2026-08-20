@@ -6,7 +6,6 @@ import St from 'gi://St';
 import Shell from 'gi://Shell';
 import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
-import Clutter from 'gi://Clutter';
 import {buildSearchEntry} from './searchEntry.js';
 import {buildResultsContainer} from './resultsContainer.js';
 import {SelectionManager} from './selectionManager.js';
@@ -21,10 +20,10 @@ import {PopupPositioner} from './popupPositioner.js';
 // added to gnome's chrome layer so it floats above all windows
 //
 // single unified window design: entry and results share one continuous
-// background with rounded corners. the surface widget has both the blur
-// effect and the translucent tint color, and contains all content.
-// Shell.BlurEffect in BACKGROUND mode blurs whatever is beneath the surface
-// (the desktop and windows), and the translucent css background tints it.
+// background. Shell.BlurEffect in BACKGROUND mode blurs the pixels beneath
+// the popup, and the translucent css background-color tints the result to
+// create frosted glass. blur is applied directly to the container which
+// also has the rounded translucent background from css.
 //
 // shell version detection picks the right blur property name:
 //   gnome 45: sigma property (gaussian sigma value)
@@ -61,18 +60,9 @@ class SpotlightPopup extends St.BoxLayout {
         this._focusWatcher = new FocusLossWatcher(this);
         this._positioner = new PopupPositioner(this, this._settings);
 
-        // surface widget fills the entire container and is the first child
-        // it holds the blur effect, the translucent tint background, and
-        // all the content (entry + results). x_align/y_align FILL ensures
-        // it expands to the container's full size in a vertical box layout.
-        this._surface = new St.Bin({
-            x_align: Clutter.ActorAlign.FILL,
-            y_align: Clutter.ActorAlign.FILL,
-            x_expand: true,
-            y_expand: true,
-            style_class: 'spotlight-surface',
-        });
-
+        // blur effect applied directly to the container
+        // background mode blurs pixels beneath this actor
+        // css background-color provides the tint on top
         this._blurEffect = new Shell.BlurEffect({
             mode: Shell.BlurMode.BACKGROUND,
             brightness: 0.9,
@@ -83,17 +73,7 @@ class SpotlightPopup extends St.BoxLayout {
             this._blurEffect.radius = 24;
         else
             this._blurEffect.sigma = 12;
-        this._surface.add_effect(this._blurEffect);
-        this.add_child(this._surface);
-
-        // content box lives inside the surface, above the blur and tint
-        const contentBox = new St.BoxLayout({
-            vertical: true,
-            x_expand: true,
-            y_expand: true,
-            style_class: 'spotlight-content',
-        });
-        this._surface.set_child(contentBox);
+        this.add_effect(this._blurEffect);
 
         const {entryBox, entry} = buildSearchEntry();
         this._entryBox = entryBox;
@@ -109,8 +89,8 @@ class SpotlightPopup extends St.BoxLayout {
         this._resultsScroll = resultsScroll;
         this._resultsBox = resultsBox;
 
-        contentBox.add_child(this._entryBox);
-        contentBox.add_child(this._resultsScroll);
+        this.add_child(this._entryBox);
+        this.add_child(this._resultsScroll);
 
         this._selection = new SelectionManager(resultsBox, resultsScroll);
         this._keyHandler = new PopupKeyHandler(this, this._selection);
@@ -173,10 +153,7 @@ class SpotlightPopup extends St.BoxLayout {
     destroy() {
         this.close();
         Main.layoutManager.removeChrome(this);
-        if (this._surface) {
-            this._surface.remove_effect(this._blurEffect);
-            this._surface = null;
-        }
+        this.remove_effect(this._blurEffect);
         this._blurEffect = null;
         this._settings = null;
         super.destroy();
