@@ -16,8 +16,7 @@ export function searchCalculator(query) {
         description: 'Press Enter to copy to clipboard',
         icon: 'accessories-calculator-symbolic',
         activate: () => {
-            // clipboard write only - triggered by explicit user action on the calculator result
-            // declared in metadata.json description
+            // writes the result to the clipboard on user activation
             const clipboard = St.Clipboard.get_default();
             clipboard.set_text(St.ClipboardType.CLIPBOARD, formatNumber(result));
         },

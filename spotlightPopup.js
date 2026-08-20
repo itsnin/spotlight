@@ -13,6 +13,8 @@ import {ResultsRenderer} from './resultsRenderer.js';
 import {PopupKeyHandler} from './popupKeyHandler.js';
 import {PopupBackdrop} from './popupBackdrop.js';
 import {FocusLossWatcher} from './focusLossWatcher.js';
+import {StageKeyCapture} from './stageKeyCapture.js';
+import {PopupPositioner} from './popupPositioner.js';
 
 // the popup widget - a vertical box with a search entry and scrollable results
 // added to gnome's chrome layer so it floats above all windows
@@ -44,10 +46,9 @@ class SpotlightPopup extends St.BoxLayout {
         this.set_vertical(true);
 
         this._settings = extension._settings;
-        this._positionIdleId = 0;
         this._backdrop = null;
-        this._stageKeyId = 0;
         this._focusWatcher = new FocusLossWatcher(this);
+        this._positioner = new PopupPositioner(this, this._settings);
 
         const {entryBox, entry} = buildSearchEntry();
         this._entryBox = entryBox;
@@ -66,6 +67,7 @@ class SpotlightPopup extends St.BoxLayout {
 
         this._selection = new SelectionManager(resultsBox, resultsScroll);
         this._keyHandler = new PopupKeyHandler(this, this._selection);
+        this._stageKeyCapture = new StageKeyCapture(this._keyHandler);
         this._renderer = new ResultsRenderer(
             resultsBox, resultsScroll, this._selection, this._settings,
             (r) => { r.activate(); this.close(); },
@@ -86,20 +88,6 @@ class SpotlightPopup extends St.BoxLayout {
         // raise() or lower() calls which are unreliable on hidden actors
     }
 
-    // position the popup at the center of the primary monitor
-    // called once when the popup opens based on the empty-state height
-    // the popup then grows downward from this fixed position as results appear
-    // this prevents the popup from shifting upward when results grow
-    _reposition() {
-        const monitor = Main.layoutManager.primaryMonitor;
-        const popupWidth = this._settings.get_int('popup-width');
-        const [, naturalHeight] = this.get_preferred_height(popupWidth);
-        this.set_position(
-            Math.floor(monitor.x + (monitor.width - popupWidth) / 2),
-            Math.floor(monitor.y + (monitor.height - naturalHeight) / 2),
-        );
-    }
-
     open() {
         if (this.visible)
             return;
@@ -116,68 +104,25 @@ class SpotlightPopup extends St.BoxLayout {
             Main.layoutManager.removeChrome(this);
         Main.layoutManager.addChrome(this);
 
-        // queue a layout pass then position before showing
-        // ensures get_preferred_height returns correct values
-        // otherwise css may not be applied and height is wrong
-        const popupWidth = this._settings.get_int('popup-width');
-        this.set_width(popupWidth);
-        this.queue_relayout();
-        this._positionIdleId = GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
-            this._positionIdleId = 0;
-            if (!this._backdrop)
-                return GLib.SOURCE_REMOVE;
-            this._reposition();
-            this.show();
+        this._positioner.showCentered(() => {
             // grab focus only after the popup is visible
             // grabbing focus on a hidden actor fails silently
             this._entry.grab_key_focus();
-            // capture key events at the stage level during capture phase
-            // this guarantees we see enter/esc/arrows before st entry can
-            // consume them which was the root cause of keyboard not working
-            this._stageKeyId = global.stage.connect('captured-event',
-                (_, event) => this._keyHandler.handleEvent(event));
-            return GLib.SOURCE_REMOVE;
+            this._stageKeyCapture.start();
         });
 
         this._entry.set_text('');
         this._renderer.reset();
-
-        // defer the focus-loss handler until after the popup is shown and
-        // focus is grabbed otherwise notify::key-focus fires immediately
-        // during the open call and closes the popup right away
-        this._focusIdleId = GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
-            this._focusIdleId = 0;
-            if (!this.visible)
-                return GLib.SOURCE_REMOVE;
-            this._keyFocusId = global.stage.connect('notify::key-focus', () => {
-                if (!this.visible)
-                    return;
-                const focus = global.stage.get_key_focus();
-                if (!focus || focus === global.stage) {
-                    this.close();
-                    return;
-                }
-                if (!this.contains(focus))
-                    this.close();
-            });
-            return GLib.SOURCE_REMOVE;
-        });
+        this._focusWatcher.start();
     }
 
     close() {
         if (!this.visible)
             return;
 
-        if (this._stageKeyId) {
-            global.stage.disconnect(this._stageKeyId);
-            this._stageKeyId = 0;
-        }
-        if (this._keyFocusId) {
-            global.stage.disconnect(this._keyFocusId);
-            this._keyFocusId = 0;
-        }
-        this._clearIdle('_focusIdleId');
-        this._clearIdle('_positionIdleId');
+        this._stageKeyCapture.stop();
+        this._focusWatcher.stop();
+        this._positioner.stop();
         this._renderer.destroy();
 
         if (this._backdrop) {
@@ -186,13 +131,6 @@ class SpotlightPopup extends St.BoxLayout {
         }
 
         this.hide();
-    }
-
-    _clearIdle(field) {
-        if (this[field]) {
-            GLib.source_remove(this[field]);
-            this[field] = 0;
-        }
     }
 
     // overridden so that disable() -> destroy() tears down everything cleanly:

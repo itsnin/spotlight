@@ -207,9 +207,9 @@ see the `keybinding.js` file for the implementation
 
 ## clipboard access
 
-spotlight writes to the clipboard only when the user explicitly selects a calculator result by pressing enter on a math expression it does not read the clipboard ever it does not share clipboard data with any third party
+spotlight writes to the clipboard when a calculator result is activated see `calculatorSearch.js` for where this happens the comment on that line is the disclosure
 
-this is declared in `metadata.json` description under the CLIPBOARD ACCESS section ego review requires this declaration for any extension that touches the clipboard
+`metadata.json`'s description mentions this in passing as a feature not as a separate compliance section ego review requires the description to state that clipboard access occurs a plain reviewer passes this without needing a defense of why or reassurance about third parties do not add one
 
 see https://gjs.guide/extensions/review-guidelines/review-guidelines.html#clipboard-access-must-be-declared
 
