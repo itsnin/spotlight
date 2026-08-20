@@ -8,24 +8,29 @@ import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
 import Clutter from 'gi://Clutter';
 import {PopupBackdrop} from './popupBackdrop.js';
-import {FocusLossWatcher} from './focusLossWatcher.js';
 import {PopupPositioner} from './popupPositioner.js';
 
 // popup structure matches search-light exactly:
 //   outer St.Widget (this)  -> added to chrome, handles positioning
 //   inner St.BoxLayout      -> holds entry + gnome search results, has blur/styling
 //
-// reuses gnome overview's entire search infrastructure rather than
-// implementing custom providers. steals Main.overview.searchEntry and
-// Main.overview.searchController, reparents them into our popup, and
-// restores them on close. this automatically gives every search provider
-// registered with gnome: calculator, apps, files, settings, system actions,
-// and any third-party providers the user has installed.
+// reuses gnome overview's entire search infrastructure. steals
+// Main.overview.searchEntry and Main.overview.searchController, reparents
+// them into our popup, and restores them on close. this automatically
+// gives every search provider registered with gnome: calculator, apps,
+// files, settings, system actions, and any third-party providers.
+//
+// important guards copied from search-light:
+//   _inOverview flag - prevents opening while overview is already visible
+//   window-created / app-state-changed - hide popup when apps launch
+//   disable_unredirect / enable_unredirect - performance for blur effect
+//   connectObject for all global signals - automatic cleanup on destroy
+//   popup-menu focus handling - don't close when menus open from results
 //
 // blur uses Shell.BlurEffect (not search-light's imagemagick approach).
 // background mode blurs pixels beneath the content box, css background-color
-// tints it. tint is made opaque enough that the rectangular blur sampling
-// is invisible at the extreme rounded corners.
+// tints it. tint is made opaque enough that rectangular blur sampling is
+// invisible at the extreme rounded corners.
 export const SpotlightPopup = GObject.registerClass(
 class SpotlightPopup extends St.Widget {
     _init(extension) {
@@ -37,11 +42,11 @@ class SpotlightPopup extends St.Widget {
         });
         this._settings = extension._settings;
         this._backdrop = null;
-        this._focusWatcher = new FocusLossWatcher(this);
         this._positioner = new PopupPositioner(this, this._settings);
+        this._inOverview = false;
+        this._visible = false;
 
-        // inner content box - what the user sees
-        // blur effect, background tint, rounded corners, shadow all live here
+        // inner content box - what the user actually sees
         this._content = new St.BoxLayout({
             style_class: 'spotlight-container',
             vertical: true,
@@ -69,11 +74,32 @@ class SpotlightPopup extends St.Widget {
         this._searchParent = null;
         this._searchResults = null;
         this._textChangedEventId = 0;
-        this._capturedEventId = 0;
         this._originalActivateDefault = null;
-        this._originalSearchCancelled = null;
-        this._originalOverviewToggle = null;
-        this._originalOverviewHide = null;
+
+        // track overview state so we don't steal widgets while it's visible
+        Main.overview.connectObject(
+            'overview-showing', () => { this._inOverview = true; },
+            'overview-hidden', () => { this._inOverview = false; },
+            this,
+        );
+
+        // hide popup when new windows are created (app launched from result)
+        global.display.connectObject(
+            'window-created', () => {
+                if (this._visible)
+                    this.close();
+            },
+            this,
+        );
+
+        // hide popup when app state changes
+        Shell.AppSystem.get_default().connectObject(
+            'app-state-changed', () => {
+                if (this._visible)
+                    this.close();
+            },
+            this,
+        );
     }
 
     // acquires gnome overview's search entry and controller
@@ -83,11 +109,11 @@ class SpotlightPopup extends St.Widget {
             return;
 
         // override overview methods so it doesn't try to show itself while
-        // we're using its search widgets
+        // we're using its search widgets. originals saved on overview object
+        // exactly like search-light does, restored in _releaseUi.
         if (!Main.overview._originalToggle) {
             Main.overview._originalToggle = Main.overview.toggle;
             Main.overview.toggle = () => {
-                // if our search is visible, just focus it instead
                 if (this._search && this._search.visible)
                     this._search._text.get_parent().grab_key_focus();
             };
@@ -95,7 +121,6 @@ class SpotlightPopup extends St.Widget {
         if (!Main.overview._originalHide) {
             Main.overview._originalHide = Main.overview.hide;
             Main.overview.hide = () => {
-                // don't let overview hiding interfere with our popup
                 Main.overview._originalHide();
             };
         }
@@ -142,16 +167,40 @@ class SpotlightPopup extends St.Widget {
             },
         );
 
-        // capture esc key to close the popup
-        // gnome's search widgets handle arrow keys, enter, tab internally
-        this._capturedEventId = global.stage.connect('captured-event', (actor, event) => {
-            if (event.type() === Clutter.EventType.KEY_PRESS &&
-                event.get_key_symbol() === Clutter.KEY_Escape) {
-                this.close();
-                return Clutter.EVENT_STOP;
-            }
-            return Clutter.EVENT_PROPAGATE;
-        });
+        // capture esc key to close the popup - uses connectObject so it's
+        // automatically disconnected when this object is destroyed
+        global.stage.connectObject(
+            'captured-event', (actor, event) => {
+                if (event.type() === Clutter.EventType.KEY_PRESS &&
+                    event.get_key_symbol() === Clutter.KEY_Escape) {
+                    this.close();
+                    return Clutter.EVENT_STOP;
+                }
+                return Clutter.EVENT_PROPAGATE;
+            },
+            this,
+        );
+
+        // also close on key-focus loss (unless focus went to a popup-menu
+        // which some results might open - those should not dismiss us)
+        global.stage.connectObject(
+            'notify::key-focus', () => {
+                if (!this._entry || !this._visible)
+                    return;
+                const focus = global.stage.get_key_focus();
+                const appearFocused = focus && (
+                    this._entry.contains(focus) ||
+                    this._searchResults.contains(focus)
+                );
+                if (!appearFocused) {
+                    if (focus && focus.style_class &&
+                        focus.style_class.includes('popup-menu'))
+                        return;
+                    this.close();
+                }
+            },
+            this,
+        );
 
         this._search._text.get_parent().grab_key_focus();
     }
@@ -178,12 +227,6 @@ class SpotlightPopup extends St.Widget {
                 this._textChangedEventId = 0;
             }
 
-            // disconnect esc key capture
-            if (this._capturedEventId) {
-                global.stage.disconnect(this._capturedEventId);
-                this._capturedEventId = 0;
-            }
-
             // restore original search cancelled method
             if (this._search._originalSearchCancelled) {
                 this._search._searchCancelled = this._search._originalSearchCancelled;
@@ -201,6 +244,9 @@ class SpotlightPopup extends St.Widget {
             this._searchResults = null;
         }
 
+        // disconnect global stage signals connected with connectObject
+        global.stage.disconnectObject(this);
+
         // restore overview methods
         if (Main.overview._originalToggle) {
             Main.overview.toggle = Main.overview._originalToggle;
@@ -213,7 +259,12 @@ class SpotlightPopup extends St.Widget {
     }
 
     open() {
-        if (this.visible)
+        if (this._visible)
+            return;
+
+        // never open when the overview is already visible - its search
+        // widgets are in use and we would conflict with them
+        if (this._inOverview)
             return;
 
         this._acquireUi();
@@ -227,6 +278,9 @@ class SpotlightPopup extends St.Widget {
             Main.layoutManager.removeChrome(this);
         Main.layoutManager.addChrome(this);
 
+        // disable unredirect so blur effect works correctly and performs well
+        global.compositor.disable_unredirect();
+
         this._positioner.showCentered(() => {
             if (this._search)
                 this._search._text.get_parent().grab_key_focus();
@@ -238,11 +292,10 @@ class SpotlightPopup extends St.Widget {
             this._search.show();
         }
 
-        this._focusWatcher.start();
+        this._visible = true;
     }
 
     close() {
-        this._focusWatcher.stop();
         this._positioner.stop();
 
         if (this._backdrop) {
@@ -251,12 +304,24 @@ class SpotlightPopup extends St.Widget {
         }
 
         this._releaseUi();
+
+        // re-enable unredirect now that blur effect is hidden
+        global.compositor.enable_unredirect();
+
+        this._visible = false;
         this.hide();
     }
 
     destroy() {
         this.close();
         Main.layoutManager.removeChrome(this);
+
+        // disconnect all remaining signals connected with connectObject
+        Main.overview.disconnectObject(this);
+        global.display.disconnectObject(this);
+        Shell.AppSystem.get_default().disconnectObject(this);
+        global.stage.disconnectObject(this);
+
         if (this._content) {
             this._content.remove_effect(this._blurEffect);
             this._content = null;
