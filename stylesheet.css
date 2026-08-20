@@ -1,137 +1,96 @@
 /* spotlight - stylesheet */
-/* single unified window - entry and results share one continuous background */
-/* blur effect applied directly to the container via Shell.BlurEffect */
+/* reuses gnome overview's search widgets - styles them to fit our popup */
+/* blur via Shell.BlurEffect, tint via css background-color on container */
 /* colors: background #1c1c1e text #f5f5f7 selection rgba(255,255,255,0.12) */
 
-/* global reset for spotlight widgets - kill any inherited focus outline or */
-/* border that the parent theme might draw around actors we add to the chrome layer */
+/* global reset - kill inherited focus outlines or borders from parent theme */
 .spotlight-container,
 .spotlight-container * {
   border: none;
   outline: none;
+  box-shadow: none;
+  -st-icon-style: symbolic;
 }
 
 /* container - single unified window with frosted glass */
-/* blur is applied via Shell.BlurEffect in javascript */
-/* background-color tints the blurred result - made very opaque so that */
-/* the rectangular blur sampling is invisible at the extreme rounded corners */
-/* border-radius and box-shadow define the rounded visual boundary */
+/* Shell.BlurEffect applied in javascript, background-color tints it */
+/* 0.92 opacity hides rectangular blur sampling at extreme rounded corners */
 .spotlight-container {
   background-color: rgba(28, 28, 30, 0.92);
   border-radius: 36px;
   padding: 10px;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  color: #f5f5f7;
 }
 
-/* search icon on the left side of the entry */
-.spotlight-search-icon {
-  icon-size: 18px;
-  padding: 0 12px 0 14px;
-  color: #98989d;
-}
-
-/* entry box - no separate background, part of unified window */
-.spotlight-entry-box {
-  background-color: transparent;
-  border-radius: 14px;
-  padding: 2px 4px 2px 0;
-}
-
-/* the actual entry inside the entry box */
-.spotlight-entry {
+/* search entry - make it blend into unified window */
+.spotlight-container > StEntry,
+.spotlight-container > StEntry:focus {
   background-color: transparent;
   color: #f5f5f7;
   border: none;
   border-radius: 14px;
-  padding: 12px 14px 12px 0;
+  padding: 12px 16px;
   font-size: 18px;
   font-weight: 400;
   caret-color: #ffffff;
   selection-background-color: #0a84ff;
 }
 
-.spotlight-entry:focus {
-  border: none;
-  outline: none;
-}
-
-.spotlight-entry StLabel.hint-text {
+.spotlight-container > StEntry StLabel.hint-text {
   color: rgba(245, 245, 247, 0.35);
 }
 
-/* results list - no separate background, part of unified window */
-.spotlight-results {
-  background-color: transparent;
-  border-radius: 14px;
+/* search results area - transparent so it blends with container */
+.spotlight-container .search-section-content {
+  background-color: transparent !important;
+  border-radius: 12px;
   padding: 2px;
-  max-height: 360px;
-  margin-top: 2px;
 }
 
-/* section header */
-.spotlight-section-header {
+/* individual result rows */
+.spotlight-container .list-search-result,
+.spotlight-container .overview-tile,
+.spotlight-container .search-provider-icon,
+.spotlight-container .list-search-provider-content {
+  background-color: transparent;
+  color: #f5f5f7;
+  border-radius: 12px;
+}
+
+/* selected / hover state */
+.spotlight-container .list-search-result:selected,
+.spotlight-container .overview-tile:selected,
+.spotlight-container .list-search-result:hover,
+.spotlight-container .overview-tile:hover,
+.spotlight-container .search-provider-icon:hover,
+.spotlight-container .list-search-provider-content:hover,
+.spotlight-container .list-search-result:focus,
+.spotlight-container .overview-tile:focus,
+.spotlight-container .search-provider-icon:focus,
+.spotlight-container .list-search-provider-content:focus {
+  background-color: rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff;
+}
+
+/* result text colors */
+.spotlight-container .list-search-result,
+.spotlight-container .list-search-result StLabel {
+  color: #f5f5f7;
+}
+
+.spotlight-container .list-search-result:selected StLabel,
+.spotlight-container .list-search-result:hover StLabel,
+.spotlight-container .list-search-result:focus StLabel {
+  color: #ffffff;
+}
+
+/* provider section headers */
+.spotlight-container .search-provider-icon {
   color: #98989d;
   font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 1px;
   padding: 6px 12px 2px 12px;
-}
-
-/* single result row - compact */
-.spotlight-result {
-  padding: 8px 10px;
-  border-radius: 12px;
-  color: #f5f5f7;
-  transition-duration: 100ms;
-  spacing: 12px;
-}
-
-/* selection uses a blackish overlay not blue */
-.spotlight-result:hover,
-.spotlight-result:focus,
-.spotlight-result.spotlight-selected {
-  background-color: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
-}
-
-.spotlight-result-icon {
-  padding-right: 2px;
-}
-
-.spotlight-result-content {
-  x_expand: true;
-}
-
-.spotlight-result-title {
-  font-size: 14px;
-  font-weight: 500;
-  color: inherit;
-}
-
-.spotlight-result-description {
-  font-size: 11px;
-  color: #98989d;
-  padding-top: 1px;
-}
-
-.spotlight-result:hover .spotlight-result-description,
-.spotlight-result:focus .spotlight-result-description,
-.spotlight-result.spotlight-selected .spotlight-result-description {
-  color: rgba(255, 255, 255, 0.85);
-}
-
-/* no results empty state */
-.spotlight-no-results {
-  padding: 24px 20px;
-  color: #98989d;
-  font-size: 13px;
-  text-align: center;
-}
-
-.spotlight-no-results-title {
-  font-size: 13px;
-  font-weight: 500;
-  color: #f5f5f7;
-  padding-bottom: 4px;
 }
