@@ -35,7 +35,8 @@ import {PopupPositioner} from './popupPositioner.js';
 // mutations originating from signal handlers accelerator-activated
 // window-created captured-event notify key-focus button-release-event
 // must be deferred through glib idle add so they run after the current
-// dispatch unwinds see search-light issue 166 for the same bug pattern
+// dispatch unwinds this is the same bug pattern reported and fixed in
+// multiple gnome shell extensions on gnome 50
 export const SpotlightPopup = GObject.registerClass(
 class SpotlightPopup extends St.Widget {
     _init(settings) {
@@ -331,7 +332,8 @@ class SpotlightPopup extends St.Widget {
     //
     // hide before detach pattern clutter 18 has stricter unrealize
     // assertions hiding first unmaps the actor so detach is safe
-    // see search-light pr 164 for the same bug pattern
+    // this is the same bug pattern reported and fixed in multiple
+    // gnome shell extensions on gnome 50
     _doClose() {
         this._positioner.stop();
 

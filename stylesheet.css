@@ -21,6 +21,7 @@
   padding: 10px;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
   color: #f5f5f7;
+  max-height: 480px;
 }
 
 /* search entry - make it blend into unified window */
