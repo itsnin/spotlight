@@ -41,6 +41,7 @@ class SpotlightPopup extends St.Widget {
         this._backdrop = null;
         this._positioner = new PopupPositioner(this, this._settings);
         this._visible = false;
+        this._unredirectDisabled = false;
 
         // inner content box what the user actually sees
         this._content = new St.BoxLayout({
@@ -151,9 +152,6 @@ class SpotlightPopup extends St.Widget {
     // called once from extension.disable()
     // returns stolen widgets back to overview restores original methods
     returnOverviewSearch() {
-        // disconnect global stage signals connected with connectObject
-        global.stage.disconnectObject(this);
-
         if (this._entry) {
             this._entry.remove_style_class_name('spotlight-entry-stolen');
             this._entry.visible = true;
@@ -231,7 +229,10 @@ class SpotlightPopup extends St.Widget {
         Main.layoutManager.addChrome(this);
 
         // disable unredirect so blur effect works correctly and performs well
-        global.compositor.disable_unredirect();
+        if (!this._unredirectDisabled) {
+            global.compositor.disable_unredirect();
+            this._unredirectDisabled = true;
+        }
 
         this._positioner.showCentered(() => {
             this._search._text.get_parent().grab_key_focus();
@@ -314,7 +315,10 @@ class SpotlightPopup extends St.Widget {
         }
 
         // re-enable unredirect now that blur effect is hidden
-        global.compositor.enable_unredirect();
+        if (this._unredirectDisabled) {
+            global.compositor.enable_unredirect();
+            this._unredirectDisabled = false;
+        }
 
         this._visible = false;
         this.hide();

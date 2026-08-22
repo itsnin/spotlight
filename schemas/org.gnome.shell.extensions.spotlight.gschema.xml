@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
   <schema id="org.gnome.shell.extensions.spotlight" path="/org/gnome/shell/extensions/spotlight/">
-    <!-- Default is Ctrl+Space (Super+Space has timing issues on some GNOME 50 setups) -->
+    <!-- default is ctrl space super space has timing issues on some gnome 50 setups -->
     <key name="toggle-shortcut" type="as">
       <default>['&lt;Control&gt;space']</default>
       <summary>Toggle shortcut</summary>
