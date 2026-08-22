@@ -8,7 +8,7 @@ import {KeybindingManager} from './keybinding.js';
 export default class SpotlightExtension extends Extension {
     enable() {
         this._settings = this.getSettings();
-        this._popup = new SpotlightPopup(this);
+        this._popup = new SpotlightPopup(this._settings);
         // permanently steal overview search widgets on enable
         // overview search is gone for as long as spotlight is enabled
         this._popup.stealOverviewSearch();

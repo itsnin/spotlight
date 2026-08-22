@@ -46,6 +46,11 @@ export class KeybindingManager {
             this._wmSettings.set_strv('activate-window-menu', []);
             // try grab again now that wm binding is disabled
             action = global.display.grab_accelerator(accelerator, 0);
+            // if second grab also fails restore wm binding before returning
+            if (action === Meta.KeyBindingAction.NONE) {
+                this._wmSettings.set_strv('activate-window-menu', this._savedWindowMenu);
+                this._savedWindowMenu = null;
+            }
         }
 
         if (action === Meta.KeyBindingAction.NONE)

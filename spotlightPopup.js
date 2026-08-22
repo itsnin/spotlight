@@ -10,34 +10,34 @@ import Clutter from 'gi://Clutter';
 import {PopupBackdrop} from './popupBackdrop.js';
 import {PopupPositioner} from './popupPositioner.js';
 
-// popup structure:
-//   outer St.Widget (this)  -> added to chrome handles positioning
-//   inner St.BoxLayout      -> holds entry + gnome search results has blur styling
+// popup structure
+//   outer St.Widget this  -> added to chrome handles positioning
+//   inner St.BoxLayout    -> holds entry plus gnome search results has blur styling
 //
-// spotlight is first-class citizen. on enable() we permanently steal the
-// overview's search entry and controller and hide them. overview search
-// is gone for as long as spotlight is enabled. when the popup opens we
-// reparent the already-stolen widgets into our popup. when it closes we
-// remove them from the popup but keep them stolen and hidden. they are
-// only returned to the overview on disable().
+// spotlight is first-class citizen on enable we permanently steal the
+// overview search entry and controller and hide them overview search
+// is gone for as long as spotlight is enabled when the popup opens we
+// reparent the already-stolen widgets into our popup when it closes we
+// remove them from the popup but keep them stolen and hidden they are
+// only returned to the overview on disable
 //
 // this means users cannot use overview search at all while spotlight is
-// enabled. spotlight replaces it completely. overview itself stays
-// functional only its search ui is permanently hijacked.
+// enabled spotlight replaces it completely overview itself stays
+// functional only its search ui is permanently hijacked
 //
-// blur uses Shell.BlurEffect background mode. css background-color tints
-// the blurred pixels. tint opacity is chosen so the rectangular blur
-// sampling is invisible at the rounded corners.
+// blur uses Shell.BlurEffect background mode css background-color tints
+// the blurred pixels tint opacity is chosen so the rectangular blur
+// sampling is invisible at the rounded corners
 export const SpotlightPopup = GObject.registerClass(
 class SpotlightPopup extends St.Widget {
-    _init(extension) {
+    _init(settings) {
         super._init({
             layout_manager: new Clutter.BinLayout(),
             reactive: true,
             can_focus: true,
             visible: false,
         });
-        this._settings = extension._settings;
+        this._settings = settings;
         this._backdrop = null;
         this._positioner = new PopupPositioner(this);
         this._visible = false;
@@ -109,12 +109,6 @@ class SpotlightPopup extends St.Widget {
                     this._search._text.get_parent().grab_key_focus();
                 else
                     Main.overview._originalToggle();
-            };
-        }
-        if (!Main.overview._originalHide) {
-            Main.overview._originalHide = Main.overview.hide;
-            Main.overview.hide = () => {
-                Main.overview._originalHide();
             };
         }
 
@@ -192,10 +186,6 @@ class SpotlightPopup extends St.Widget {
         if (Main.overview._originalToggle) {
             Main.overview.toggle = Main.overview._originalToggle;
             Main.overview._originalToggle = null;
-        }
-        if (Main.overview._originalHide) {
-            Main.overview.hide = Main.overview._originalHide;
-            Main.overview._originalHide = null;
         }
     }
 
