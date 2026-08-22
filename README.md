@@ -27,7 +27,7 @@ Spotlight uses GNOME's registered search providers. Results and their order are 
 - **Files** — Indexed via Tracker, GNOME's file metadata system.
 - **System Actions** — Lock, suspend, restart, shut down, log out.
 - **GNOME Settings** — Direct navigation to any Settings panel.
-- **Web Search** — Falls back to your configured search engine.
+- **Web Search** — Provided by your browser (Firefox, Epiphany) or search provider extensions when installed.
 
 ## Usage
 
@@ -66,8 +66,8 @@ Configurable options:
 - The toggle keyboard shortcut
 - Popup width (400–1200 px, default 520)
 - Maximum results per category
-- Web search engine (Google, DuckDuckGo, Brave, Bing, Startpage)
-- Whether to display the web search fallback
+
+Web search is provided by GNOME's registered search providers. Install Firefox, Epiphany, or a search provider extension to enable web search results.
 
 ## Architecture
 
@@ -85,7 +85,6 @@ This approach means Spotlight automatically benefits from every search provider 
 | `keybinding.js` | Keybinding manager using `Meta.Display.grab_accelerator` |
 | `prefs/shortcutPage.js` | Keyboard shortcut configuration |
 | `prefs/appearancePage.js` | Popup width and result limit controls |
-| `prefs/webSearchPage.js` | Search engine selection |
 | `prefs/aboutPage.js` | About section |
 
 ## Design Principles

@@ -89,7 +89,6 @@ spotlight@nin/
     prefs/                    preference pages
         shortcutPage.js
         appearancePage.js
-        webSearchPage.js
         aboutPage.js
 ```
 
@@ -211,8 +210,6 @@ see the `keybinding.js` file for the implementation
 the schema id is `org.gnome.shell.extensions.spotlight` and the path is `/org/gnome/shell/extensions/spotlight/` both follow the gnome shell extension convention
 
 the schema file is `schemas/org.gnome.shell.extensions.spotlight.gschema.xml` the filename must match the schema id pattern
-
-the `web-search-engine` key uses `<choices>` not `<enum>` because the code reads and writes it as a string with `get_string()` and `set_string()` using an enum would require `get_enum()` and `set_enum()` instead
 
 the `gschemas.compiled` binary is not shipped in the zip gnome shell 44 and later compiles schemas automatically on install shipping the compiled binary is unnecessary
 

@@ -61,7 +61,6 @@ Each preference page resides in its own file under `prefs/`, since these run exc
 
 - **`prefs/shortcutPage.js`** — Keyboard shortcut capture and configuration.
 - **`prefs/appearancePage.js`** — Popup width and maximum result count.
-- **`prefs/webSearchPage.js`** — Search engine selection and web search toggle.
 - **`prefs/aboutPage.js`** — About section.
 
 ## Search Providers

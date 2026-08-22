@@ -7,38 +7,17 @@
       <summary>Toggle shortcut</summary>
       <description>Keyboard shortcut to open Spotlight. Default is Ctrl+Space.</description>
     </key>
-
     <key name="popup-width" type="i">
       <default>520</default>
       <range min="400" max="1200"/>
       <summary>Popup width</summary>
       <description>Width of the Spotlight popup in pixels.</description>
     </key>
-
     <key name="max-results" type="i">
       <default>5</default>
       <range min="1" max="20"/>
       <summary>Maximum results per category</summary>
       <description>Maximum results displayed per category.</description>
-    </key>
-
-    <key name="web-search-engine" type="s">
-      <choices>
-        <choice value="google"/>
-        <choice value="duckduckgo"/>
-        <choice value="brave"/>
-        <choice value="bing"/>
-        <choice value="startpage"/>
-      </choices>
-      <default>'google'</default>
-      <summary>Web search engine</summary>
-      <description>Search engine used for the web search fallback.</description>
-    </key>
-
-    <key name="show-web-search" type="b">
-      <default>true</default>
-      <summary>Show web search fallback</summary>
-      <description>If true, a web search result is shown when no apps or settings match.</description>
     </key>
   </schema>
 </schemalist>

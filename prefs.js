@@ -6,7 +6,6 @@ import Adw from 'gi://Adw';
 
 import {buildShortcutPage} from './prefs/shortcutPage.js';
 import {buildAppearancePage} from './prefs/appearancePage.js';
-import {buildWebSearchPage} from './prefs/webSearchPage.js';
 import {buildAboutPage} from './prefs/aboutPage.js';
 
 export default class SpotlightPreferences extends ExtensionPreferences {
@@ -20,7 +19,6 @@ export default class SpotlightPreferences extends ExtensionPreferences {
 
         page.add(buildShortcutPage(settings));
         page.add(buildAppearancePage(settings));
-        page.add(buildWebSearchPage(settings));
         page.add(buildAboutPage());
 
         window.add(page);
