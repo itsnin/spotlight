@@ -2,19 +2,19 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import GLib from 'gi://GLib';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
-// sizing and centering happens once per open(), based on the empty-state
-// height (just the search entry, before any results render) - the popup
-// then grows downward as results appear without recentering, since
+// sizing and centering happens once per open based on the empty-state
+// height just the search entry before any results render the popup
+// then grows downward as results appear without recentering since
 // recentering on every size change makes the popup visibly drift upward
-// as it grows (see AGENTS.md popup positioning section for the full
-// reasoning)
+// as it grows see AGENTS.md popup positioning section for the full
+// reasoning
 //
 // width is capped relative to the monitor width so the popup never
-// overflows on small monitors. all sizes are in logical pixels and gnome
-// handles hidpi scaling automatically - we never scale ourselves.
+// overflows on small monitors all sizes are in logical pixels and gnome
+// handles hidpi scaling automatically we never scale ourselves
 //
-// showing the popup needs a layout pass to have already happened, or
-// get_preferred_height returns a stale value before css is applied - that's
+// showing the popup needs a layout pass to have already happened or
+// get_preferred_height returns a stale value before css is applied that is
 // why this is deferred through an idle source rather than done inline
 export class PopupPositioner {
     constructor(popup, settings) {
@@ -22,14 +22,14 @@ export class PopupPositioner {
         this._settings = settings;
         this._idleId = 0;
     }
-    // queues the popup to be sized, centered, and shown - calls onShown once
-    // that's done, so the caller can grab focus and start key capture only
+    // queues the popup to be sized centered and shown calls onShown once
+    // that is done so the caller can grab focus and start key capture only
     // once the popup is actually visible on screen
     showCentered(onShown) {
         const monitor = Main.layoutManager.primaryMonitor;
         const configuredWidth = this._settings.get_int('popup-width');
         // cap width at 85% of monitor width so it never overflows
-        // sizes are logical pixels - gnome handles hidpi scaling
+        // sizes are logical pixels gnome handles hidpi scaling
         const popupWidth = Math.min(configuredWidth, Math.floor(monitor.width * 0.85));
         this._popup.set_width(popupWidth);
         this._popup.queue_relayout();

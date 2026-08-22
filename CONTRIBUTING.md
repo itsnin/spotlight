@@ -36,45 +36,24 @@ On Wayland, restarting GNOME Shell requires logging out and logging back in.
 
 ## Project Structure
 
-The codebase consists of 22 JavaScript files: 18 at the root level for the shell process and 4 inside `prefs/` for the preferences process. `extension.js` must reside at the root of the archive for the GNOME Extensions website to locate it. The preferences files are isolated under `prefs/` because they execute in a separate GTK4 process and must not import shell-only libraries (`St`, `Clutter`, `Meta`, `Shell`), just as shell-side files must not import GTK-only libraries (`Gtk`, `Gdk`, `Adw`).
+Spotlight permanently takes over GNOME Overview's search infrastructure. On enable, it steals the Overview's search entry and search controller widgets and hides them. When the popup opens, these already-stolen widgets are reparented into the popup. When the popup closes, they are removed from the popup but kept stolen and hidden. They are only returned to the Overview on disable.
+
+The codebase consists of 7 JavaScript files at the root level for the shell process and 4 inside `prefs/` for the preferences process. `extension.js` must reside at the root of the archive for the GNOME Extensions website to locate it. The preferences files are isolated under `prefs/` because they execute in a separate GTK4 process and must not import shell-only libraries (`St`, `Clutter`, `Meta`, `Shell`), just as shell-side files must not import GTK-only libraries (`Gtk`, `Gdk`, `Adw`).
 
 ### Entry Points
 
-- **`extension.js`** — Main entry point. Constructs the popup widget and registers the keybinding manager.
+- **`extension.js`** — Main entry point. Constructs the popup widget, permanently steals Overview search, and registers the keybinding manager.
 - **`prefs.js`** — Preferences window entry point. Imports the individual preference pages.
 
 ### UI Components
 
-These files construct the visual elements of the popup:
-
-- **`spotlightPopup.js`** — The popup widget. Handles open/close lifecycle, search rendering, keyboard navigation, and click-outside dismissal.
-- **`searchEntry.js`** — Search input box with magnifying-glass icon.
-- **`resultsContainer.js`** — Scrollable results container.
-- **`resultRow.js`** — Constructs a single result row with icon, title, and interaction handlers.
-- **`sectionHeader.js`** — Section header label for categorizing results.
-- **`sectionTitles.js`** — Maps result type strings to human-readable section titles.
-- **`noResults.js`** — Empty-state widget displayed when a search yields no matches.
-
-### Search Providers
-
-Each search type lives in its own file and exports a function that accepts a query string and returns an array of result objects. Every result object must contain `type`, `title`, `icon`, and `activate` properties.
-
-- **`appSearch.js`** — GNOME-style application search via `Shell.AppSystem`.
-- **`calculatorSearch.js`** — Arithmetic evaluation and clipboard copy.
-- **`systemActionsSearch.js`** — System actions (lock, suspend, restart, etc.) via `Shell.SystemActions` singleton.
-- **`settingsSearch.js`** — GNOME Settings panel navigation.
-- **`webSearch.js`** — Web search fallback.
+- **`spotlightPopup.js`** — The popup widget. Handles stealing and returning Overview search widgets, open/close lifecycle, keyboard capture, and click-outside dismissal.
+- **`popupBackdrop.js`** — Transparent full-screen widget added to the chrome layer behind the popup. Detects clicks outside the popup bounds.
+- **`popupPositioner.js`** — Sizes, centers, and shows the popup via a deferred idle callback to ensure layout has completed.
 
 ### Services
 
-- **`searchController.js`** — Orchestrates all search providers and combines their results in priority order.
 - **`keybinding.js`** — Keybinding manager using `Meta.Display.grab_accelerator`.
-
-### Utilities
-
-Pure functions with no side effects:
-
-- **`calculator.js`** — Recursive-descent arithmetic parser.
 
 ### Preference Pages
 
@@ -85,6 +64,19 @@ Each preference page resides in its own file under `prefs/`, since these run exc
 - **`prefs/webSearchPage.js`** — Search engine selection and web search toggle.
 - **`prefs/aboutPage.js`** — About section.
 
+## Search Providers
+
+Spotlight does not implement custom search providers. It reuses GNOME Overview's entire search infrastructure by stealing its widgets. This automatically gives every search provider registered with GNOME Shell:
+
+- Calculator via gnome-calculator search provider
+- Applications via Shell.AppSystem
+- Files via Tracker
+- Settings via gnome-control-center search provider
+- System actions via GNOME Shell built-in provider
+- Any third-party search providers the user has installed
+
+Search priority and behavior are entirely controlled by GNOME Shell, not by Spotlight.
+
 ## Code Style
 
 ### Comments
@@ -92,7 +84,7 @@ Each preference page resides in its own file under `prefs/`, since these run exc
 - All comments must be **lowercase** with **no punctuation**, unless a capital letter or punctuation mark is required to preserve meaning. For example, `curl -fsSL` must retain the capital `S` and `L` because they are case-sensitive command-line flags.
 - Explain **why**, not **what**. The code itself already describes what it does; comments should illuminate the reasoning behind non-obvious decisions.
 - No block-comment boxes, no JSDoc annotations, no `/* */` banners. Use plain `//` comments exclusively.
-- No references to other projects or extensions within comments.
+- No references to other projects or extensions within comments by name.
 - No LLM-generated phrasing such as "here we", "let's", "we need to", "note that", "important:", "TODO", or "FIXME".
 - For obscure or uncommon code, provide both **what** and **why**. For conventional code, provide only **why**.
 - Wherever possible, include verified working links to the official GNOME Shell extension documentation at `https://gjs.guide`.
@@ -139,30 +131,19 @@ GNOME Shell extensions must not create any objects, connect any signals, add any
 
 The only exception is static data structures — arrays, plain objects, `Map`, `Set`, and `RegExp` instances. All dynamically allocated memory must be released in `disable()`.
 
+See https://gjs.guide/extensions/review-guidelines/review-guidelines.html#only-use-initialization-for-static-resources
+
 ### Signal Management
 
 All signal connections on GObjects use `connectObject()` and `disconnectObject()` — the convenience API introduced in GNOME Shell 42 that auto-disconnects every signal registered with a given owner object. In `disable()` or `destroy()`, call `disconnectObject(this)` to release every signal connected with `this` as the owner.
 
-The only exceptions use plain `connect()` because the source is not a GObject that supports `connectObject()`:
-
-- `global.display.connect('accelerator-activated')` in `keybinding.js` — disconnected manually in `disable()`.
-- `global.stage.connect('captured-event')` in `spotlightPopup.js` — for click-outside dismissal, disconnected manually in `close()`.
+See https://gjs.guide/extensions/upgrading/gnome-shell-42.html
 
 ### Object Lifecycle
 
 Every object created in `enable()` must be destroyed in `disable()`. Every widget added to the chrome layer must be removed. Every main-loop source must be removed. Every signal must be disconnected.
 
-The popup widget overrides `destroy()` to call `close()` first — which pops the modal grab, removes idle sources, and disconnects the captured-event handler — then removes itself from the chrome layer and chains up to the parent destroy.
-
-## Adding a New Search Provider
-
-1. Create a new file at the root level, for example `mySearch.js`.
-2. Export a function that accepts a query string and returns an array of result objects.
-3. Each result object must contain `type`, `title`, `icon`, and `activate` properties.
-4. Import the new provider in `searchController.js`.
-5. Add it to the `runSearch()` function in the correct priority order.
-6. Add the type string to `sectionTitles.js` if a custom section header is desired.
-7. Never create module-scope instances — use lazy calls inside callbacks.
+The popup widget overrides `destroy()` to call `close()` first — which removes the backdrop and idle sources — then removes itself from the chrome layer and chains up to the parent destroy. Stolen Overview search widgets are returned to the Overview in `returnOverviewSearch()` called from `disable()`.
 
 ## Adding a New UI Component
 

@@ -10,27 +10,24 @@ import Clutter from 'gi://Clutter';
 import {PopupBackdrop} from './popupBackdrop.js';
 import {PopupPositioner} from './popupPositioner.js';
 
-// popup structure matches search-light exactly:
-//   outer St.Widget (this)  -> added to chrome, handles positioning
-//   inner St.BoxLayout      -> holds entry + gnome search results, has blur/styling
+// popup structure:
+//   outer St.Widget (this)  -> added to chrome handles positioning
+//   inner St.BoxLayout      -> holds entry + gnome search results has blur styling
 //
-// reuses gnome overview's entire search infrastructure. steals
-// Main.overview.searchEntry and Main.overview.searchController, reparents
-// them into our popup, and restores them on close. this automatically
-// gives every search provider registered with gnome: calculator, apps,
-// files, settings, system actions, and any third-party providers.
+// spotlight is first-class citizen. on enable() we permanently steal the
+// overview's search entry and controller and hide them. overview search
+// is gone for as long as spotlight is enabled. when the popup opens we
+// reparent the already-stolen widgets into our popup. when it closes we
+// remove them from the popup but keep them stolen and hidden. they are
+// only returned to the overview on disable().
 //
-// important guards copied from search-light:
-//   _inOverview flag - prevents opening while overview is already visible
-//   window-created / app-state-changed - hide popup when apps launch
-//   disable_unredirect / enable_unredirect - performance for blur effect
-//   connectObject for all global signals - automatic cleanup on destroy
-//   popup-menu focus handling - don't close when menus open from results
+// this means users cannot use overview search at all while spotlight is
+// enabled. spotlight replaces it completely. overview itself stays
+// functional only its search ui is permanently hijacked.
 //
-// blur uses Shell.BlurEffect (not search-light's imagemagick approach).
-// background mode blurs pixels beneath the content box, css background-color
-// tints it. tint is made opaque enough that rectangular blur sampling is
-// invisible at the extreme rounded corners.
+// blur uses Shell.BlurEffect background mode. css background-color tints
+// the blurred pixels. tint opacity is chosen so the rectangular blur
+// sampling is invisible at the rounded corners.
 export const SpotlightPopup = GObject.registerClass(
 class SpotlightPopup extends St.Widget {
     _init(extension) {
@@ -43,10 +40,9 @@ class SpotlightPopup extends St.Widget {
         this._settings = extension._settings;
         this._backdrop = null;
         this._positioner = new PopupPositioner(this, this._settings);
-        this._inOverview = false;
         this._visible = false;
 
-        // inner content box - what the user actually sees
+        // inner content box what the user actually sees
         this._content = new St.BoxLayout({
             style_class: 'spotlight-container',
             vertical: true,
@@ -57,7 +53,7 @@ class SpotlightPopup extends St.Widget {
             mode: Shell.BlurMode.BACKGROUND,
             brightness: 0.9,
         });
-        // shell version detection - both paths equal, neither is fallback
+        // shell version detection both paths equal neither is fallback
         const shellVersion = parseInt(Config.PACKAGE_VERSION);
         if (shellVersion >= 46)
             this._blurEffect.radius = 24;
@@ -67,7 +63,8 @@ class SpotlightPopup extends St.Widget {
 
         this.add_child(this._content);
 
-        // saved references for restoring overview widgets on close
+        // stolen overview widgets taken once in stealOverviewSearch
+        // kept until returnOverviewSearch called from disable()
         this._entry = null;
         this._entryParent = null;
         this._search = null;
@@ -76,14 +73,7 @@ class SpotlightPopup extends St.Widget {
         this._textChangedEventId = 0;
         this._originalActivateDefault = null;
 
-        // track overview state so we don't steal widgets while it's visible
-        Main.overview.connectObject(
-            'overview-showing', () => { this._inOverview = true; },
-            'overview-hidden', () => { this._inOverview = false; },
-            this,
-        );
-
-        // hide popup when new windows are created (app launched from result)
+        // hide popup when new windows appear app launched from result
         global.display.connectObject(
             'window-created', () => {
                 if (this._visible)
@@ -102,20 +92,22 @@ class SpotlightPopup extends St.Widget {
         );
     }
 
-    // acquires gnome overview's search entry and controller
-    // reparents them into our popup so we reuse the entire search system
-    _acquireUi() {
+    // called once from extension.enable()
+    // permanently steals overview's search widgets and hides them
+    // overview search is gone for as long as spotlight is enabled
+    stealOverviewSearch() {
         if (this._entry)
             return;
 
-        // override overview methods so it doesn't try to show itself while
-        // we're using its search widgets. originals saved on overview object
-        // exactly like search-light does, restored in _releaseUi.
+        // override overview methods so it doesn't try to use stolen widgets
         if (!Main.overview._originalToggle) {
             Main.overview._originalToggle = Main.overview.toggle;
             Main.overview.toggle = () => {
+                // if our popup is visible focus it instead
                 if (this._search && this._search.visible)
                     this._search._text.get_parent().grab_key_focus();
+                else
+                    Main.overview._originalToggle();
             };
         }
         if (!Main.overview._originalHide) {
@@ -125,27 +117,103 @@ class SpotlightPopup extends St.Widget {
             };
         }
 
-        // steal the overview's search entry
+        // steal overview's search entry
         this._entry = Main.overview.searchEntry;
         this._entryParent = this._entry.get_parent();
         this._entry.add_style_class_name('spotlight-entry-stolen');
+        if (this._entry.get_parent())
+            this._entry.get_parent().remove_child(this._entry);
+        // hide it overview will show empty space where search used to be
+        this._entry.visible = false;
 
-        // steal the overview's search controller (contains results display)
+        // steal overview's search controller
         this._search = Main.overview.searchController;
-        this._search.hide();
         this._searchResults = this._search._searchResults;
         this._searchParent = this._search.get_parent();
+        if (this._search.get_parent())
+            this._search.get_parent().remove_child(this._search);
+        this._search.hide();
 
-        // override activateDefault to close our popup when result is activated
+        // override activateDefault to close our popup when activated
         this._originalActivateDefault = this._searchResults.activateDefault;
         this._searchResults.activateDefault = () => {
             this.close();
             this._originalActivateDefault.call(this._searchResults);
         };
 
+        // prevent search controller from cancelling itself
+        if (!this._search._originalSearchCancelled) {
+            this._search._originalSearchCancelled = this._search._searchCancelled;
+            this._search._searchCancelled = () => {};
+        }
+    }
+
+    // called once from extension.disable()
+    // returns stolen widgets back to overview restores original methods
+    returnOverviewSearch() {
+        // disconnect global stage signals connected with connectObject
+        global.stage.disconnectObject(this);
+
+        if (this._entry) {
+            this._entry.remove_style_class_name('spotlight-entry-stolen');
+            this._entry.visible = true;
+            if (this._entry.get_parent())
+                this._entry.get_parent().remove_child(this._entry);
+            this._entryParent.add_child(this._entry);
+            this._entry = null;
+            this._entryParent = null;
+        }
+
+        if (this._search) {
+            if (this._textChangedEventId) {
+                this._search._text.disconnect(this._textChangedEventId);
+                this._textChangedEventId = 0;
+            }
+
+            // restore original search cancelled method
+            if (this._search._originalSearchCancelled) {
+                this._search._searchCancelled = this._search._originalSearchCancelled;
+                this._search._originalSearchCancelled = null;
+            }
+
+            // restore original activateDefault
+            if (this._originalActivateDefault) {
+                this._searchResults.activateDefault = this._originalActivateDefault;
+                this._originalActivateDefault = null;
+            }
+
+            if (this._search.get_parent())
+                this._search.get_parent().remove_child(this._search);
+            this._searchParent.add_child(this._search);
+            this._search = null;
+            this._searchParent = null;
+            this._searchResults = null;
+        }
+
+        // restore overview methods
+        if (Main.overview._originalToggle) {
+            Main.overview.toggle = Main.overview._originalToggle;
+            Main.overview._originalToggle = null;
+        }
+        if (Main.overview._originalHide) {
+            Main.overview.hide = Main.overview._originalHide;
+            Main.overview._originalHide = null;
+        }
+    }
+
+    // reparents already-stolen widgets into our popup and shows it
+    open() {
+        if (this._visible)
+            return;
+
+        // widgets should already be stolen by stealOverviewSearch in enable
+        if (!this._entry || !this._search)
+            return;
+
         // reparent entry into our container
         if (this._entry.get_parent())
             this._entry.get_parent().remove_child(this._entry);
+        this._entry.visible = true;
         this._content.add_child(this._entry);
 
         // reparent search results into our container
@@ -153,22 +221,37 @@ class SpotlightPopup extends St.Widget {
             this._search.get_parent().remove_child(this._search);
         this._content.add_child(this._search);
 
-        // prevent search controller from cancelling itself
-        if (!this._search._originalSearchCancelled) {
-            this._search._originalSearchCancelled = this._search._searchCancelled;
-            this._search._searchCancelled = () => {};
+        // backdrop first then popup later addition to chrome means higher
+        // in stacking order so popup sits above the backdrop naturally
+        this._backdrop = new PopupBackdrop(() => this.close());
+        this._backdrop.show();
+
+        if (this.get_parent())
+            Main.layoutManager.removeChrome(this);
+        Main.layoutManager.addChrome(this);
+
+        // disable unredirect so blur effect works correctly and performs well
+        global.compositor.disable_unredirect();
+
+        this._positioner.showCentered(() => {
+            this._search._text.get_parent().grab_key_focus();
+        });
+
+        // clear any previous search text
+        this._search._text.set_text('');
+        this._search.show();
+
+        // update size when text changes results appear or disappear
+        if (!this._textChangedEventId) {
+            this._textChangedEventId = this._search._text.connect(
+                'text-changed',
+                () => {
+                    this._search.show();
+                },
+            );
         }
 
-        // update size when text changes (results appear/disappear)
-        this._textChangedEventId = this._search._text.connect(
-            'text-changed',
-            () => {
-                this._search.show();
-            },
-        );
-
-        // capture esc key to close the popup - uses connectObject so it's
-        // automatically disconnected when this object is destroyed
+        // capture esc key to close the popup
         global.stage.connectObject(
             'captured-event', (actor, event) => {
                 if (event.type() === Clutter.EventType.KEY_PRESS &&
@@ -181,8 +264,8 @@ class SpotlightPopup extends St.Widget {
             this,
         );
 
-        // also close on key-focus loss (unless focus went to a popup-menu
-        // which some results might open - those should not dismiss us)
+        // close on key-focus loss unless focus went to a popup-menu
+        // some results open menus and those should not dismiss us
         global.stage.connectObject(
             'notify::key-focus', () => {
                 if (!this._entry || !this._visible)
@@ -202,99 +285,11 @@ class SpotlightPopup extends St.Widget {
             this,
         );
 
-        this._search._text.get_parent().grab_key_focus();
-    }
-
-    // restores overview's widgets and methods back to their original state
-    _releaseUi() {
-        if (this._entry) {
-            if (this._entry.get_parent())
-                this._entry.get_parent().remove_child(this._entry);
-            this._entryParent.add_child(this._entry);
-            this._entry.remove_style_class_name('spotlight-entry-stolen');
-            this._entry = null;
-            this._entryParent = null;
-        }
-
-        if (this._search) {
-            this._search.hide();
-            if (this._search.get_parent())
-                this._search.get_parent().remove_child(this._search);
-            this._searchParent.add_child(this._search);
-
-            if (this._textChangedEventId) {
-                this._search._text.disconnect(this._textChangedEventId);
-                this._textChangedEventId = 0;
-            }
-
-            // restore original search cancelled method
-            if (this._search._originalSearchCancelled) {
-                this._search._searchCancelled = this._search._originalSearchCancelled;
-                this._search._originalSearchCancelled = null;
-            }
-
-            // restore original activateDefault
-            if (this._originalActivateDefault) {
-                this._searchResults.activateDefault = this._originalActivateDefault;
-                this._originalActivateDefault = null;
-            }
-
-            this._search = null;
-            this._searchParent = null;
-            this._searchResults = null;
-        }
-
-        // disconnect global stage signals connected with connectObject
-        global.stage.disconnectObject(this);
-
-        // restore overview methods
-        if (Main.overview._originalToggle) {
-            Main.overview.toggle = Main.overview._originalToggle;
-            Main.overview._originalToggle = null;
-        }
-        if (Main.overview._originalHide) {
-            Main.overview.hide = Main.overview._originalHide;
-            Main.overview._originalHide = null;
-        }
-    }
-
-    open() {
-        if (this._visible)
-            return;
-
-        // never open when the overview is already visible - its search
-        // widgets are in use and we would conflict with them
-        if (this._inOverview)
-            return;
-
-        this._acquireUi();
-
-        // backdrop first, then popup - later addition to chrome means higher
-        // in stacking order, so popup sits above the backdrop naturally
-        this._backdrop = new PopupBackdrop(() => this.close());
-        this._backdrop.show();
-
-        if (this.get_parent())
-            Main.layoutManager.removeChrome(this);
-        Main.layoutManager.addChrome(this);
-
-        // disable unredirect so blur effect works correctly and performs well
-        global.compositor.disable_unredirect();
-
-        this._positioner.showCentered(() => {
-            if (this._search)
-                this._search._text.get_parent().grab_key_focus();
-        });
-
-        // clear any previous search text
-        if (this._search) {
-            this._search._text.set_text('');
-            this._search.show();
-        }
-
         this._visible = true;
     }
 
+    // removes widgets from our popup but keeps them stolen and hidden
+    // does NOT return them to overview that only happens in disable()
     close() {
         this._positioner.stop();
 
@@ -303,21 +298,35 @@ class SpotlightPopup extends St.Widget {
             this._backdrop = null;
         }
 
-        this._releaseUi();
+        // disconnect stage signals they get reconnected on next open
+        global.stage.disconnectObject(this);
+
+        // remove entry from our container hide it keep it stolen
+        if (this._entry && this._entry.get_parent()) {
+            this._entry.get_parent().remove_child(this._entry);
+            this._entry.visible = false;
+        }
+
+        // remove search from our container hide it keep it stolen
+        if (this._search && this._search.get_parent()) {
+            this._search.get_parent().remove_child(this._search);
+            this._search.hide();
+        }
 
         // re-enable unredirect now that blur effect is hidden
         global.compositor.enable_unredirect();
 
         this._visible = false;
         this.hide();
+
+        if (this.get_parent())
+            Main.layoutManager.removeChrome(this);
     }
 
     destroy() {
         this.close();
-        Main.layoutManager.removeChrome(this);
 
         // disconnect all remaining signals connected with connectObject
-        Main.overview.disconnectObject(this);
         global.display.disconnectObject(this);
         Shell.AppSystem.get_default().disconnectObject(this);
         global.stage.disconnectObject(this);

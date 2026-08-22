@@ -6,12 +6,12 @@ import Clutter from 'gi://Clutter';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 // a transparent full-screen reactive actor that sits behind the popup in
-// the chrome layer - any click on it closes the popup, which is how we
+// the chrome layer any click on it closes the popup which is how we
 // detect click-outside without a modal grab swallowing pointer events
 // before they reach the stage
 //
-// owns its own add/remove-from-chrome so spotlightPopup.js just calls
-// show()/destroy(), it never has to know how the backdrop gets on screen
+// owns its own add and remove from chrome so spotlightPopup.js just calls
+// show and destroy it never has to know how the backdrop gets on screen
 export class PopupBackdrop {
     constructor(onClickOutside) {
         this._actor = new St.Widget({
