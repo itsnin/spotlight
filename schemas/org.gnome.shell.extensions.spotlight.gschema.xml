@@ -7,17 +7,5 @@
       <summary>Toggle shortcut</summary>
       <description>Keyboard shortcut to open Spotlight. Default is Ctrl+Space.</description>
     </key>
-    <key name="popup-width" type="i">
-      <default>520</default>
-      <range min="400" max="1200"/>
-      <summary>Popup width</summary>
-      <description>Width of the Spotlight popup in pixels.</description>
-    </key>
-    <key name="max-results" type="i">
-      <default>5</default>
-      <range min="1" max="20"/>
-      <summary>Maximum results per category</summary>
-      <description>Maximum results displayed per category.</description>
-    </key>
   </schema>
 </schemalist>

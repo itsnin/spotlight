@@ -39,7 +39,7 @@ class SpotlightPopup extends St.Widget {
         });
         this._settings = extension._settings;
         this._backdrop = null;
-        this._positioner = new PopupPositioner(this, this._settings);
+        this._positioner = new PopupPositioner(this);
         this._visible = false;
         this._unredirectDisabled = false;
 
@@ -47,7 +47,7 @@ class SpotlightPopup extends St.Widget {
         this._content = new St.BoxLayout({
             style_class: 'spotlight-container',
             vertical: true,
-            width: this._settings.get_int('popup-width'),
+            width: 520,
         });
 
         this._blurEffect = new Shell.BlurEffect({

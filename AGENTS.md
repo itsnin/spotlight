@@ -88,7 +88,6 @@ spotlight@nin/
         org.gnome.shell.extensions.spotlight.gschema.xml
     prefs/                    preference pages
         shortcutPage.js
-        appearancePage.js
         aboutPage.js
 ```
 

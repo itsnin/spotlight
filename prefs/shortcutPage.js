@@ -52,9 +52,11 @@ export function buildShortcutPage(settings) {
             accelerator += '<Control>';
         if (state & Gdk.ModifierType.SHIFT_MASK)
             accelerator += '<Shift>';
+        if (state & Gdk.ModifierType.MOD1_MASK)
+            accelerator += '<Alt>';
         if (state & Gdk.ModifierType.META_MASK)
             accelerator += '<Meta>';
-        accelerator += Gdk.keyval_name(keyval);
+        accelerator += Gdk.keyval_name(keyval).toLowerCase();
 
         settings.set_strv('toggle-shortcut', [accelerator]);
         shortcutLabel.label = formatShortcut([accelerator]);

@@ -63,9 +63,7 @@ gnome-extensions prefs spotlight@nin
 ```
 
 Configurable options:
-- The toggle keyboard shortcut
-- Popup width (400–1200 px, default 520)
-- Maximum results per category
+- The toggle keyboard shortcut (default `Ctrl+Space`, also supports `Alt+Space` PowerToys style)
 
 Web search is provided by GNOME's registered search providers. Install Firefox, Epiphany, or a search provider extension to enable web search results.
 
@@ -84,7 +82,6 @@ This approach means Spotlight automatically benefits from every search provider 
 | `popupPositioner.js` | Sizes, centers, and shows the popup via deferred idle callback |
 | `keybinding.js` | Keybinding manager using `Meta.Display.grab_accelerator` |
 | `prefs/shortcutPage.js` | Keyboard shortcut configuration |
-| `prefs/appearancePage.js` | Popup width and result limit controls |
 | `prefs/aboutPage.js` | About section |
 
 ## Design Principles
