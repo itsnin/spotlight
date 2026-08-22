@@ -63,7 +63,9 @@ gnome-extensions prefs spotlight@nin
 ```
 
 Configurable options:
-- The toggle keyboard shortcut (default `Ctrl+Space`, also supports `Alt+Space` PowerToys style)
+- The toggle keyboard shortcut (default `Ctrl+Space`, also supports `Alt+Space` PowerToys Run style)
+
+**About Alt+Space:** GNOME Shell uses Alt+Space for the window menu by default. When you set Alt+Space as your Spotlight shortcut, the extension temporarily disables the window menu keybinding so Spotlight can receive the key. The original window menu keybinding is automatically restored when you change the shortcut or disable the extension. This matches how PowerToys Run works on Windows.
 
 Web search is provided by GNOME's registered search providers. Install Firefox, Epiphany, or a search provider extension to enable web search results.
 
@@ -87,7 +89,7 @@ This approach means Spotlight automatically benefits from every search provider 
 ## Design Principles
 
 - **Dark, not black.** Background `#1c1c1e` with text `#f5f5f7`. Pure black is harsh on OLED and inaccurate on IPS panels.
-- **Compact.** 520 px wide by default, centered on the primary monitor. Results cap at 360 px height before scrolling engages.
+- **Compact.** 520 px wide, centered on the primary monitor. Minimum supported resolution is 1366×768. On small screens with many search results, some elements may be cropped at the bottom — this is expected behavior. Results cap at 360 px height before scrolling engages.
 - **Extreme rounded corners.** 36 px border radius on the popup.
 - **Frosted glass.** `Shell.BlurEffect` in background mode with a translucent tint layer.
 - **Fixed anchor.** The popup is positioned once at open time and grows downward from that anchor. It never drifts upward when results appear.

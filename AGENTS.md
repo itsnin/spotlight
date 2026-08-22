@@ -22,7 +22,7 @@ the background is `#1c1c1e` not pure black pure black looks harsh on oled and wr
 
 ### compact not full screen
 
-the popup is 520px wide by default centered on the primary monitor it grows downward as results appear but never exceeds 360px in results height after which it scrolls this keeps it unobtrusive
+the popup is 520px wide centered on the primary monitor it grows downward as results appear but never exceeds 360px in results height after which it scrolls this keeps it unobtrusive minimum supported resolution is 1366x768 on small screens with many search results some elements may be cropped at the bottom this is expected behavior
 
 ### frosted glass no animations
 
