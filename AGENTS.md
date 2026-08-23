@@ -22,7 +22,7 @@ the background is `#1c1c1e` not pure black pure black looks harsh on oled and wr
 
 ### compact not full screen
 
-the popup is 520px wide centered on the primary monitor it grows downward as results appear but never exceeds 480px total height results scroll internally via gnome built in StScrollView this keeps it unobtrusive minimum supported resolution is 1366x768 on small screens with many search results some elements may be cropped at the bottom this is expected behavior
+the popup is 520px wide centered on the primary monitor it grows downward as results appear but never exceeds 380px total height fits minimum supported resolution 1366x768 with 37px bottom margin zero cropping results scroll internally via gnome built in StScrollView this keeps it unobtrusive across all supported resolutions
 
 ### frosted glass no animations
 

@@ -26,8 +26,11 @@ import {PopupPositioner} from './popupPositioner.js';
 // functional only its search ui is permanently hijacked
 //
 // blur uses Shell.BlurEffect background mode css background-color tints
-// the blurred pixels tint opacity is chosen so the rectangular blur
-// sampling is invisible at the rounded corners
+// the blurred pixels shell blur effect samples a sharp rectangle css
+// border radius only rounds the tint layer on top the 0 92 opacity tint
+// masks 92 percent of the rectangular bleed artifact at the 36px corners
+// perfect clipping requires gnome-rounded-blur system library which we
+// do not require this is the pragmatic no dependency solution
 //
 // gnome 50 clutter 18 critical note changing the actor tree show hide
 // reparent addchrome removechrome synchronously while a signal is being

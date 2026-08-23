@@ -89,7 +89,7 @@ This approach means Spotlight automatically benefits from every search provider 
 ## Design Principles
 
 - **Dark, not black.** Background `#1c1c1e` with text `#f5f5f7`. Pure black is harsh on OLED and inaccurate on IPS panels.
-- **Compact.** 520 px wide, 480 px max height, centered on the primary monitor. Search results scroll internally when they exceed available space. Minimum supported resolution is 1366×768. On small screens with many search results, some elements may be cropped at the bottom — this is expected behavior.
+- **Compact.** 520 px wide, 380 px max height, centered on the primary monitor. Search results scroll internally via GNOME built-in St.ScrollView when they exceed available space. Minimum supported resolution is 1366×768 fits perfectly with 37 px bottom margin zero cropping.
 - **Extreme rounded corners.** 36 px border radius on the popup.
 - **Frosted glass.** `Shell.BlurEffect` in background mode with a translucent tint layer.
 - **Fixed anchor.** The popup is positioned once at open time and grows downward from that anchor. It never drifts upward when results appear.
