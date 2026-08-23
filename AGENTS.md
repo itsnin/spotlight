@@ -8,7 +8,7 @@ if you are an ai agent read the whole file do not skim
 
 spotlight is a compact launcher for gnome shell inspired by macos spotlight you press a shortcut a centered popup appears you type and results show up in real time
 
-the goal is to feel like macos spotlight not look like a gnome shell extension that means dark compact rounded frosted glass background no title bar no chrome just a floating input box with results below it
+the goal is to feel like macos spotlight not look like a gnome shell extension that means dark compact rounded solid dark background no title bar no chrome just a floating input box with results below it
 
 ## design philosophy
 
@@ -24,9 +24,9 @@ the background is `#1c1c1e` not pure black pure black looks harsh on oled and wr
 
 the popup is 520px wide centered on the primary monitor it grows downward as results appear but never exceeds 380px total height fits minimum supported resolution 1366x768 with 37px bottom margin zero cropping results scroll internally via gnome built in StScrollView this keeps it unobtrusive across all supported resolutions
 
-### frosted glass no animations
+### solid dark background no animations
 
-the popup uses Shell.BlurEffect in background mode to blur pixels beneath it a translucent css background-color tints the result creating frosted glass the tint is made opaque enough that rectangular blur sampling is invisible at the rounded corners the popup appears instantly with no fade-in or slide animation this is intentional macos spotlight is fast extensions that animate feel slow
+the popup uses a solid dark background color #1c1c1e for maximum readability no blur or transparency effects the popup appears instantly with no fade-in or slide animation this is intentional macos spotlight is fast extensions that animate feel slow
 
 ## gnome shell version support
 
@@ -52,7 +52,6 @@ the codebase calls `set_vertical(true)` after `_init()` for st box layouts not `
 
 `vertical` and `set_vertical()` are confirmed to exist across the full 45 through 50 range so this is the correct choice do not switch back to `orientation` in the constructor without first confirming it against the actual minimum supported version not just the newest one
 
-Shell.BlurEffect uses `radius` property on gnome 46 and `sigma` property on gnome 45 both paths are equal neither is a fallback version detection via `parseInt(Config.PACKAGE_VERSION)` picks the right one
 
 ### single package for all versions
 

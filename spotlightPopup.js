@@ -1,7 +1,6 @@
 // spotlight - popup widget
 // SPDX-License-Identifier: GPL-3.0-or-later
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
-import * as Config from 'resource:///org/gnome/shell/misc/config.js';
 import St from 'gi://St';
 import Shell from 'gi://Shell';
 import GLib from 'gi://GLib';
@@ -10,36 +9,6 @@ import Clutter from 'gi://Clutter';
 import {PopupBackdrop} from './popupBackdrop.js';
 import {PopupPositioner} from './popupPositioner.js';
 
-// popup structure
-//   outer St.Widget this  -> added to chrome handles positioning
-//   inner St.BoxLayout    -> holds entry plus gnome search results has blur styling
-//
-// spotlight is first-class citizen on enable we permanently steal the
-// overview search entry and controller and hide them overview search
-// is gone for as long as spotlight is enabled when the popup opens we
-// reparent the already-stolen widgets into our popup when it closes we
-// remove them from the popup but keep them stolen and hidden they are
-// only returned to the overview on disable
-//
-// this means users cannot use overview search at all while spotlight is
-// enabled spotlight replaces it completely overview itself stays
-// functional only its search ui is permanently hijacked
-//
-// blur uses Shell.BlurEffect background mode css background-color tints
-// the blurred pixels shell blur effect samples a sharp rectangle css
-// border radius only rounds the tint layer on top the 0 92 opacity tint
-// masks 92 percent of the rectangular bleed artifact at the 36px corners
-// perfect clipping requires gnome-rounded-blur system library which we
-// do not require this is the pragmatic no dependency solution
-//
-// gnome 50 clutter 18 critical note changing the actor tree show hide
-// reparent addchrome removechrome synchronously while a signal is being
-// dispatched causes sigabrt full session kill on wayland all actor tree
-// mutations originating from signal handlers accelerator-activated
-// window-created captured-event notify key-focus button-release-event
-// must be deferred through glib idle add so they run after the current
-// dispatch unwinds this is the same bug pattern reported and fixed in
-// multiple gnome shell extensions on gnome 50
 export const SpotlightPopup = GObject.registerClass(
 class SpotlightPopup extends St.Widget {
     _init(settings) {
@@ -49,14 +18,18 @@ class SpotlightPopup extends St.Widget {
             can_focus: true,
             visible: false,
         });
+
         this._settings = settings;
         this._backdrop = null;
         this._positioner = new PopupPositioner(this);
         this._visible = false;
-        this._unredirectDisabled = false;
         this._openIdleId = 0;
         this._closeIdleId = 0;
         this._opening = false;
+
+        // popup structure
+        //   outer St.Widget this  -> added to chrome handles positioning
+        //   inner St.BoxLayout    -> holds entry plus gnome search results
 
         // inner content box what the user actually sees
         this._content = new St.BoxLayout({
@@ -64,20 +37,6 @@ class SpotlightPopup extends St.Widget {
             vertical: true,
             width: 520,
         });
-
-        this._blurEffect = new Shell.BlurEffect({
-            mode: Shell.BlurMode.BACKGROUND,
-            brightness: 0.9,
-        });
-
-        // shell version detection both paths equal neither is fallback
-        const shellVersion = parseInt(Config.PACKAGE_VERSION);
-        if (shellVersion >= 46)
-            this._blurEffect.radius = 24;
-        else
-            this._blurEffect.sigma = 12;
-
-        this._content.add_effect(this._blurEffect);
         this.add_child(this._content);
 
         // stolen overview widgets taken once in stealOverviewSearch
@@ -111,7 +70,7 @@ class SpotlightPopup extends St.Widget {
 
     // called once from extension.enable()
     // permanently steals overview's search widgets and hides them
-    // overview search is gone for as long as spotlight is enabled
+    // spotlight is first-class citizen overview itself stays functional
     stealOverviewSearch() {
         if (this._entry)
             return;
@@ -246,26 +205,23 @@ class SpotlightPopup extends St.Widget {
             Main.layoutManager.removeChrome(this);
         Main.layoutManager.addChrome(this);
 
-        // disable unredirect so blur effect works correctly and performs well
-        if (!this._unredirectDisabled) {
-            global.compositor.disable_unredirect();
-            this._unredirectDisabled = true;
-        }
-
         this._positioner.showCentered(() => {
             this._search._text.get_parent().grab_key_focus();
         });
 
-        // clear any previous search text
+        // clear any previous search text start with empty
         this._search._text.set_text('');
-        this._search.show();
+        // hide results area when empty keeps popup compact at idle
+        this._search.visible = false;
 
-        // update size when text changes results appear or disappear
+        // show results only when user has typed something
+        // this prevents no results message from taking up vertical space
         if (!this._textChangedEventId) {
             this._textChangedEventId = this._search._text.connect(
                 'text-changed',
                 () => {
-                    this._search.show();
+                    const hasText = this._search._text.get_text().length > 0;
+                    this._search.visible = hasText;
                 },
             );
         }
@@ -332,11 +288,6 @@ class SpotlightPopup extends St.Widget {
     // removes widgets from our popup but keeps them stolen and hidden
     // does NOT return them to overview that only happens in disable()
     // runs from idle context never inside signal dispatch
-    //
-    // hide before detach pattern clutter 18 has stricter unrealize
-    // assertions hiding first unmaps the actor so detach is safe
-    // this is the same bug pattern reported and fixed in multiple
-    // gnome shell extensions on gnome 50
     _doClose() {
         this._positioner.stop();
 
@@ -360,12 +311,6 @@ class SpotlightPopup extends St.Widget {
         if (this._search && this._search.get_parent()) {
             this._search.hide();
             this._search.get_parent().remove_child(this._search);
-        }
-
-        // re-enable unredirect now that blur effect is hidden
-        if (this._unredirectDisabled) {
-            global.compositor.enable_unredirect();
-            this._unredirectDisabled = false;
         }
 
         this._visible = false;
@@ -401,11 +346,7 @@ class SpotlightPopup extends St.Widget {
         Shell.AppSystem.get_default().disconnectObject(this);
         global.stage.disconnectObject(this);
 
-        if (this._content) {
-            this._content.remove_effect(this._blurEffect);
-            this._content = null;
-        }
-        this._blurEffect = null;
+        this._content = null;
         this._settings = null;
 
         super.destroy();

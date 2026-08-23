@@ -1,6 +1,5 @@
 /* spotlight - stylesheet */
-/* reuses gnome overview's search widgets - styles them to fit our popup */
-/* blur via Shell.BlurEffect, tint via css background-color on container */
+/* reuses gnome overview's search widgets styles them to fit our popup */
 /* colors: background #1c1c1e text #f5f5f7 selection rgba(255,255,255,0.12) */
 
 /* global reset - kill inherited focus outlines or borders from parent theme */
@@ -12,14 +11,9 @@
   -st-icon-style: symbolic;
 }
 
-/* container - single unified window with frosted glass */
-/* Shell.BlurEffect applied in javascript, background-color tints it */
-/* 0.92 opacity hides rectangular blur sampling at extreme rounded corners */
-/* shell blur effect samples a rectangle css border radius only rounds */
-/* the tint layer on top perfect corner clipping requires gnome-rounded-blur */
-/* max height 380px fits minimum supported resolution 1366x768 with margin */
+/* container - single unified window */
 .spotlight-container {
-  background-color: rgba(28, 28, 30, 0.92);
+  background-color: #1c1c1e;
   border-radius: 36px;
   padding: 10px;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);

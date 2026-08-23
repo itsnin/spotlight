@@ -4,7 +4,7 @@ A compact, macOS Spotlight–inspired launcher for GNOME Shell 45 through 50.
 
 [Repository](https://github.com/itsnin/spotlight) • [GNOME Extensions](https://extensions.gnome.org/extension/10666/spotlight/)
 
-**Version:** 2026.08.22
+**Version:** 2026.08.24
 
 ## Keyboard Shortcut
 
@@ -63,9 +63,8 @@ gnome-extensions prefs spotlight@nin
 ```
 
 Configurable options:
-- The toggle keyboard shortcut (default `Ctrl+Space`, also supports `Alt+Space` PowerToys Run style)
+- The toggle keyboard shortcut (default `Ctrl+Space`)
 
-**About Alt+Space:** GNOME Shell uses Alt+Space for the window menu by default. When you set Alt+Space as your Spotlight shortcut, the extension temporarily disables the window menu keybinding so Spotlight can receive the key. The original window menu keybinding is automatically restored when you change the shortcut or disable the extension. This matches how PowerToys Run works on Windows.
 
 Web search is provided by GNOME's registered search providers. Install Firefox, Epiphany, or a search provider extension to enable web search results.
 
@@ -89,9 +88,9 @@ This approach means Spotlight automatically benefits from every search provider 
 ## Design Principles
 
 - **Dark, not black.** Background `#1c1c1e` with text `#f5f5f7`. Pure black is harsh on OLED and inaccurate on IPS panels.
-- **Compact.** 520 px wide, 380 px max height, centered on the primary monitor. Search results scroll internally via GNOME built-in St.ScrollView when they exceed available space. Minimum supported resolution is 1366×768 fits perfectly with 37 px bottom margin zero cropping.
+- **Compact.** 520 px wide, 380 px max height, centered on the primary monitor. Search results scroll internally via GNOME's built-in `St.ScrollView` when they exceed available space. Minimum supported resolution is 1366×768 — fits perfectly with 37 px bottom margin, zero cropping.
 - **Extreme rounded corners.** 36 px border radius on the popup.
-- **Frosted glass.** `Shell.BlurEffect` in background mode with a translucent tint layer.
+- **Solid dark background.** `#1c1c1e` with text `#f5f5f7` for maximum readability.
 - **Fixed anchor.** The popup is positioned once at open time and grows downward from that anchor. It never drifts upward when results appear.
 - **Instant.** No fade-in, no slide animation. The popup appears the same frame the shortcut is registered.
 
