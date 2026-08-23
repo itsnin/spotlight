@@ -139,7 +139,9 @@ class SpotlightPopup extends St.Widget {
                     const unicode = Clutter.keysym_to_unicode(
                         event.get_key_symbol(),
                     );
-                    if (unicode > 0)
+                    // unicode 0x20 and above are printable characters
+                    // control characters enter esc tab arrows etc pass through
+                    if (unicode >= 0x20)
                         return Clutter.EVENT_STOP;
                     return Clutter.EVENT_PROPAGATE;
                 },
