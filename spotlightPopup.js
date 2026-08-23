@@ -48,6 +48,7 @@ class SpotlightPopup extends St.Widget {
         this._searchResults = null;
         this._textChangedEventId = 0;
         this._originalActivateDefault = null;
+        this._overviewKeyCaptureId = 0;
 
         // hide popup when new windows appear app launched from result
         global.display.connectObject(
@@ -115,6 +116,33 @@ class SpotlightPopup extends St.Widget {
         if (!this._search._originalSearchCancelled) {
             this._search._originalSearchCancelled = this._search._searchCancelled;
             this._search._searchCancelled = () => {};
+        }
+
+        // overview and app grid have a start typing to search feature when
+        // user presses any printable character it tries to show search view
+
+        // since we permanently stole the search widgets this would show a
+        // blank screen intercept printable keys at stage level before the
+        // overview sees them and consume them so nothing happens
+
+        // only intercept when overview is visible and our popup is not visible
+        // non printable keys arrows enter esc tab etc pass through normally
+        if (this._overviewKeyCaptureId === 0) {
+            this._overviewKeyCaptureId = global.stage.connect(
+                'captured-event',
+                (actor, event) => {
+                    if (event.type() !== Clutter.EventType.KEY_PRESS)
+                        return Clutter.EVENT_PROPAGATE;
+                    if (!Main.overview.visible || this._visible)
+                        return Clutter.EVENT_PROPAGATE;
+                    const unicode = Clutter.keysym_to_unicode(
+                        event.get_key_symbol(),
+                    );
+                    if (unicode > 0)
+                        return Clutter.EVENT_STOP;
+                    return Clutter.EVENT_PROPAGATE;
+                },
+            );
         }
     }
 
@@ -216,12 +244,17 @@ class SpotlightPopup extends St.Widget {
 
         // show results only when user has typed something
         // this prevents no results message from taking up vertical space
+
+        // results stay shown once user has typed even if they delete back to
+        // empty hiding while user is typing causes focus state changes that
+        // incorrectly close the popup
         if (!this._textChangedEventId) {
             this._textChangedEventId = this._search._text.connect(
                 'text-changed',
                 () => {
                     const hasText = this._search._text.get_text().length > 0;
-                    this._search.visible = hasText;
+                    if (hasText)
+                        this._search.visible = true;
                 },
             );
         }
@@ -241,21 +274,18 @@ class SpotlightPopup extends St.Widget {
 
         // close on key-focus loss unless focus went to a popup-menu
         // some results open menus and those should not dismiss us
+        // check this.contains to catch focus anywhere within our widget tree
         global.stage.connectObject(
             'notify::key-focus', () => {
-                if (!this._entry || !this._visible)
+                if (!this._visible)
                     return;
                 const focus = global.stage.get_key_focus();
-                const appearFocused = focus && (
-                    this._entry.contains(focus) ||
-                    this._searchResults.contains(focus)
-                );
-                if (!appearFocused) {
-                    if (focus && focus.style_class &&
-                        focus.style_class.includes('popup-menu'))
-                        return;
-                    this.close();
-                }
+                if (focus && this.contains(focus))
+                    return;
+                if (focus && focus.style_class &&
+                    focus.style_class.includes('popup-menu'))
+                    return;
+                this.close();
             },
             this,
         );
@@ -340,6 +370,12 @@ class SpotlightPopup extends St.Widget {
     destroy() {
         // synchronous close destroy runs outside signal dispatch
         this._syncClose();
+
+        // disconnect overview key capture connected with regular connect
+        if (this._overviewKeyCaptureId !== 0) {
+            global.stage.disconnect(this._overviewKeyCaptureId);
+            this._overviewKeyCaptureId = 0;
+        }
 
         // disconnect all remaining signals connected with connectObject
         global.display.disconnectObject(this);
