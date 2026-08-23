@@ -25,6 +25,7 @@ class SpotlightPopup extends St.Widget {
         this._visible = false;
         this._openIdleId = 0;
         this._closeIdleId = 0;
+        this._focusCheckIdleId = 0;
         this._opening = false;
 
         // popup structure
@@ -246,14 +247,22 @@ class SpotlightPopup extends St.Widget {
 
         // toggle results visibility based on text content
         // hide when empty keeps popup compact show when typed gives results
-        // focus check below specifically guards against closing while the
-        
-        // entry has focus so hiding results does not dismiss the popup
+
+        // before hiding results move focus back to entry clutter clears
+        // focus to null when actor containing focus is unmapped on hide
+        // moving focus to entry first prevents null focus from closing us
         if (!this._textChangedEventId) {
             this._textChangedEventId = this._search._text.connect(
                 'text-changed',
                 () => {
                     const hasText = this._search._text.get_text().length > 0;
+                    if (!hasText) {
+                        const focus = global.stage.get_key_focus();
+                        if (focus && this._search &&
+                            this._search.contains(focus)) {
+                            this._entry.grab_key_focus();
+                        }
+                    }
                     this._search.visible = hasText;
                 },
             );
@@ -274,23 +283,55 @@ class SpotlightPopup extends St.Widget {
 
         // close on key-focus loss unless focus went to a popup-menu
         // some results open menus and those should not dismiss us
-        
-        // never close while entry has focus user is still typing
-        // also check this.contains to catch focus anywhere within our tree
+
+        // check deferred to idle so transient focus changes from actor
+        // mutations hiding results etc settle before we evaluate
+        // multiple guards entry focus this contains popup menu null focus
         global.stage.connectObject(
             'notify::key-focus', () => {
                 if (!this._visible)
                     return;
-                const focus = global.stage.get_key_focus();
-                if (focus && this._entry &&
-                    (this._entry === focus || this._entry.contains(focus)))
-                    return;
-                if (focus && this.contains(focus))
-                    return;
-                if (focus && focus.style_class &&
-                    focus.style_class.includes('popup-menu'))
-                    return;
-                this.close();
+
+                // cancel any pending focus check schedule a fresh one
+                if (this._focusCheckIdleId !== 0) {
+                    GLib.source_remove(this._focusCheckIdleId);
+                    this._focusCheckIdleId = 0;
+                }
+
+                this._focusCheckIdleId = GLib.idle_add(
+                    GLib.PRIORITY_DEFAULT_IDLE,
+                    () => {
+                        this._focusCheckIdleId = 0;
+                        if (!this._visible)
+                            return GLib.SOURCE_REMOVE;
+
+                        const focus = global.stage.get_key_focus();
+
+                        // null focus is transient during actor tree mutations
+                        // clutter clears focus to null when hiding focused actor
+                        if (!focus)
+                            return GLib.SOURCE_REMOVE;
+
+                        // never close while entry has focus user still typing
+                        if (this._entry &&
+                            (this._entry === focus ||
+                             this._entry.contains(focus)))
+                            return GLib.SOURCE_REMOVE;
+
+                        // focus anywhere within our widget tree is safe
+                        if (this.contains(focus))
+                            return GLib.SOURCE_REMOVE;
+
+                        // popup menus from results should not dismiss us
+                        if (focus.style_class &&
+                            focus.style_class.includes('popup-menu'))
+                            return GLib.SOURCE_REMOVE;
+
+                        // genuinely lost focus close popup
+                        this.close();
+                        return GLib.SOURCE_REMOVE;
+                    },
+                );
             },
             this,
         );
@@ -325,6 +366,12 @@ class SpotlightPopup extends St.Widget {
     // runs from idle context never inside signal dispatch
     _doClose() {
         this._positioner.stop();
+
+        // cancel any pending focus check idle handler
+        if (this._focusCheckIdleId !== 0) {
+            GLib.source_remove(this._focusCheckIdleId);
+            this._focusCheckIdleId = 0;
+        }
 
         if (this._backdrop) {
             this._backdrop.destroy();
@@ -366,6 +413,10 @@ class SpotlightPopup extends St.Widget {
         if (this._closeIdleId !== 0) {
             GLib.source_remove(this._closeIdleId);
             this._closeIdleId = 0;
+        }
+        if (this._focusCheckIdleId !== 0) {
+            GLib.source_remove(this._focusCheckIdleId);
+            this._focusCheckIdleId = 0;
         }
         this._opening = false;
         if (this._visible)
