@@ -82,7 +82,7 @@ class SpotlightPopup extends St.Widget {
             Main.overview._originalToggle = Main.overview.toggle;
             Main.overview.toggle = () => {
                 // if our popup is visible focus it instead
-                if (this._search && this._search.visible)
+                if (this._visible)
                     this._search._text.get_parent().grab_key_focus();
                 else
                     Main.overview._originalToggle();
@@ -242,28 +242,45 @@ class SpotlightPopup extends St.Widget {
 
         // clear any previous search text start with empty
         this._search._text.set_text('');
-        // hide results area when empty keeps popup compact at idle
-        this._search.visible = false;
+        // keep search mapped never hide it while popup is open hiding
+        // unmaps actor and clutter clears key focus to null causes close
+        this._search.visible = true;
+        // use css class to visually collapse results when empty keeps
+        // popup compact at idle without unmapping the actor
+        this._search.add_style_class_name('search-collapsed');
 
-        // toggle results visibility based on text content
-        // hide when empty keeps popup compact show when typed gives results
+        // toggle css class based on text content never hide actor while
+        // popup is open hiding unmaps actor clutter clears focus to null
 
-        // before hiding results move focus back to entry clutter clears
-        // focus to null when actor containing focus is unmapped on hide
-        // moving focus to entry first prevents null focus from closing us
+        // css class visually collapses to zero height actor stays mapped
+        // clutter never clears key focus no null focus no close no focus loss
         if (!this._textChangedEventId) {
             this._textChangedEventId = this._search._text.connect(
                 'text-changed',
                 () => {
                     const hasText = this._search._text.get_text().length > 0;
-                    if (!hasText) {
+                    if (hasText) {
+                        this._search.remove_style_class_name(
+                            'search-collapsed',
+                        );
+                    } else {
+                        // if focus is inside results move back to entry
+                        // deferred to idle so it runs after signal processing
                         const focus = global.stage.get_key_focus();
                         if (focus && this._search &&
                             this._search.contains(focus)) {
-                            this._entry.grab_key_focus();
+                            GLib.idle_add(
+                                GLib.PRIORITY_DEFAULT_IDLE,
+                                () => {
+                                    this._entry.grab_key_focus();
+                                    return GLib.SOURCE_REMOVE;
+                                },
+                            );
                         }
+                        this._search.add_style_class_name(
+                            'search-collapsed',
+                        );
                     }
-                    this._search.visible = hasText;
                 },
             );
         }
