@@ -244,19 +244,17 @@ class SpotlightPopup extends St.Widget {
         // hide results area when empty keeps popup compact at idle
         this._search.visible = false;
 
-        // show results only when user has typed something
-        // this prevents no results message from taking up vertical space
-
-        // results stay shown once user has typed even if they delete back to
-        // empty hiding results while popup is open causes focus state changes
-        // that incorrectly close the popup compact height only on fresh open
+        // toggle results visibility based on text content
+        // hide when empty keeps popup compact show when typed gives results
+        // focus check below specifically guards against closing while the
+        
+        // entry has focus so hiding results does not dismiss the popup
         if (!this._textChangedEventId) {
             this._textChangedEventId = this._search._text.connect(
                 'text-changed',
                 () => {
                     const hasText = this._search._text.get_text().length > 0;
-                    if (hasText)
-                        this._search.visible = true;
+                    this._search.visible = hasText;
                 },
             );
         }
@@ -276,12 +274,17 @@ class SpotlightPopup extends St.Widget {
 
         // close on key-focus loss unless focus went to a popup-menu
         // some results open menus and those should not dismiss us
-        // check this.contains to catch focus anywhere within our widget tree
+        
+        // never close while entry has focus user is still typing
+        // also check this.contains to catch focus anywhere within our tree
         global.stage.connectObject(
             'notify::key-focus', () => {
                 if (!this._visible)
                     return;
                 const focus = global.stage.get_key_focus();
+                if (focus && this._entry &&
+                    (this._entry === focus || this._entry.contains(focus)))
+                    return;
                 if (focus && this.contains(focus))
                     return;
                 if (focus && focus.style_class &&
