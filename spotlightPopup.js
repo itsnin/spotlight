@@ -96,17 +96,6 @@ class SpotlightPopup extends St.Widget {
         // hide it overview will show empty space where search used to be
         this._entry.visible = false;
 
-        // overview and app grid call grab_key_focus on search entry when user
-        // types any printable character this is the start typing to search
-
-        // feature since we permanently stole the entry and controller the
-        // original behavior now shows a blank screen override it to do
-        // nothing so typing in overview or app grid simply has no effect
-        if (!this._entry._originalGrabKeyFocus) {
-            this._entry._originalGrabKeyFocus = this._entry.grab_key_focus;
-            this._entry.grab_key_focus = () => {};
-        }
-
         // steal overview's search controller
         this._search = Main.overview.searchController;
         this._searchResults = this._search._searchResults;
@@ -135,11 +124,6 @@ class SpotlightPopup extends St.Widget {
         if (this._entry) {
             this._entry.remove_style_class_name('spotlight-entry-stolen');
             this._entry.visible = true;
-            // restore original grab_key_focus we overrode during steal
-            if (this._entry._originalGrabKeyFocus) {
-                this._entry.grab_key_focus = this._entry._originalGrabKeyFocus;
-                this._entry._originalGrabKeyFocus = null;
-            }
             if (this._entry.get_parent())
                 this._entry.get_parent().remove_child(this._entry);
             this._entryParent.add_child(this._entry);
@@ -232,17 +216,12 @@ class SpotlightPopup extends St.Widget {
 
         // show results only when user has typed something
         // this prevents no results message from taking up vertical space
-
-        // results stay shown once user has typed even if they delete back to
-        // empty hiding while user is typing causes focus state changes that
-        // incorrectly close the popup
         if (!this._textChangedEventId) {
             this._textChangedEventId = this._search._text.connect(
                 'text-changed',
                 () => {
                     const hasText = this._search._text.get_text().length > 0;
-                    if (hasText)
-                        this._search.visible = true;
+                    this._search.visible = hasText;
                 },
             );
         }
@@ -262,18 +241,21 @@ class SpotlightPopup extends St.Widget {
 
         // close on key-focus loss unless focus went to a popup-menu
         // some results open menus and those should not dismiss us
-        // check this.contains to catch focus anywhere within our widget tree
         global.stage.connectObject(
             'notify::key-focus', () => {
-                if (!this._visible)
+                if (!this._entry || !this._visible)
                     return;
                 const focus = global.stage.get_key_focus();
-                if (focus && this.contains(focus))
-                    return;
-                if (focus && focus.style_class &&
-                    focus.style_class.includes('popup-menu'))
-                    return;
-                this.close();
+                const appearFocused = focus && (
+                    this._entry.contains(focus) ||
+                    this._searchResults.contains(focus)
+                );
+                if (!appearFocused) {
+                    if (focus && focus.style_class &&
+                        focus.style_class.includes('popup-menu'))
+                        return;
+                    this.close();
+                }
             },
             this,
         );
