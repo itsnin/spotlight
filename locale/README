@@ -1,0 +1,49 @@
+# Translations
+
+Spotlight uses gettext for internationalization. The gettext domain is `spotlight`.
+
+## Structure
+
+Source translation files (`.po`) are placed in this directory as `<lang>.po` (e.g., `fr.po`, `es.po`).
+
+At build and install time, these are compiled to binary `.mo` files and placed at:
+```
+locale/<lang>/LC_MESSAGES/spotlight.mo
+```
+
+This matches the structure used by GNOME extensions in the wild, where compiled
+translation files ship inside the installed extension.
+
+## Adding a New Translation
+
+1. Copy the template to start a new language:
+   ```bash
+   msginit -i locale/spotlight.pot -o locale/fr.po -l fr
+   ```
+
+2. Edit `locale/fr.po` with translated strings using a PO editor or text editor.
+
+3. The build script automatically compiles all `.po` files to `.mo` during install.
+
+## Updating the Template
+
+To regenerate the translation template from source strings:
+```bash
+xgettext --from-code=UTF-8 \
+    --copyright-holder="Spotlight contributors" \
+    --package-name="Spotlight" \
+    --package-version="2026.08.25" \
+    --output=locale/spotlight.pot \
+    *.js prefs/*.js
+```
+
+## Installed Layout
+
+When installed, translations appear at:
+```
+~/.local/share/gnome-shell/extensions/spotlight@nin/
+    locale/
+        fr/LC_MESSAGES/spotlight.mo
+        es/LC_MESSAGES/spotlight.mo
+        ...
+```
