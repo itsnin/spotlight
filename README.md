@@ -27,7 +27,7 @@ Spotlight uses GNOME's registered search providers. Results and their order are 
 - **Files** — Indexed via Tracker, GNOME's file metadata system.
 - **System Actions** — Lock, suspend, restart, shut down, log out.
 - **GNOME Settings** — Direct navigation to any Settings panel.
-- **Web Search** — Provided by your browser (Firefox, Epiphany) or search provider extensions when installed.
+- **Web Search** — Provided by your browser
 
 ## Usage
 
