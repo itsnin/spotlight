@@ -9,16 +9,39 @@ export function steal(popup) {
     if (popup._entry)
         return;
 
-    // override overview methods so it doesn't try to use stolen widgets
+    // override overview methods two level override distinguishes call paths
+    // Main.toggleOverview called by super key activities button hot corner
+    // Main.overview.toggle called directly by individual search results
     if (!Main.overview._originalToggle) {
         Main.overview._originalToggle = Main.overview.toggle;
         Main.overview.toggle = () => {
-            // individual search results call Main.overview.toggle() on activate
-            // super key also calls this to show overview
-            // close our popup either way and let original toggle do its job
+            // individual search results call this directly on activate
+            // close popup and return overview should not appear after launching result
+            if (popup._visible) {
+                popup.close();
+                // safety net if Main.toggleOverview does not exist on this version
+                // inspect call stack to distinguish super key from search activation
+                if (!Main._originalToggleOverview) {
+                    const stack = new Error().stack;
+                    const fromSearch = stack.includes('activateResult') ||
+                                      stack.includes('SearchResult') ||
+                                      stack.includes('activateDefault');
+                    if (!fromSearch)
+                        Main.overview._originalToggle.call(Main.overview);
+                }
+                return;
+            }
+            Main.overview._originalToggle.call(Main.overview);
+        };
+    }
+    // Main.toggleOverview is what super key binding actually invokes
+    // close popup first then let original flow show the overview
+    if (Main.toggleOverview && !Main._originalToggleOverview) {
+        Main._originalToggleOverview = Main.toggleOverview;
+        Main.toggleOverview = () => {
             if (popup._visible)
                 popup.close();
-            Main.overview._originalToggle();
+            Main._originalToggleOverview();
         };
     }
 
@@ -39,10 +62,10 @@ export function steal(popup) {
         popup._search.get_parent().remove_child(popup._search);
     popup._search.hide();
 
-    // override activateDefault to close our popup when activated
+    // override activateDefault let Main.overview.toggle handle closing
+    // closing here would make toggle override think popup is already gone
     popup._originalActivateDefault = popup._searchResults.activateDefault;
     popup._searchResults.activateDefault = () => {
-        popup.close();
         popup._originalActivateDefault.call(popup._searchResults);
     };
 
@@ -125,5 +148,9 @@ export function return_(popup) {
     if (Main.overview._originalToggle) {
         Main.overview.toggle = Main.overview._originalToggle;
         Main.overview._originalToggle = null;
+    }
+    if (Main._originalToggleOverview) {
+        Main.toggleOverview = Main._originalToggleOverview;
+        Main._originalToggleOverview = null;
     }
 }
