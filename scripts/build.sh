@@ -1,5 +1,5 @@
 #!/bin/bash
-# Installs Spotlight directly from GitHub main branch
+# Downloads and installs the latest Spotlight release from GitHub
 # Usage: ./scripts/build.sh
 #    or: curl -sL https://raw.githubusercontent.com/itsnin/spotlight/main/scripts/build.sh | bash
 set -e
@@ -7,68 +7,39 @@ set -e
 # Configuration
 REPO_OWNER="itsnin"
 REPO_NAME="spotlight"
-BRANCH="main"
 UUID="spotlight@nin"
-GETTEXT_DOMAIN="spotlight"
-BASE_URL="https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${BRANCH}"
+ASSET_NAME="${UUID}.shell-extension.zip"
+API_URL="https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases/latest"
 
-# Extension source files to download from main branch
-FILES=(
-    "extension.js"
-    "spotlightPopup.js"
-    "prefs.js"
-    "stylesheet.css"
-    "metadata.json"
-    "schemas/org.gnome.shell.extensions.spotlight.gschema.xml"
-    "popup/overviewSearch.js"
-    "popup/popupBackdrop.js"
-    "popup/popupPositioner.js"
-    "popup/themeManager.js"
-    "services/keybinding.js"
-    "prefs/shortcutPage.js"
-    "prefs/appearancePage.js"
-    "prefs/aboutPage.js"
-)
+echo "Fetching latest release from GitHub..."
 
-# Install directory
-INSTALL_DIR="${HOME}/.local/share/gnome-shell/extensions/${UUID}"
-
-echo "Installing Spotlight from ${BRANCH} branch..."
-echo "Target: ${INSTALL_DIR}"
-
-# Create directory structure
-mkdir -p "${INSTALL_DIR}/schemas"
-mkdir -p "${INSTALL_DIR}/popup"
-mkdir -p "${INSTALL_DIR}/services"
-mkdir -p "${INSTALL_DIR}/prefs"
-
-# Download each file
-for filepath in "${FILES[@]}"; do
-    echo "  Downloading ${filepath}..."
-    curl -sL --fail "${BASE_URL}/${filepath}" -o "${INSTALL_DIR}/${filepath}"
-done
-
-# Compile schemas
-echo "  Compiling schemas..."
-glib-compile-schemas "${INSTALL_DIR}/schemas/"
-
-# Download and compile translations
-if command -v msgfmt >/dev/null 2>&1; then
-    echo "  Checking for translations..."
-    for po_file in $(curl -sL "${BASE_URL}/locale/" 2>/dev/null | grep -oP '[a-z]{2}(_[A-Z]{2})?\.po' | sort -u); do
-        lang_code="${po_file%.po}"
-        echo "    Compiling translation: ${lang_code}"
-        mkdir -p "${INSTALL_DIR}/locale/${lang_code}/LC_MESSAGES"
-        curl -sL --fail "${BASE_URL}/locale/${po_file}" -o /tmp/spotlight_${lang_code}.po
-        msgfmt -o "${INSTALL_DIR}/locale/${lang_code}/LC_MESSAGES/${GETTEXT_DOMAIN}.mo" "/tmp/spotlight_${lang_code}.po"
-        rm -f "/tmp/spotlight_${lang_code}.po"
-    done
+# Get the download URL for the extension zip
+# Prefer jq if available, fall back to grep/sed
+if command -v jq >/dev/null 2>&1; then
+    DOWNLOAD_URL=$(curl -sL "$API_URL" | jq -r ".assets[] | select(.name==\"${ASSET_NAME}\") | .browser_download_url")
+else
+    DOWNLOAD_URL=$(curl -sL "$API_URL" | grep -o "\"browser_download_url\": \"[^\"]*${ASSET_NAME}\"" | cut -d'"' -f4)
 fi
 
+if [ -z "$DOWNLOAD_URL" ]; then
+    echo "ERROR: Could not find ${ASSET_NAME} in the latest release"
+    echo "Check releases at https://github.com/${REPO_OWNER}/${REPO_NAME}/releases"
+    exit 1
+fi
+
+echo "Downloading: ${DOWNLOAD_URL}"
+
+# Download the release zip to a temp file
+TEMP_ZIP=$(mktemp /tmp/spotlight.XXXXXX.zip)
+curl -sL --fail "$DOWNLOAD_URL" -o "$TEMP_ZIP"
+
+echo "Installing extension..."
+gnome-extensions install --force "$TEMP_ZIP"
+rm -f "$TEMP_ZIP"
+
 echo ""
-echo "Spotlight installed successfully!"
+echo "Extension installed successfully!"
 echo ""
-echo "To enable:"
-echo "  gnome-extensions enable ${UUID}"
-echo ""
-echo "On Wayland, log out and back in to activate."
+echo "To activate:"
+echo "  1. Log out and back in (required on Wayland)"
+echo "  2. Run: gnome-extensions enable ${UUID}"
