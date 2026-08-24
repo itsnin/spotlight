@@ -1,6 +1,6 @@
 # Spotlight
 
-A compact Spotlight-inspired launcher for GNOME Shell 45 through 50.
+A compact, keyboard-driven launcher for GNOME Shell 45 through 50.
 
 [Repository](https://github.com/itsnin/spotlight) • [GNOME Extensions](https://extensions.gnome.org/extension/10666/spotlight/)
 
@@ -63,8 +63,9 @@ gnome-extensions prefs spotlight@nin
 ```
 
 Configurable options:
-- The toggle keyboard shortcut (default `Ctrl+Space`)
 
+- The toggle keyboard shortcut (default `Ctrl+Space`)
+- Visual theme: Default (follows GNOME system style), Dark, or Light
 
 Web search is provided by GNOME's registered search providers. Install Firefox, Epiphany, or a search provider extension to enable web search results.
 

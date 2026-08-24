@@ -87,6 +87,7 @@ Search priority and behavior are entirely controlled by GNOME Shell, not by Spot
 - No LLM-generated phrasing such as "here we", "let's", "we need to", "note that", "important:", "TODO", or "FIXME".
 - For obscure or uncommon code, provide both **what** and **why**. For conventional code, provide only **why**.
 - Wherever possible, include verified working links to the official GNOME Shell extension documentation at `https://gjs.guide`.
+- Maximum three consecutive comment lines without intervening code. The fourth line must be code, or the structure must be refactored to interleave comments and code. Comments are annotations adjacent to the code they describe, not standalone paragraphs.
 
 ### Code Structure
 
