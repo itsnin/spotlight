@@ -352,3 +352,40 @@
   font-size: 13px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
 }
+
+/* emoji skin tone selector buttons */
+.spotlight-emoji-tones {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: 4px;
+}
+
+.spotlight-container.theme-light .spotlight-emoji-tones {
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+.spotlight-emoji-tone-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 11px;
+  border: 2px solid transparent;
+  padding: 0;
+}
+
+.spotlight-emoji-tone-btn:hover,
+.spotlight-emoji-tone-btn:focus {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.spotlight-container.theme-light .spotlight-emoji-tone-btn:hover,
+.spotlight-container.theme-light .spotlight-emoji-tone-btn:focus {
+  border-color: rgba(0, 0, 0, 0.2);
+}
+
+.spotlight-emoji-tone-btn:checked {
+  border-color: #ffffff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
+}
+
+.spotlight-container.theme-light .spotlight-emoji-tone-btn:checked {
+  border-color: #007aff;
+}

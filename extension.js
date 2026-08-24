@@ -7,6 +7,7 @@ import {ClipboardManager} from './services/clipboardManager.js';
 import {EmojiData} from './services/emojiData.js';
 import {ClipboardView} from './popup/clipboardView.js';
 import {EmojiView, destroyTooltip} from './popup/emojiView.js';
+import {destroyDevice} from './services/virtualKeyboard.js';
 
 // entry point enable and disable are kept next to each other for easy review
 export default class SpotlightExtension extends Extension {
@@ -15,7 +16,7 @@ export default class SpotlightExtension extends Extension {
         this._popup = new SpotlightPopup(this._settings);
 
         // services
-        this._clipboardManager = new ClipboardManager(this._settings);
+        this._clipboardManager = new ClipboardManager(this._settings, this.uuid);
         this._clipboardManager.start();
         this._emojiData = new EmojiData(this.path, this._settings);
 
@@ -105,8 +106,10 @@ export default class SpotlightExtension extends Extension {
         this._clipboardManager.stop();
         this._clipboardManager.destroy();
         this._clipboardManager = null;
+        this._emojiData.flush();
         this._emojiData = null;
         destroyTooltip();
+        destroyDevice();
 
         // views destroyed by popup destroy
         // return stolen widgets back to overview before destroying

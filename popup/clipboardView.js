@@ -54,7 +54,11 @@ class ClipboardView extends St.ScrollView {
 
         const history = this._clipboardManager.getHistory();
         const filtered = this._filterText
-            ? history.filter(e => e.text.toLowerCase().includes(this._filterText))
+            ? history.filter(e => {
+                if (!e.isText())
+                    return false;
+                return e.getStringValue().toLowerCase().includes(this._filterText);
+            })
             : history;
 
         this._emptyLabel.visible = (filtered.length === 0);
@@ -78,15 +82,32 @@ class ClipboardView extends St.ScrollView {
         const hbox = new St.BoxLayout({
             vertical: false,
             x_align: Clutter.ActorAlign.FILL,
+            spacing: 10,
         });
         item.set_child(hbox);
 
-        // truncate long text for preview
-        const preview = entry.text.length > 120
-            ? entry.text.substring(0, 120) + '…'
-            : entry.text;
-        // replace newlines with spaces so items stay single line
-        const displayText = preview.replace(/\n/g, ' ');
+        // type icon
+        const iconName = entry.isImage()
+            ? 'image-x-generic-symbolic'
+            : 'edit-paste-symbolic';
+        const icon = new St.Icon({
+            icon_name: iconName,
+            icon_size: 16,
+            style_class: 'spotlight-clipboard-icon',
+        });
+        hbox.add_child(icon);
+
+        // content preview
+        let displayText;
+        if (entry.isImage()) {
+            displayText = `[Image] ${entry.mimetype()}`;
+        } else {
+            const text = entry.getStringValue();
+            const preview = text.length > 120
+                ? text.substring(0, 120) + '…'
+                : text;
+            displayText = preview.replace(/\n/g, ' ');
+        }
 
         const label = new St.Label({
             style_class: 'spotlight-clipboard-preview',
@@ -98,7 +119,7 @@ class ClipboardView extends St.ScrollView {
 
         item.connect('clicked', () => {
             this._clipboardManager.selectEntry(originalIndex);
-            if (this._settings.get_boolean('paste-on-select'))
+            if (entry.isText() && this._settings.get_boolean('paste-on-select'))
                 triggerPaste();
             if (this._onSelect)
                 this._onSelect();
@@ -109,7 +130,7 @@ class ClipboardView extends St.ScrollView {
             const symbol = event.get_key_symbol();
             if (symbol === Clutter.KEY_Return || symbol === Clutter.KEY_KP_Enter) {
                 this._clipboardManager.selectEntry(originalIndex);
-                if (this._settings.get_boolean('paste-on-select'))
+                if (entry.isText() && this._settings.get_boolean('paste-on-select'))
                     triggerPaste();
                 if (this._onSelect)
                     this._onSelect();

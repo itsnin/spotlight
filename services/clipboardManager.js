@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import St from 'gi://St';
 import GLib from 'gi://GLib';
+import {ClipboardEntry, readClipboardContent} from './clipboardEntry.js';
+import {Registry} from './clipboardRegistry.js';
 
 const CLIPBOARD_TYPE = St.ClipboardType.CLIPBOARD;
 
 export class ClipboardManager {
-    constructor(settings) {
+    constructor(settings, uuid) {
         this._settings = settings;
         this._clipboard = St.Clipboard.get_default();
         this._history = [];
@@ -14,9 +16,29 @@ export class ClipboardManager {
         this._listeners = new Set();
         this._signalId = 0;
         this._ignoreCount = 0;
-        this._settingsChangedId = settings.connect('changed::clipboard-history-size', () => {
-            this.setMaxSize(settings.get_int('clipboard-history-size'));
-        });
+        this._loading = false;
+        this._registry = new Registry(uuid);
+
+        this._settingsChangedId = settings.connect(
+            'changed::clipboard-history-size',
+            () => this.setMaxSize(settings.get_int('clipboard-history-size')),
+        );
+
+        // load persisted history from disk
+        this._loadFromDisk();
+    }
+
+    async _loadFromDisk() {
+        this._loading = true;
+        try {
+            const entries = await this._registry.read();
+            this._history = entries.slice(0, this._maxSize);
+            this._notify();
+        } catch {
+            // fail silently start with empty history
+        } finally {
+            this._loading = false;
+        }
     }
 
     start() {
@@ -27,8 +49,6 @@ export class ClipboardManager {
             'selection-owner-changed',
             () => this._onClipboardChanged(),
         );
-        // read current clipboard content as first entry
-        this._onClipboardChanged();
     }
 
     stop() {
@@ -41,6 +61,8 @@ export class ClipboardManager {
 
     destroy() {
         this.stop();
+        // persist current history to disk
+        this._registry.write(this._history);
         if (this._settingsChangedId) {
             this._settings.disconnect(this._settingsChangedId);
             this._settingsChangedId = 0;
@@ -60,30 +82,38 @@ export class ClipboardManager {
     }
 
     // called when clipboard content changes
-    _onClipboardChanged() {
+    async _onClipboardChanged() {
         if (this._ignoreCount > 0) {
             this._ignoreCount--;
             return;
         }
-        this._clipboard.get_text(CLIPBOARD_TYPE, (clipboard, text) => {
-            if (!text || text.trim().length === 0)
+        try {
+            const entry = await readClipboardContent(this._clipboard);
+            if (!entry)
                 return;
-            this._addEntry(text);
-        });
+            // ignore empty text
+            if (entry.isText() && entry.getStringValue().trim().length === 0)
+                return;
+            this._addEntry(entry);
+        } catch {
+            // fail silently
+        }
     }
 
     // add entry to history deduplicate most recent goes to top
-    _addEntry(text) {
+    _addEntry(entry) {
         // remove duplicate if exists
-        const existingIndex = this._history.findIndex(e => e.text === text);
+        const existingIndex = this._history.findIndex(e => e.equals(entry));
         if (existingIndex !== -1)
             this._history.splice(existingIndex, 1);
         // add to top
-        this._history.unshift({ text, id: Date.now() });
+        this._history.unshift(entry);
         // trim to max size
         while (this._history.length > this._maxSize)
             this._history.pop();
         this._notify();
+        // persist to disk
+        this._registry.write(this._history);
     }
 
     getHistory() {
@@ -96,15 +126,28 @@ export class ClipboardManager {
             return null;
         const entry = this._history[index];
         this._ignoreCount++;
-        this._clipboard.set_text(CLIPBOARD_TYPE, entry.text);
+        if (entry.isText()) {
+            this._clipboard.set_text(CLIPBOARD_TYPE, entry.getStringValue());
+            this._clipboard.set_text(St.ClipboardType.PRIMARY, entry.getStringValue());
+        } else if (entry.isImage()) {
+            const bytes = entry.asBytes();
+            if (bytes) {
+                this._clipboard.set_content(
+                    CLIPBOARD_TYPE,
+                    entry.mimetype(),
+                    bytes,
+                );
+            }
+        }
         // move to top
         this._history.splice(index, 1);
         this._history.unshift(entry);
         this._notify();
+        this._registry.write(this._history);
         return entry;
     }
 
-    // set clipboard content without adding to history used by emoji selector
+    // set clipboard content without adding to history
     // sets both clipboard and primary selections atomically
     setText(text) {
         this._ignoreCount++;
@@ -117,11 +160,13 @@ export class ClipboardManager {
             return;
         this._history.splice(index, 1);
         this._notify();
+        this._registry.write(this._history);
     }
 
     clearHistory() {
         this._history = [];
         this._notify();
+        this._registry.write(this._history);
     }
 
     setMaxSize(size) {

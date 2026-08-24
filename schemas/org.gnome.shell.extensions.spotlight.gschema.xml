@@ -44,5 +44,25 @@
       <summary>Paste on select</summary>
       <description>Automatically paste after selecting a clipboard history entry or emoji.</description>
     </key>
+    <!-- emoji skin tone 0 none 1 light 2 medium light 3 medium 4 medium dark 5 dark -->
+    <key name="emoji-skin-tone" type="i">
+      <default>0</default>
+      <summary>Emoji skin tone</summary>
+      <description>Default skin tone modifier for applicable emojis. 0 = none, 1-5 = light to dark.</description>
+      <range min="0" max="5"/>
+    </key>
+    <!-- emoji gender 0 none 1 women 2 men -->
+    <key name="emoji-gender" type="i">
+      <default>0</default>
+      <summary>Emoji gender</summary>
+      <description>Default gender modifier for applicable emojis. 0 = none, 1 = women, 2 = men.</description>
+      <range min="0" max="2"/>
+    </key>
+    <!-- emoji click counts for popularity ranking stored as json string -->
+    <key name="emoji-click-counts" type="s">
+      <default>''</default>
+      <summary>Emoji click counts</summary>
+      <description>JSON mapping of emoji characters to click counts for search ranking.</description>
+    </key>
   </schema>
 </schemalist>

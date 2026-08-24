@@ -75,6 +75,54 @@ export function buildAppearancePage(settings) {
     behaviorGroup.add(historyRow);
     groups.push(behaviorGroup);
 
+    // emoji defaults group
+    const emojiGroup = new Adw.PreferencesGroup({
+        title: 'Emoji defaults',
+        description: 'Skin tone and gender modifiers for applicable emojis',
+    });
+
+    const toneLabels = [
+        'Default (no tone)',
+        'Light',
+        'Medium light',
+        'Medium',
+        'Medium dark',
+        'Dark',
+    ];
+    const toneRow = new Adw.ComboRow({
+        title: 'Skin tone',
+        subtitle: 'Default skin tone for people emojis',
+    });
+    const toneList = new Gtk.StringList();
+    for (const label of toneLabels)
+        toneList.append(label);
+    toneRow.set_model(toneList);
+    toneRow.set_selected(settings.get_int('emoji-skin-tone'));
+    toneRow.connect('notify::selected', () => {
+        settings.set_int('emoji-skin-tone', toneRow.get_selected());
+    });
+    emojiGroup.add(toneRow);
+
+    const genderLabels = [
+        'Gender neutral',
+        'Women',
+        'Men',
+    ];
+    const genderRow = new Adw.ComboRow({
+        title: 'Gender',
+        subtitle: 'Default gender for applicable emojis',
+    });
+    const genderList = new Gtk.StringList();
+    for (const label of genderLabels)
+        genderList.append(label);
+    genderRow.set_model(genderList);
+    genderRow.set_selected(settings.get_int('emoji-gender'));
+    genderRow.connect('notify::selected', () => {
+        settings.set_int('emoji-gender', genderRow.get_selected());
+    });
+    emojiGroup.add(genderRow);
+    groups.push(emojiGroup);
+
     return groups;
 }
 

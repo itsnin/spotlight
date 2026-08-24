@@ -4,10 +4,20 @@ import St from 'gi://St';
 import Clutter from 'gi://Clutter';
 import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
-import { CATEGORIES } from '../services/emojiData.js';
+import { CATEGORIES, TONES } from '../services/emojiData.js';
 import {triggerPaste} from '../services/virtualKeyboard.js';
 
 const COLUMNS = 10;
+
+// tone preview colors for the selector buttons
+const TONE_COLORS = [
+    '#FFEE00', // none yellow default
+    '#FFD8A8', // light
+    '#E5B590', // medium light
+    '#B88750', // medium
+    '#9B6020', // medium dark
+    '#4B2000', // dark
+];
 
 // shared tooltip label for all emoji buttons added to global stage
 let _tooltipLabel = null;
@@ -49,7 +59,9 @@ class EmojiView extends St.BoxLayout {
         this._activeCategory = null;
         this._buttons = [];
         this._categoryButtons = [];
+        this._toneButtons = [];
         this._tooltipTimeoutId = 0;
+        this._settingHandlerIds = [];
 
         // category buttons row
         this._categoryRow = new St.ScrollView({
@@ -64,6 +76,18 @@ class EmojiView extends St.BoxLayout {
         });
         this._categoryRow.add_actor(this._categoryBox);
         this.add_child(this._categoryRow);
+
+        // skin tone selector row
+        this._toneRow = new St.BoxLayout({
+            style_class: 'spotlight-emoji-tones',
+            vertical: false,
+            spacing: 4,
+            x_align: Clutter.ActorAlign.CENTER,
+            padding_top: 4,
+            padding_bottom: 4,
+        });
+        this._buildToneButtons();
+        this.add_child(this._toneRow);
 
         // emoji grid scroll view
         this._scroll = new St.ScrollView({
@@ -112,7 +136,46 @@ class EmojiView extends St.BoxLayout {
             this._categoryButtons.push(btn);
         }
 
+        // re render when tone or gender settings change
+        this._settingHandlerIds.push(
+            this._settings.connect('changed::emoji-skin-tone', () => {
+                this._updateToneButtons();
+                this._render();
+            }),
+        );
+        this._settingHandlerIds.push(
+            this._settings.connect('changed::emoji-gender', () => {
+                this._render();
+            }),
+        );
+
         this._render();
+    }
+
+    _buildToneButtons() {
+        for (let i = 0; i < TONES.length; i++) {
+            const btn = new St.Button({
+                style_class: 'spotlight-emoji-tone-btn',
+                can_focus: true,
+                toggle_mode: true,
+                accessible_name: `Skin tone ${i}`,
+                style: `background-color: ${TONE_COLORS[i]};`,
+            });
+            const idx = i;
+            btn.connect('clicked', () => {
+                this._settings.set_int('emoji-skin-tone', idx);
+            });
+            this._toneRow.add_child(btn);
+            this._toneButtons.push(btn);
+        }
+        this._updateToneButtons();
+    }
+
+    _updateToneButtons() {
+        const current = this._settings.get_int('emoji-skin-tone');
+        for (let i = 0; i < this._toneButtons.length; i++) {
+            this._toneButtons[i].checked = (i === current);
+        }
     }
 
     _updateCategoryButtons() {
@@ -153,10 +216,9 @@ class EmojiView extends St.BoxLayout {
         } else {
             // show recently used first then smileys
             const recents = this._emojiData.getRecentlyUsed();
-            const recentEmojis = recents.map(e => {
-                const found = this._emojiData._emojis.find(x => x.e === e);
-                return found || { e };
-            });
+            const recentEmojis = recents
+                .map(e => this._emojiData.getEmoji(e))
+                .filter(e => e !== null);
             const smileys = this._emojiData.getCategory('Smileys & Emotion').slice(0, 40);
             emojis = [...recentEmojis, ...smileys];
         }
@@ -182,12 +244,17 @@ class EmojiView extends St.BoxLayout {
     }
 
     _createEmojiButton(emojiItem) {
+        // display base character apply modifiers on copy
+        const displayChar = emojiItem.e;
         const btn = new St.Button({
             style_class: 'spotlight-emoji-btn',
             can_focus: true,
-            label: emojiItem.e,
+            label: displayChar,
             accessible_name: emojiItem.d || emojiItem.e,
         });
+
+        // store full emoji item on button for activation
+        btn._emojiItem = emojiItem;
 
         // tooltip on hover
         btn.connect('notify::hover', (actor) => {
@@ -212,13 +279,13 @@ class EmojiView extends St.BoxLayout {
             }
         });
 
-        btn.connect('clicked', () => this._activateEmoji(emojiItem.e));
+        btn.connect('clicked', () => this._activateEmoji(emojiItem));
 
         // keyboard support enter activates
         btn.connect('key-press-event', (actor, event) => {
             const symbol = event.get_key_symbol();
             if (symbol === Clutter.KEY_Return || symbol === Clutter.KEY_KP_Enter) {
-                this._activateEmoji(emojiItem.e);
+                this._activateEmoji(emojiItem);
                 return Clutter.EVENT_STOP;
             }
             return Clutter.EVENT_PROPAGATE;
@@ -227,10 +294,17 @@ class EmojiView extends St.BoxLayout {
         return btn;
     }
 
-    _activateEmoji(emojiChar) {
+    _activateEmoji(emojiItem) {
+        // apply skin tone and gender modifiers based on settings
+        const finalEmoji = this._emojiData.applyModifiers(emojiItem);
+
+        // track popularity
+        this._emojiData.incrementClick(emojiItem.e);
+
         // copy to clipboard without adding to clipboard history
-        this._clipboardManager.setText(emojiChar);
-        this._emojiData.addRecentlyUsed(emojiChar);
+        this._clipboardManager.setText(finalEmoji);
+        this._emojiData.addRecentlyUsed(emojiItem.e);
+
         if (this._settings.get_boolean('paste-on-select'))
             triggerPaste();
         if (this._onSelect)
@@ -242,10 +316,16 @@ class EmojiView extends St.BoxLayout {
             GLib.source_remove(this._tooltipTimeoutId);
             this._tooltipTimeoutId = 0;
         }
+        // disconnect setting handlers
+        for (const id of this._settingHandlerIds)
+            this._settings.disconnect(id);
+        this._settingHandlerIds = [];
+
         for (const btn of this._buttons)
             btn.destroy();
         this._buttons = [];
         this._categoryButtons = [];
+        this._toneButtons = [];
         super.destroy();
     }
 });
