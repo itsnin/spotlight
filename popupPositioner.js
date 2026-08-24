@@ -15,17 +15,15 @@ export class PopupPositioner {
     // that is done so the caller can grab focus and start key capture only
     // once the popup is actually visible on screen
     showCentered(onShown) {
-        const monitor = Main.layoutManager.primaryMonitor;
-
+        const monitor = this.getTargetMonitor();
         // popup then grows downward as results appear without recentering since
         // recentering on every size change makes the popup visibly drift upward
 
-        // width is fixed at 520px apple philosophy one perfect size no settings
+        // width is fixed at 520px design philosophy one perfect size no settings
         // capped at 85 percent of monitor width so it never overflows
         const popupWidth = Math.min(520, Math.floor(monitor.width * 0.85));
         this._popup.set_width(popupWidth);
         this._popup.queue_relayout();
-
         // all sizes are in logical pixels and gnome handles hidpi
         // scaling automatically we never scale ourselves
 
@@ -34,15 +32,28 @@ export class PopupPositioner {
         // is why this is deferred through an idle source rather than done inline
         this._idleId = GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
             this._idleId = 0;
-            this._center(popupWidth);
+            this._center(popupWidth, monitor);
             this._popup.show();
             onShown();
             return GLib.SOURCE_REMOVE;
         });
     }
 
-    _center(popupWidth) {
-        const monitor = Main.layoutManager.primaryMonitor;
+    // always opens on the monitor where the cursor currently is
+    // works correctly on both single and multi monitor setups
+    // falls back to primary monitor if cursor position cannot be determined
+    getTargetMonitor() {
+        const [px, py] = global.get_pointer();
+        for (const m of Main.layoutManager.monitors) {
+            if (px >= m.x && px < m.x + m.width &&
+                py >= m.y && py < m.y + m.height) {
+                return m;
+            }
+        }
+        return Main.layoutManager.primaryMonitor;
+    }
+
+    _center(popupWidth, monitor) {
         const [, naturalHeight] = this._popup.get_preferred_height(popupWidth);
         this._popup.set_position(
             Math.floor(monitor.x + (monitor.width - popupWidth) / 2),

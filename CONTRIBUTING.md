@@ -38,7 +38,7 @@ On Wayland, restarting GNOME Shell requires logging out and logging back in.
 
 Spotlight permanently takes over GNOME Overview's search infrastructure. On enable, it steals the Overview's search entry and search controller widgets and hides them. When the popup opens, these already-stolen widgets are reparented into the popup. When the popup closes, they are removed from the popup but kept stolen and hidden. They are only returned to the Overview on disable.
 
-The codebase consists of 6 JavaScript files at the root level for the shell process and 2 inside `prefs/` for the preferences process. `extension.js` must reside at the root of the archive for the GNOME Extensions website to locate it. The preferences files are isolated under `prefs/` because they execute in a separate GTK4 process and must not import shell-only libraries (`St`, `Clutter`, `Meta`, `Shell`), just as shell-side files must not import GTK-only libraries (`Gtk`, `Gdk`, `Adw`).
+The codebase consists of 6 JavaScript files at the root level for the shell process and 3 inside `prefs/` for the preferences process. `extension.js` must reside at the root of the archive for the GNOME Extensions website to locate it. The preferences files are isolated under `prefs/` because they execute in a separate GTK4 process and must not import shell-only libraries (`St`, `Clutter`, `Meta`, `Shell`), just as shell-side files must not import GTK-only libraries (`Gtk`, `Gdk`, `Adw`).
 
 ### Entry Points
 
@@ -60,6 +60,7 @@ The codebase consists of 6 JavaScript files at the root level for the shell proc
 Each preference page resides in its own file under `prefs/`, since these run exclusively in the preferences process and must remain isolated from shell-only code:
 
 - **`prefs/shortcutPage.js`** — Keyboard shortcut capture and configuration.
+- **`prefs/appearancePage.js`** — Visual theme selection (Default, Dark, Light).
 - **`prefs/aboutPage.js`** — About section.
 
 ## Search Providers
@@ -86,6 +87,7 @@ Search priority and behavior are entirely controlled by GNOME Shell, not by Spot
 - No LLM-generated phrasing such as "here we", "let's", "we need to", "note that", "important:", "TODO", or "FIXME".
 - For obscure or uncommon code, provide both **what** and **why**. For conventional code, provide only **why**.
 - Wherever possible, include verified working links to the official GNOME Shell extension documentation at `https://gjs.guide`.
+- Maximum three consecutive comment lines without intervening code. The fourth line must be code, or the structure must be refactored to interleave comments and code. Comments are annotations adjacent to the code they describe, not standalone paragraphs.
 
 ### Code Structure
 

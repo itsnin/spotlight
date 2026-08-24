@@ -5,6 +5,7 @@ import St from 'gi://St';
 import Shell from 'gi://Shell';
 import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
+import Gio from 'gi://Gio';
 import Clutter from 'gi://Clutter';
 import {PopupBackdrop} from './popupBackdrop.js';
 import {PopupPositioner} from './popupPositioner.js';
@@ -22,6 +23,10 @@ class SpotlightPopup extends St.Widget {
         this._settings = settings;
         this._backdrop = null;
         this._positioner = new PopupPositioner(this);
+        // gnome interface settings used to detect system color scheme
+        this._ifaceSettings = new Gio.Settings({
+            schema_id: 'org.gnome.desktop.interface',
+        });
         this._visible = false;
         this._openIdleId = 0;
         this._closeIdleId = 0;
@@ -48,6 +53,7 @@ class SpotlightPopup extends St.Widget {
         this._searchResults = null;
         this._textChangedEventId = 0;
         this._originalActivateDefault = null;
+        this._overviewKeyCaptureId = 0;
 
         // hide popup when new windows appear app launched from result
         global.display.connectObject(
@@ -80,8 +86,8 @@ class SpotlightPopup extends St.Widget {
             Main.overview._originalToggle = Main.overview.toggle;
             Main.overview.toggle = () => {
                 // if our popup is visible focus it instead
-                if (this._search && this._search.visible)
-                    this._search._text.get_parent().grab_key_focus();
+                if (this._visible)
+                    this._entry.grab_key_focus();
                 else
                     Main.overview._originalToggle();
             };
@@ -115,6 +121,35 @@ class SpotlightPopup extends St.Widget {
         if (!this._search._originalSearchCancelled) {
             this._search._originalSearchCancelled = this._search._searchCancelled;
             this._search._searchCancelled = () => {};
+        }
+
+        // overview and app grid have a start typing to search feature when
+        // user presses any printable character it tries to show search view
+
+        // since we permanently stole the search widgets this would show a
+        // blank screen intercept printable keys at stage level before the
+        // overview sees them and consume them so nothing happens
+
+        // only intercept when overview is visible and our popup is not visible
+        // non printable keys arrows enter esc tab etc pass through normally
+        if (this._overviewKeyCaptureId === 0) {
+            this._overviewKeyCaptureId = global.stage.connect(
+                'captured-event',
+                (actor, event) => {
+                    if (event.type() !== Clutter.EventType.KEY_PRESS)
+                        return Clutter.EVENT_PROPAGATE;
+                    if (!Main.overview.visible || this._visible)
+                        return Clutter.EVENT_PROPAGATE;
+                    const unicode = Clutter.keysym_to_unicode(
+                        event.get_key_symbol(),
+                    );
+                    // unicode 0x20 and above are printable characters
+                    // control characters enter esc tab arrows etc pass through
+                    if (unicode >= 0x20)
+                        return Clutter.EVENT_STOP;
+                    return Clutter.EVENT_PROPAGATE;
+                },
+            );
         }
     }
 
@@ -196,9 +231,13 @@ class SpotlightPopup extends St.Widget {
             this._search.get_parent().remove_child(this._search);
         this._content.add_child(this._search);
 
+        // apply theme before showing so colors are correct on first paint
+        this._applyTheme();
+
         // backdrop first then popup later addition to chrome means higher
         // in stacking order so popup sits above the backdrop naturally
-        this._backdrop = new PopupBackdrop(() => this.close());
+        const monitor = this._positioner.getTargetMonitor();
+        this._backdrop = new PopupBackdrop(() => this.close(), monitor);
         this._backdrop.show();
 
         if (this.get_parent())
@@ -206,7 +245,7 @@ class SpotlightPopup extends St.Widget {
         Main.layoutManager.addChrome(this);
 
         this._positioner.showCentered(() => {
-            this._search._text.get_parent().grab_key_focus();
+            this._entry.grab_key_focus();
         });
 
         // clear any previous search text start with empty
@@ -214,8 +253,8 @@ class SpotlightPopup extends St.Widget {
         // hide results area when empty keeps popup compact at idle
         this._search.visible = false;
 
-        // show results only when user has typed something
-        // this prevents no results message from taking up vertical space
+        // toggle results visibility based on text content
+        // hide when empty keeps popup compact show when typed gives results
         if (!this._textChangedEventId) {
             this._textChangedEventId = this._search._text.connect(
                 'text-changed',
@@ -241,21 +280,38 @@ class SpotlightPopup extends St.Widget {
 
         // close on key-focus loss unless focus went to a popup-menu
         // some results open menus and those should not dismiss us
+
+        // null focus is transient during actor tree mutations clutter
+        // clears focus to null when hiding focused actor refocus entry
+        // immediately to prevent close and keep typing working
         global.stage.connectObject(
             'notify::key-focus', () => {
-                if (!this._entry || !this._visible)
+                if (!this._visible)
                     return;
                 const focus = global.stage.get_key_focus();
-                const appearFocused = focus && (
-                    this._entry.contains(focus) ||
-                    this._searchResults.contains(focus)
-                );
-                if (!appearFocused) {
-                    if (focus && focus.style_class &&
-                        focus.style_class.includes('popup-menu'))
-                        return;
-                    this.close();
+
+                // null focus means actor was hidden and clutter cleared it
+                // refocus entry immediately prevents close and focus loss
+                if (!focus) {
+                    this._entry.grab_key_focus();
+                    return;
                 }
+
+                // never close while entry has focus user still typing
+                if (this._entry &&
+                    (this._entry === focus || this._entry.contains(focus)))
+                    return;
+
+                // focus anywhere within our widget tree is safe
+                if (this.contains(focus))
+                    return;
+
+                // popup menus from results should not dismiss us
+                if (focus.style_class &&
+                    focus.style_class.includes('popup-menu'))
+                    return;
+
+                this.close();
             },
             this,
         );
@@ -283,6 +339,28 @@ class SpotlightPopup extends St.Widget {
             this._doClose();
             return GLib.SOURCE_REMOVE;
         });
+    }
+
+    // determines whether to use light theme based on user preference
+    // and gnome system color scheme when preference is set to default
+    _shouldUseLightTheme() {
+        const pref = this._settings.get_string('theme-preference');
+        if (pref === 'light')
+            return true;
+        if (pref === 'dark')
+            return false;
+        // default follows gnome system color scheme
+        const scheme = this._ifaceSettings.get_string('color-scheme');
+        return scheme === 'prefer-light';
+    }
+
+    // applies or removes theme light class on our content container
+    // stylesheet overrides all colors when this class is present
+    _applyTheme() {
+        if (this._shouldUseLightTheme())
+            this._content.add_style_class_name('theme-light');
+        else
+            this._content.remove_style_class_name('theme-light');
     }
 
     // removes widgets from our popup but keeps them stolen and hidden
@@ -340,6 +418,12 @@ class SpotlightPopup extends St.Widget {
     destroy() {
         // synchronous close destroy runs outside signal dispatch
         this._syncClose();
+
+        // disconnect overview key capture connected with regular connect
+        if (this._overviewKeyCaptureId !== 0) {
+            global.stage.disconnect(this._overviewKeyCaptureId);
+            this._overviewKeyCaptureId = 0;
+        }
 
         // disconnect all remaining signals connected with connectObject
         global.display.disconnectObject(this);

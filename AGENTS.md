@@ -6,9 +6,9 @@ if you are an ai agent read the whole file do not skim
 
 ## what this extension is
 
-spotlight is a compact launcher for gnome shell inspired by macos spotlight you press a shortcut a centered popup appears you type and results show up in real time
+spotlight is a compact launcher for gnome shell inspired by a keyboard-driven launcher design you press a shortcut a centered popup appears you type and results show up in real time
 
-the goal is to feel like macos spotlight not look like a gnome shell extension that means dark compact rounded solid dark background no title bar no chrome just a floating input box with results below it
+the goal is to feel like a dedicated launcher not look like a generic shell extension that means dark compact rounded solid dark background no title bar no chrome just a floating input box with results below it
 
 ## design philosophy
 
@@ -18,15 +18,15 @@ the popup has no title bar no close button no backdrop overlay clicking outside 
 
 ### dark not black
 
-the background is `#1c1c1e` not pure black pure black looks harsh on oled and wrong on ips the text is `#f5f5f7` not pure white to reduce eye strain selection uses `rgba(255,255,255,0.12)` a subtle white overlay not the gnome blue accent this matches the macos spotlight dark appearance
+the background is `#1c1c1e` not pure black pure black looks harsh on oled and wrong on ips the text is `#f5f5f7` not pure white to reduce eye strain selection uses `rgba(255,255,255,0.12)` a subtle white overlay not the gnome blue accent this matches a clean dark appearance
 
 ### compact not full screen
 
-the popup is 520px wide centered on the primary monitor it grows downward as results appear but never exceeds 380px total height fits minimum supported resolution 1366x768 with 37px bottom margin zero cropping results scroll internally via gnome built in StScrollView this keeps it unobtrusive across all supported resolutions
+the popup is 520px wide centered on the monitor where the cursor currently sits it grows downward as results appear but never exceeds 380px total height fits minimum supported resolution 1366x768 with 37px bottom margin zero cropping results scroll internally via gnome built in StScrollView this keeps it unobtrusive across all supported resolutions
 
 ### solid dark background no animations
 
-the popup uses a solid dark background color #1c1c1e for maximum readability no blur or transparency effects the popup appears instantly with no fade-in or slide animation this is intentional macos spotlight is fast extensions that animate feel slow
+the popup uses a solid dark background color #1c1c1e for maximum readability no blur or transparency effects the popup appears instantly with no fade-in or slide animation this is intentional instant response feels fast extensions that animate feel slow
 
 ## gnome shell version support
 
@@ -52,7 +52,6 @@ the codebase calls `set_vertical(true)` after `_init()` for st box layouts not `
 
 `vertical` and `set_vertical()` are confirmed to exist across the full 45 through 50 range so this is the correct choice do not switch back to `orientation` in the constructor without first confirming it against the actual minimum supported version not just the newest one
 
-
 ### single package for all versions
 
 ego supports multi-versioning where you upload separate zips for different gnome versions spotlight does not do this one zip works on all supported versions if a future gnome version breaks something fix it in the same codebase do not maintain a fork
@@ -66,6 +65,7 @@ on enable spotlight permanently steals the overview's search entry and search co
 when the popup opens spotlight reparents the already-stolen widgets into its popup when the popup closes spotlight removes them from the popup but keeps them stolen and hidden they are only returned to the overview on disable
 
 this is achieved through two methods on SpotlightPopup
+
 - `stealOverviewSearch()` called once from extension.enable()
 - `returnOverviewSearch()` called once from extension.disable()
 
@@ -87,12 +87,14 @@ spotlight@nin/
         org.gnome.shell.extensions.spotlight.gschema.xml
     prefs/                    preference pages
         shortcutPage.js
+        appearancePage.js
         aboutPage.js
 ```
 
 ### process isolation
 
 gnome shell extensions run in two processes
+
 - the shell process runs `extension.js` and all root-level js files it has access to `St` `Clutter` `Meta` `Shell` `GLib` `GObject` `Gio` and `Main` it must not import `Gtk` `Gdk` or `Adw` these conflict with clutter
 - the preferences process runs `prefs.js` and `prefs/*.js` it has access to `Gtk` `Gdk` `Adw` `Gio` it must not import `St` `Clutter` `Meta` or `Shell` these conflict with gtk
 
@@ -131,7 +133,7 @@ if the monitor geometry changes while the popup is open for example the user cha
 
 the popup does not use `Main.pushModal` a modal grab swallows pointer events before they reach the stage which makes click-outside detection impossible instead the popup uses two mechanisms working together
 
-first a transparent full-screen reactive `St.Widget` called the backdrop is added to the chrome layer before the popup itself the backdrop covers the entire primary monitor and listens for `button-release-event` when the user clicks anywhere outside the popup the click lands on the backdrop and the popup closes the popup sits above the backdrop in the chrome stack so clicks on the popup itself are received normally
+first a transparent full-screen reactive `St.Widget` called the backdrop is added to the chrome layer before the popup itself the backdrop covers the entire target monitor and listens for `button-release-event` when the user clicks anywhere outside the popup the click lands on the backdrop and the popup closes the popup sits above the backdrop in the chrome stack so clicks on the popup itself are received normally
 
 second the popup monitors `notify::key-focus` on `global.stage` if keyboard focus moves to an actor outside the popup for example via alt-tab the popup closes unless focus moves to a popup-menu which some results open and should not dismiss us
 
@@ -165,6 +167,7 @@ see https://gjs.guide/extensions/review-guidelines/review-guidelines.html#only-u
 - no llm-smell phrases like "here we" "let's" "we need to" "note that" "important:" "todo" "fixme"
 - for obscure or uncommon code provide both what and why for common code provide only why
 - provide verified working links whenever possible prefer https://gjs.guide links over blog posts
+- maximum three consecutive comment lines without intervening code the fourth line must be code or the structure must be refactored to interleave comments and code comments are annotations not paragraphs
 
 ### code structure
 
@@ -212,6 +215,37 @@ the schema file is `schemas/org.gnome.shell.extensions.spotlight.gschema.xml` th
 the `gschemas.compiled` binary is not shipped in the zip gnome shell 44 and later compiles schemas automatically on install shipping the compiled binary is unnecessary
 
 see https://gjs.guide/extensions/development/preferences.html#gsettings
+
+### schema keys
+
+- `toggle-shortcut` type `as` default `['<Control>space']` keyboard shortcut to open and close the popup
+- `theme-preference` type `s` default `'default'` controls visual theme
+  - `'default'` follows gnome system color scheme via `org.gnome.desktop.interface color-scheme`
+  - `'dark'` always uses dark appearance
+  - `'light'` always uses light appearance
+
+## appearance theme
+
+the popup supports three theme modes controlled by the `theme-preference` gsettings key
+
+dark is the default stylesheet colors background `#1c1c1e` text `#f5f5f7` selection `rgba(255,255,255,0.12)`
+
+light mode is applied by adding the `theme-light` style class to the content container
+light colors background `#ffffff` text `#1d1d1f` selection `rgba(0,122,255,0.12)`
+
+the theme class is applied in `_applyTheme()` called from `_doOpen()` before the popup is shown
+
+theme is determined once at open time it does not update live if the system theme changes while the popup is open
+
+## multi monitor behavior
+
+the popup always opens on the monitor where the cursor currently sits
+
+`PopupPositioner.getTargetMonitor()` calls `global.get_pointer()` and checks which monitor rectangle contains the cursor coordinates
+
+falls back to `Main.layoutManager.primaryMonitor` if cursor position cannot be determined
+
+the backdrop covers only the target monitor users on other monitors can interact normally
 
 ## testing
 

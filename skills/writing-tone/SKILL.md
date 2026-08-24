@@ -2,7 +2,6 @@
 name: writing-tone
 description: How to write any prose document (README, AGENTS.md, CONTRIBUTING.md, commit messages, PR descriptions, comments to the user) so it reads like a real, sharp person wrote it instead of an AI. Use this whenever producing markdown docs, project documentation, or long-form written explanation for this user - not just on request, every time. Keeps docs and code comments in two separate registers rather than blending them, and applies to any project.
 ---
-
 # writing tone
 
 this exists because the same mistake kept happening in both directions: docs that read
@@ -45,6 +44,54 @@ docs" - it's a different, terser register on purpose, because comments sit next 
 and get read in short bursts, not start to finish. picture a sharp senior engineer
 leaving a quick note for the next person reading the same line - not a formal writeup, not
 a diary entry, just the minimum needed to know why this line exists.
+
+### the interleaving rule for code comments - ABSOLUTELY FORBIDDEN pattern
+
+the following pattern is categorically prohibited. under no circumstances may a
+contributor produce it, and any reviewer who encounters it must reject the change until
+it is corrected:
+
+```
+// comment comment comment comment
+// comment comment comment comment
+// comment comment comment comment
+// comment comment comment comment
+code code code code code
+code code code code code
+code code code code code
+```
+
+paragraph-like blocks of comments stacked together, then blocks of code stacked
+together, constitute an anti-pattern that defeats the entire purpose of inline
+annotation. a comment separated from the code it describes by several intervening lines
+or by other comments loses its referential clarity and becomes indistinguishable from
+general exposition, which belongs in documentation, not in source.
+
+the correct and required pattern is strict interleaving:
+
+```
+// comment explaining the next line
+code line one
+
+// comment explaining the next block
+code line two
+code line three
+
+// comment explaining the next line
+code line four
+```
+
+each comment or small group of comments (maximum three consecutive lines) must sit
+immediately adjacent to the exact code it describes. when a different concept begins, a
+blank line separates it, and the next comment precedes its corresponding code. this
+maintains the invariant that a reader scanning downward always encounters the rationale
+for a construct immediately before encountering the construct itself.
+
+enforcement: any block of four or more consecutive comment lines without an intervening
+line of code constitutes a violation of this rule, regardless of how well-written the
+individual comments may be. the remedy is not to delete the information but to
+restructure it: either distribute the comments among the code they describe, or elevate
+the material to a markdown document where extended exposition belongs.
 
 if in doubt which register applies: is this text in a `.md` file, a commit message, or a
 PR description → docs rule. is this text a `//` or `#` comment inside a source file →
@@ -118,7 +165,8 @@ nouns, punctuation dropped to the point sentences run together).
 for code comments: check for capitalization or punctuation that's crept in beyond what
 correctness requires - a capitalized sentence start, a period on a line that didn't need
 one, a proper-sounding tone that doesn't match the terse, lowercase-first target
-described above.
+described above. verify strict interleaving: no block of four or more consecutive comment
+lines without intervening code.
 
 for both: check for any sentence that implicitly or explicitly puts down another project
 or approach, any named project that should have been described generically instead if
