@@ -6,9 +6,8 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 // sizing and centering happens once per open based on the empty-state
 // height just the search entry before any results render
 export class PopupPositioner {
-    constructor(popup, settings) {
+    constructor(popup) {
         this._popup = popup;
-        this._settings = settings;
         this._idleId = 0;
     }
 
@@ -16,11 +15,11 @@ export class PopupPositioner {
     // that is done so the caller can grab focus and start key capture only
     // once the popup is actually visible on screen
     showCentered(onShown) {
-        const monitor = this._getTargetMonitor();
+        const monitor = this.getTargetMonitor();
         // popup then grows downward as results appear without recentering since
         // recentering on every size change makes the popup visibly drift upward
 
-        // width is fixed at 520px apple philosophy one perfect size no settings
+        // width is fixed at 520px design philosophy one perfect size no settings
         // capped at 85 percent of monitor width so it never overflows
         const popupWidth = Math.min(520, Math.floor(monitor.width * 0.85));
         this._popup.set_width(popupWidth);
@@ -40,29 +39,17 @@ export class PopupPositioner {
         });
     }
 
-    // determines which monitor to use based on user preference
-    // primary cursor or specific index falls back to primary on any error
-    _getTargetMonitor() {
-        const behavior = this._settings.get_string('monitor-behavior');
-
-        if (behavior === 'cursor') {
-            const [px, py] = global.get_pointer();
-            for (const m of Main.layoutManager.monitors) {
-                if (px >= m.x && px < m.x + m.width &&
-                    py >= m.y && py < m.y + m.height) {
-                    return m;
-                }
+    // always opens on the monitor where the cursor currently is
+    // works correctly on both single and multi monitor setups
+    // falls back to primary monitor if cursor position cannot be determined
+    getTargetMonitor() {
+        const [px, py] = global.get_pointer();
+        for (const m of Main.layoutManager.monitors) {
+            if (px >= m.x && px < m.x + m.width &&
+                py >= m.y && py < m.y + m.height) {
+                return m;
             }
         }
-
-        if (behavior !== 'primary' && behavior !== 'cursor') {
-            const idx = parseInt(behavior, 10);
-            if (!isNaN(idx) && idx >= 0 &&
-                idx < Main.layoutManager.monitors.length) {
-                return Main.layoutManager.monitors[idx];
-            }
-        }
-
         return Main.layoutManager.primaryMonitor;
     }
 
@@ -72,12 +59,6 @@ export class PopupPositioner {
             Math.floor(monitor.x + (monitor.width - popupWidth) / 2),
             Math.floor(monitor.y + (monitor.height - naturalHeight) / 2),
         );
-    }
-
-    // public accessor for target monitor used by backdrop to cover
-    // the same monitor where the popup will appear
-    getTargetMonitor() {
-        return this._getTargetMonitor();
     }
 
     stop() {

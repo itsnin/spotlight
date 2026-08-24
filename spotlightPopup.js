@@ -5,6 +5,7 @@ import St from 'gi://St';
 import Shell from 'gi://Shell';
 import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
+import Gio from 'gi://Gio';
 import Clutter from 'gi://Clutter';
 import {PopupBackdrop} from './popupBackdrop.js';
 import {PopupPositioner} from './popupPositioner.js';
@@ -21,7 +22,11 @@ class SpotlightPopup extends St.Widget {
 
         this._settings = settings;
         this._backdrop = null;
-        this._positioner = new PopupPositioner(this, this._settings);
+        this._positioner = new PopupPositioner(this);
+        // gnome interface settings used to detect system color scheme
+        this._ifaceSettings = new Gio.Settings({
+            schema_id: 'org.gnome.desktop.interface',
+        });
         this._visible = false;
         this._openIdleId = 0;
         this._closeIdleId = 0;
@@ -331,6 +336,28 @@ class SpotlightPopup extends St.Widget {
             this._doClose();
             return GLib.SOURCE_REMOVE;
         });
+    }
+
+    // determines whether to use light theme based on user preference
+    // and gnome system color scheme when preference is set to default
+    _shouldUseLightTheme() {
+        const pref = this._settings.get_string('theme-preference');
+        if (pref === 'light')
+            return true;
+        if (pref === 'dark')
+            return false;
+        // default follows gnome system color scheme
+        const scheme = this._ifaceSettings.get_string('color-scheme');
+        return scheme === 'prefer-light';
+    }
+
+    // applies or removes theme light class on our content container
+    // stylesheet overrides all colors when this class is present
+    _applyTheme() {
+        if (this._shouldUseLightTheme())
+            this._content.add_style_class_name('theme-light');
+        else
+            this._content.remove_style_class_name('theme-light');
     }
 
     // removes widgets from our popup but keeps them stolen and hidden

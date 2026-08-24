@@ -1,7 +1,7 @@
 /* spotlight - stylesheet */
 /* reuses gnome overview's search widgets styles them to fit our popup */
-/* colors: background #1c1c1e text #f5f5f7 selection rgba(255,255,255,0.12) */
-
+/* colors dark background #1c1c1e text #f5f5f7 selection rgba(255,255,255,0.12) */
+/* colors light background #ffffff text #1d1d1f selection rgba(0,122,255,0.12) */
 /* global reset - kill inherited focus outlines or borders from parent theme */
 .spotlight-container,
 .spotlight-container * {
@@ -10,8 +10,7 @@
   box-shadow: none;
   -st-icon-style: symbolic;
 }
-
-/* container - single unified window */
+/* container - single unified window dark default */
 .spotlight-container {
   background-color: #1c1c1e;
   border-radius: 36px;
@@ -20,8 +19,13 @@
   color: #f5f5f7;
   max-height: 380px;
 }
-
-/* search entry - make it blend into unified window */
+/* light theme overrides applied when container has theme-light class */
+.spotlight-container.theme-light {
+  background-color: #ffffff;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+  color: #1d1d1f;
+}
+/* search entry - make it blend into unified window dark default */
 .spotlight-container > StEntry,
 .spotlight-container > StEntry:focus {
   background-color: transparent;
@@ -34,19 +38,25 @@
   caret-color: #ffffff;
   selection-background-color: #0a84ff;
 }
-
+.spotlight-container.theme-light > StEntry,
+.spotlight-container.theme-light > StEntry:focus {
+  color: #1d1d1f;
+  caret-color: #000000;
+  selection-background-color: rgba(0, 122, 255, 0.2);
+}
 .spotlight-container > StEntry StLabel.hint-text {
   color: rgba(245, 245, 247, 0.35);
 }
-
+.spotlight-container.theme-light > StEntry StLabel.hint-text {
+  color: rgba(29, 29, 31, 0.35);
+}
 /* search results area - transparent so it blends with container */
 .spotlight-container .search-section-content {
   background-color: transparent !important;
   border-radius: 12px;
   padding: 2px;
 }
-
-/* individual result rows */
+/* individual result rows dark default */
 .spotlight-container .list-search-result,
 .spotlight-container .overview-tile,
 .spotlight-container .search-provider-icon,
@@ -55,8 +65,13 @@
   color: #f5f5f7;
   border-radius: 12px;
 }
-
-/* selected / hover state */
+.spotlight-container.theme-light .list-search-result,
+.spotlight-container.theme-light .overview-tile,
+.spotlight-container.theme-light .search-provider-icon,
+.spotlight-container.theme-light .list-search-provider-content {
+  color: #1d1d1f;
+}
+/* selected / hover state dark default */
 .spotlight-container .list-search-result:selected,
 .spotlight-container .overview-tile:selected,
 .spotlight-container .list-search-result:hover,
@@ -70,20 +85,39 @@
   background-color: rgba(255, 255, 255, 0.12) !important;
   color: #ffffff;
 }
-
-/* result text colors */
+.spotlight-container.theme-light .list-search-result:selected,
+.spotlight-container.theme-light .overview-tile:selected,
+.spotlight-container.theme-light .list-search-result:hover,
+.spotlight-container.theme-light .overview-tile:hover,
+.spotlight-container.theme-light .search-provider-icon:hover,
+.spotlight-container.theme-light .list-search-provider-content:hover,
+.spotlight-container.theme-light .list-search-result:focus,
+.spotlight-container.theme-light .overview-tile:focus,
+.spotlight-container.theme-light .search-provider-icon:focus,
+.spotlight-container.theme-light .list-search-provider-content:focus {
+  background-color: rgba(0, 122, 255, 0.12) !important;
+  color: #000000;
+}
+/* result text colors dark default */
 .spotlight-container .list-search-result,
 .spotlight-container .list-search-result StLabel {
   color: #f5f5f7;
 }
-
+.spotlight-container.theme-light .list-search-result,
+.spotlight-container.theme-light .list-search-result StLabel {
+  color: #1d1d1f;
+}
 .spotlight-container .list-search-result:selected StLabel,
 .spotlight-container .list-search-result:hover StLabel,
 .spotlight-container .list-search-result:focus StLabel {
   color: #ffffff;
 }
-
-/* provider section headers */
+.spotlight-container.theme-light .list-search-result:selected StLabel,
+.spotlight-container.theme-light .list-search-result:hover StLabel,
+.spotlight-container.theme-light .list-search-result:focus StLabel {
+  color: #000000;
+}
+/* provider section headers dark default */
 .spotlight-container .search-provider-icon {
   color: #98989d;
   font-size: 10px;
@@ -91,4 +125,7 @@
   text-transform: uppercase;
   letter-spacing: 1px;
   padding: 6px 12px 2px 12px;
+}
+.spotlight-container.theme-light .search-provider-icon {
+  color: #6e6e73;
 }

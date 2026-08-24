@@ -7,7 +7,7 @@ export function buildAboutPage() {
     const group = new Adw.PreferencesGroup({title: 'About'});
     group.add(new Adw.ActionRow({
         title: 'Spotlight',
-        subtitle: 'A compact macOS Spotlight inspired launcher for GNOME Shell.',
+        subtitle: 'A compact Spotlight inspired launcher for GNOME Shell.',
     }));
     group.add(new Adw.ActionRow({
         title: 'Version',
