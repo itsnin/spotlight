@@ -231,6 +231,9 @@ class SpotlightPopup extends St.Widget {
             this._search.get_parent().remove_child(this._search);
         this._content.add_child(this._search);
 
+        // apply theme before showing so colors are correct on first paint
+        this._applyTheme();
+
         // backdrop first then popup later addition to chrome means higher
         // in stacking order so popup sits above the backdrop naturally
         const monitor = this._positioner.getTargetMonitor();

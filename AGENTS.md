@@ -6,9 +6,9 @@ if you are an ai agent read the whole file do not skim
 
 ## what this extension is
 
-spotlight is a compact launcher for gnome shell inspired by macos spotlight you press a shortcut a centered popup appears you type and results show up in real time
+spotlight is a compact launcher for gnome shell inspired by a compact keyboard-driven launcher design you press a shortcut a centered popup appears you type and results show up in real time
 
-the goal is to feel like macos spotlight not look like a gnome shell extension that means dark compact rounded solid dark background no title bar no chrome just a floating input box with results below it
+the goal is to feel like a dedicated launcher not look like a generic shell extension that means dark compact rounded solid dark background no title bar no chrome just a floating input box with results below it
 
 ## design philosophy
 
@@ -18,15 +18,15 @@ the popup has no title bar no close button no backdrop overlay clicking outside 
 
 ### dark not black
 
-the background is `#1c1c1e` not pure black pure black looks harsh on oled and wrong on ips the text is `#f5f5f7` not pure white to reduce eye strain selection uses `rgba(255,255,255,0.12)` a subtle white overlay not the gnome blue accent this matches the macos spotlight dark appearance
+the background is `#1c1c1e` not pure black pure black looks harsh on oled and wrong on ips the text is `#f5f5f7` not pure white to reduce eye strain selection uses `rgba(255,255,255,0.12)` a subtle white overlay not the gnome blue accent this matches a clean dark appearance
 
 ### compact not full screen
 
-the popup is 520px wide centered on the primary monitor it grows downward as results appear but never exceeds 380px total height fits minimum supported resolution 1366x768 with 37px bottom margin zero cropping results scroll internally via gnome built in StScrollView this keeps it unobtrusive across all supported resolutions
+the popup is 520px wide centered on the monitor where the cursor currently sits it grows downward as results appear but never exceeds 380px total height fits minimum supported resolution 1366x768 with 37px bottom margin zero cropping results scroll internally via gnome built in StScrollView this keeps it unobtrusive across all supported resolutions
 
 ### solid dark background no animations
 
-the popup uses a solid dark background color #1c1c1e for maximum readability no blur or transparency effects the popup appears instantly with no fade-in or slide animation this is intentional macos spotlight is fast extensions that animate feel slow
+the popup uses a solid dark background color #1c1c1e for maximum readability no blur or transparency effects the popup appears instantly with no fade-in or slide animation this is intentional instant response feels fast extensions that animate feel slow
 
 ## gnome shell version support
 
@@ -87,6 +87,7 @@ spotlight@nin/
         org.gnome.shell.extensions.spotlight.gschema.xml
     prefs/                    preference pages
         shortcutPage.js
+        appearancePage.js
         aboutPage.js
 ```
 

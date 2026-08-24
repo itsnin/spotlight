@@ -1,7 +1,6 @@
 // spotlight - about preferences page
 // SPDX-License-Identifier: GPL-3.0-or-later
 import Adw from 'gi://Adw';
-import GLib from 'gi://GLib';
 
 export function buildAboutPage() {
     const group = new Adw.PreferencesGroup({title: 'About'});

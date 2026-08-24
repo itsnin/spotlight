@@ -1,6 +1,6 @@
 # Spotlight
 
-A compact, macOS Spotlight–inspired launcher for GNOME Shell 45 through 50.
+A compact Spotlight-inspired launcher for GNOME Shell 45 through 50.
 
 [Repository](https://github.com/itsnin/spotlight) • [GNOME Extensions](https://extensions.gnome.org/extension/10666/spotlight/)
 
@@ -14,7 +14,7 @@ A compact, macOS Spotlight–inspired launcher for GNOME Shell 45 through 50.
 
 ## Overview
 
-Spotlight is a keyboard-driven launcher that surfaces results the moment you begin typing. It reuses GNOME's built-in search infrastructure to provide results from installed applications, calculator, files, system power actions, GNOME Settings panels, and any third-party search providers you have installed. The popup is anchored at the center of the primary monitor, grows downward as results accumulate, and dismisses the instant you click elsewhere, press `Esc`, or toggle the shortcut again.
+Spotlight is a keyboard-driven launcher that surfaces results the moment you begin typing. It reuses GNOME's built-in search infrastructure to provide results from installed applications, calculator, files, system power actions, GNOME Settings panels, and any third-party search providers you have installed. The popup is anchored at the center of the monitor where the cursor currently sits, grows downward as results accumulate, and dismisses the instant you click elsewhere, press `Esc`, or toggle the shortcut again.
 
 Spotlight replaces GNOME Overview search entirely. While Spotlight is enabled, Overview search is permanently disabled. The Overview itself remains fully functional — only its search UI is replaced.
 
@@ -83,12 +83,13 @@ This approach means Spotlight automatically benefits from every search provider 
 | `popupPositioner.js` | Sizes, centers, and shows the popup via deferred idle callback |
 | `keybinding.js` | Keybinding manager using `Meta.Display.grab_accelerator` |
 | `prefs/shortcutPage.js` | Keyboard shortcut configuration |
+| `prefs/appearancePage.js` | Visual theme selection |
 | `prefs/aboutPage.js` | About section |
 
 ## Design Principles
 
 - **Dark, not black.** Background `#1c1c1e` with text `#f5f5f7`. Pure black is harsh on OLED and inaccurate on IPS panels.
-- **Compact.** 520 px wide, 380 px max height, centered on the primary monitor. Search results scroll internally via GNOME's built-in `St.ScrollView` when they exceed available space. Minimum supported resolution is 1366×768 — fits perfectly with 37 px bottom margin, zero cropping.
+- **Compact.** 520 px wide, 380 px max height, centered on the monitor where the cursor currently sits. Search results scroll internally via GNOME's built-in `St.ScrollView` when they exceed available space. Minimum supported resolution is 1366×768 — fits perfectly with 37 px bottom margin, zero cropping.
 - **Extreme rounded corners.** 36 px border radius on the popup.
 - **Solid dark background.** `#1c1c1e` with text `#f5f5f7` for maximum readability.
 - **Fixed anchor.** The popup is positioned once at open time and grows downward from that anchor. It never drifts upward when results appear.
