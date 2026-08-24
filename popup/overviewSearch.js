@@ -14,11 +14,10 @@ export function steal(popup) {
         Main.overview._originalToggle = Main.overview.toggle;
         Main.overview.toggle = () => {
             // individual search results call Main.overview.toggle() on activate
-            // if our popup is visible close it result activation means done searching
-            if (popup._visible) {
+            // super key also calls this to show overview
+            // close our popup either way and let original toggle do its job
+            if (popup._visible)
                 popup.close();
-                return;
-            }
             Main.overview._originalToggle();
         };
     }

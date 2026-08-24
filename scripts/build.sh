@@ -1,8 +1,20 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# requires bash will not run correctly under sh zsh or fish
 # Downloads and installs the latest Spotlight release from GitHub
 # Usage: ./scripts/build.sh
-#    or: curl -sL https://raw.githubusercontent.com/itsnin/spotlight/main/scripts/build.sh | bash
+#    or: curl -sL https://raw.githubusercontent.com/itsnin/spotlight/main/scripts/build.sh | sh
 set -e
+
+# re-exec with bash if invoked via sh or another shell
+if [ -z "$BASH_VERSION" ]; then
+    SCRIPT_URL="https://raw.githubusercontent.com/itsnin/spotlight/main/scripts/build.sh"
+    if [ -f "$0" ]; then
+        exec bash "$0" "$@"
+    else
+        curl -sL "$SCRIPT_URL" | bash
+        exit $?
+    fi
+fi
 
 # Configuration
 REPO_OWNER="itsnin"
@@ -40,6 +52,5 @@ rm -f "$TEMP_ZIP"
 echo ""
 echo "Extension installed successfully!"
 echo ""
-echo "To activate:"
-echo "  1. Log out and back in (required on Wayland)"
-echo "  2. Run: gnome-extensions enable ${UUID}"
+echo "On Wayland, log out and back in before enabling."
+echo "Then run: gnome-extensions enable ${UUID}"
