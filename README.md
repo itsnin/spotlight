@@ -67,7 +67,7 @@ Configurable options:
 - The toggle keyboard shortcut (default `Ctrl+Space`)
 - Visual theme: Default (follows GNOME system style), Dark, or Light
 
-Web search is provided by GNOME's registered search providers. Install Firefox, Epiphany, or a search provider extension to enable web search results.
+Web search is provided by GNOME's registered search providers.
 
 ## Architecture
 
