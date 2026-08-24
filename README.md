@@ -10,7 +10,9 @@ A compact, keyboard-driven launcher for GNOME Shell 45 through 50.
 
 `Ctrl + Space`
 
-<img width="1366" height="768" alt="screenshot" src="https://github.com/user-attachments/assets/73934211-7584-4c00-a5b2-27dd88a6235b" />
+
+<img width="1366" height="768" alt="Screenshot From 2026-08-24 19-35-43" src="https://github.com/user-attachments/assets/7d3d6cfb-86eb-44a7-83a0-f9810ded63f8" />
+
 
 ## Overview
 
