@@ -21,7 +21,7 @@ class SpotlightPopup extends St.Widget {
 
         this._settings = settings;
         this._backdrop = null;
-        this._positioner = new PopupPositioner(this);
+        this._positioner = new PopupPositioner(this, this._settings);
         this._visible = false;
         this._openIdleId = 0;
         this._closeIdleId = 0;
@@ -228,7 +228,8 @@ class SpotlightPopup extends St.Widget {
 
         // backdrop first then popup later addition to chrome means higher
         // in stacking order so popup sits above the backdrop naturally
-        this._backdrop = new PopupBackdrop(() => this.close());
+        const monitor = this._positioner.getTargetMonitor();
+        this._backdrop = new PopupBackdrop(() => this.close(), monitor);
         this._backdrop.show();
 
         if (this.get_parent())

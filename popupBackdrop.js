@@ -7,7 +7,7 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 // owns its own add and remove from chrome so spotlightPopup.js just calls
 // show and destroy it never has to know how the backdrop gets on screen
 export class PopupBackdrop {
-    constructor(onClickOutside) {
+    constructor(onClickOutside, monitor) {
         // a transparent full-screen reactive actor that sits behind the popup in
         // the chrome layer any click on it closes the popup which is how we
         // detect click-outside without a modal grab swallowing pointer events
@@ -16,11 +16,10 @@ export class PopupBackdrop {
             can_focus: false,
             visible: false,
         });
-
-        const monitor = Main.layoutManager.primaryMonitor;
+        // cover only the target monitor where the popup appears
+        // users on other monitors can interact normally
         this._actor.set_size(monitor.width, monitor.height);
         this._actor.set_position(monitor.x, monitor.y);
-
         // before they reach the stage clicks outside the popup land here
         this._actor.connectObject('button-release-event', () => {
             onClickOutside();

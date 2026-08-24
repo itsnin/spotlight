@@ -7,5 +7,11 @@
       <summary>Toggle shortcut</summary>
       <description>Keyboard shortcut to open Spotlight. Default is Ctrl+Space.</description>
     </key>
+    <!-- which monitor to show the popup on primary cursor or specific by index -->
+    <key name="monitor-behavior" type="s">
+      <default>'primary'</default>
+      <summary>Popup monitor</summary>
+      <description>Which monitor shows the popup. Values: primary, cursor, or a monitor index number like 0, 1, 2.</description>
+    </key>
   </schema>
 </schemalist>
