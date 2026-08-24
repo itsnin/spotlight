@@ -2,8 +2,7 @@ popup ui:
   - changed-files:
       - any-glob-to-any-file:
           - spotlightPopup.js
-          - popupBackdrop.js
-          - popupPositioner.js
+          - popup/**
           - stylesheet.css
 preferences:
   - changed-files:
@@ -13,7 +12,7 @@ preferences:
 keybinding:
   - changed-files:
       - any-glob-to-any-file:
-          - keybinding.js
+          - services/keybinding.js
 metadata and schema:
   - changed-files:
       - any-glob-to-any-file:
@@ -31,3 +30,11 @@ ci and github config:
   - changed-files:
       - any-glob-to-any-file:
           - .github/**
+build scripts:
+  - changed-files:
+      - any-glob-to-any-file:
+          - scripts/**
+translations:
+  - changed-files:
+      - any-glob-to-any-file:
+          - locale/**

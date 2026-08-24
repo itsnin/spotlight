@@ -74,21 +74,29 @@ the popup open and close methods only reparent widgets between our content box a
 ### file layout
 
 ```
-spotlight@nin/
-    extension.js              entry point constructs popup registers keybinding
+spotlight/
+    extension.js              entry point constructs popup delegates to modules
     prefs.js                  preferences entry point
-    spotlightPopup.js         main popup widget steals overview search ui
-    popupBackdrop.js          transparent fullscreen click outside detection
-    popupPositioner.js        positions centers and shows the popup
-    keybinding.js             keybinding manager
+    spotlightPopup.js         main popup widget open close destroy lifecycle
     stylesheet.css            spotlight styling
     metadata.json             extension metadata
+    popup/                    popup components split for maintainability
+        overviewSearch.js     steals and returns overview search widgets
+        themeManager.js       theme detection and application
+        popupBackdrop.js      transparent click outside detection
+        popupPositioner.js    positions centers and shows the popup
+    services/
+        keybinding.js         keybinding manager
     schemas/                  gsettings schema
         org.gnome.shell.extensions.spotlight.gschema.xml
     prefs/                    preference pages
         shortcutPage.js
         appearancePage.js
         aboutPage.js
+    locale/                   translation source files gettext
+        spotlight.pot         translation template
+    scripts/
+        build.sh              curl installer downloads from main branch
 ```
 
 ### process isolation

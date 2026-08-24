@@ -15,14 +15,16 @@ BASE_URL="https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${BRANCH}
 # Extension source files to download from main branch
 FILES=(
     "extension.js"
-    "keybinding.js"
-    "popupBackdrop.js"
-    "popupPositioner.js"
-    "prefs.js"
     "spotlightPopup.js"
+    "prefs.js"
     "stylesheet.css"
     "metadata.json"
     "schemas/org.gnome.shell.extensions.spotlight.gschema.xml"
+    "popup/overviewSearch.js"
+    "popup/popupBackdrop.js"
+    "popup/popupPositioner.js"
+    "popup/themeManager.js"
+    "services/keybinding.js"
     "prefs/shortcutPage.js"
     "prefs/appearancePage.js"
     "prefs/aboutPage.js"
@@ -36,6 +38,8 @@ echo "Target: ${INSTALL_DIR}"
 
 # Create directory structure
 mkdir -p "${INSTALL_DIR}/schemas"
+mkdir -p "${INSTALL_DIR}/popup"
+mkdir -p "${INSTALL_DIR}/services"
 mkdir -p "${INSTALL_DIR}/prefs"
 
 # Download each file
@@ -49,13 +53,8 @@ echo "  Compiling schemas..."
 glib-compile-schemas "${INSTALL_DIR}/schemas/"
 
 # Download and compile translations
-# Check if locale directory exists with .po source files
-LOCALE_LIST_URL="${BASE_URL}/locale"
 if command -v msgfmt >/dev/null 2>&1; then
     echo "  Checking for translations..."
-    # Try to download known language files and compile them
-    # Translators add .po files to locale/ in the repo
-    # At install time we compile them to .mo in the installed locale structure
     for po_file in $(curl -sL "${BASE_URL}/locale/" 2>/dev/null | grep -oP '[a-z]{2}(_[A-Z]{2})?\.po' | sort -u); do
         lang_code="${po_file%.po}"
         echo "    Compiling translation: ${lang_code}"

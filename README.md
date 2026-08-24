@@ -77,16 +77,17 @@ This approach means Spotlight automatically benefits from every search provider 
 
 | File | Responsibility |
 |---|---|
-| `extension.js` | Entry point — constructs popup, steals Overview search, registers keybinding |
+| `extension.js` | Entry point — constructs popup, delegates to modules |
+| `spotlightPopup.js` | Popup lifecycle — open/close/destroy, delegates to helpers |
+| `popup/overviewSearch.js` | Steals and returns Overview search widgets |
+| `popup/themeManager.js` | Theme detection and application (dark/light/system) |
+| `popup/popupBackdrop.js` | Transparent click-outside detection via chrome layer |
+| `popup/popupPositioner.js` | Sizes, centers, and shows the popup via deferred idle callback |
+| `services/keybinding.js` | Keybinding manager using `Meta.Display.grab_accelerator` |
 | `prefs.js` | Preferences window entry point |
-| `spotlightPopup.js` | Popup lifecycle — steal/return Overview search, open/close/destroy |
-| `popupBackdrop.js` | Transparent click-outside detection via chrome layer |
-| `popupPositioner.js` | Sizes, centers, and shows the popup via deferred idle callback |
-| `keybinding.js` | Keybinding manager using `Meta.Display.grab_accelerator` |
 | `prefs/shortcutPage.js` | Keyboard shortcut configuration |
 | `prefs/appearancePage.js` | Visual theme selection |
 | `prefs/aboutPage.js` | About section |
-
 ## Design Principles
 
 - **Dark, not black.** Background `#1c1c1e` with text `#f5f5f7`. Pure black is harsh on OLED and inaccurate on IPS panels.

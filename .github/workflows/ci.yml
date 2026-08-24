@@ -20,7 +20,7 @@ jobs:
       - name: Check all JS files parse as ES modules
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq nodejs
-          for f in *.js prefs/*.js; do
+          for f in *.js popup/*.js services/*.js prefs/*.js; do
             node --check "$f" || { echo "SYNTAX ERROR in $f"; exit 1; }
           done
           echo "All JS files parse successfully"
@@ -72,7 +72,7 @@ jobs:
 
       - name: Check no optional chaining
         run: |
-          if grep -rnE '\?\.' *.js prefs/*.js; then
+          if grep -rnE '\?\.' *.js popup/*.js services/*.js prefs/*.js; then
             echo "ERROR: found optional chaining"
             exit 1
           fi
@@ -80,7 +80,7 @@ jobs:
 
       - name: Check no deprecated modules
         run: |
-          if grep -rn "imports.misc.lang\|imports.misc.mainloop\|imports.misc.byteArray" *.js prefs/*.js; then
+          if grep -rn "imports.misc.lang\|imports.misc.mainloop\|imports.misc.byteArray" *.js popup/*.js services/*.js prefs/*.js; then
             echo "ERROR: found deprecated module imports"
             exit 1
           fi
@@ -94,7 +94,7 @@ jobs:
             exit 1
           fi
           echo "Checking shell files don't import GTK-only libs..."
-          if grep -rn "from 'gi://Gtk'\|from 'gi://Gdk'\|from 'gi://Adw'" *.js | grep -v "^prefs"; then
+          if grep -rn "from 'gi://Gtk'\|from 'gi://Gdk'\|from 'gi://Adw'" *.js popup/*.js services/*.js; then
             echo "ERROR: shell files import GTK-only libraries"
             exit 1
           fi
@@ -111,6 +111,6 @@ jobs:
       - name: Summary
         run: |
           echo "=== CI Summary ==="
-          echo "JS files: $(ls *.js prefs/*.js | wc -l)"
+          echo "JS files: $(ls *.js popup/*.js services/*.js prefs/*.js | wc -l)"
           echo "Total files: $(find . -type f -not -path './.git/*' | wc -l)"
           echo "All checks passed"
