@@ -82,7 +82,7 @@ class SpotlightPopup extends St.Widget {
             Main.overview.toggle = () => {
                 // if our popup is visible focus it instead
                 if (this._visible)
-                    this._search._text.get_parent().grab_key_focus();
+                    this._entry.grab_key_focus();
                 else
                     Main.overview._originalToggle();
             };
@@ -236,7 +236,7 @@ class SpotlightPopup extends St.Widget {
         Main.layoutManager.addChrome(this);
 
         this._positioner.showCentered(() => {
-            this._search._text.get_parent().grab_key_focus();
+            this._entry.grab_key_focus();
         });
 
         // clear any previous search text start with empty
@@ -284,7 +284,7 @@ class SpotlightPopup extends St.Widget {
                 // null focus means actor was hidden and clutter cleared it
                 // refocus entry immediately prevents close and focus loss
                 if (!focus) {
-                    this._search._text.grab_key_focus();
+                    this._entry.grab_key_focus();
                     return;
                 }
 
