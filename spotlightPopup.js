@@ -25,7 +25,6 @@ class SpotlightPopup extends St.Widget {
         this._visible = false;
         this._openIdleId = 0;
         this._closeIdleId = 0;
-        this._focusCheckIdleId = 0;
         this._opening = false;
 
         // popup structure
@@ -242,45 +241,17 @@ class SpotlightPopup extends St.Widget {
 
         // clear any previous search text start with empty
         this._search._text.set_text('');
-        // keep search mapped never hide it while popup is open hiding
-        // unmaps actor and clutter clears key focus to null causes close
-        this._search.visible = true;
-        // use css class to visually collapse results when empty keeps
-        // popup compact at idle without unmapping the actor
-        this._search.add_style_class_name('search-collapsed');
+        // hide results area when empty keeps popup compact at idle
+        this._search.visible = false;
 
-        // toggle css class based on text content never hide actor while
-        // popup is open hiding unmaps actor clutter clears focus to null
-
-        // css class visually collapses to zero height actor stays mapped
-        // clutter never clears key focus no null focus no close no focus loss
+        // toggle results visibility based on text content
+        // hide when empty keeps popup compact show when typed gives results
         if (!this._textChangedEventId) {
             this._textChangedEventId = this._search._text.connect(
                 'text-changed',
                 () => {
                     const hasText = this._search._text.get_text().length > 0;
-                    if (hasText) {
-                        this._search.remove_style_class_name(
-                            'search-collapsed',
-                        );
-                    } else {
-                        // if focus is inside results move back to entry
-                        // deferred to idle so it runs after signal processing
-                        const focus = global.stage.get_key_focus();
-                        if (focus && this._search &&
-                            this._search.contains(focus)) {
-                            GLib.idle_add(
-                                GLib.PRIORITY_DEFAULT_IDLE,
-                                () => {
-                                    this._entry.grab_key_focus();
-                                    return GLib.SOURCE_REMOVE;
-                                },
-                            );
-                        }
-                        this._search.add_style_class_name(
-                            'search-collapsed',
-                        );
-                    }
+                    this._search.visible = hasText;
                 },
             );
         }
@@ -301,54 +272,37 @@ class SpotlightPopup extends St.Widget {
         // close on key-focus loss unless focus went to a popup-menu
         // some results open menus and those should not dismiss us
 
-        // check deferred to idle so transient focus changes from actor
-        // mutations hiding results etc settle before we evaluate
-        // multiple guards entry focus this contains popup menu null focus
+        // null focus is transient during actor tree mutations clutter
+        // clears focus to null when hiding focused actor refocus entry
+        // immediately to prevent close and keep typing working
         global.stage.connectObject(
             'notify::key-focus', () => {
                 if (!this._visible)
                     return;
+                const focus = global.stage.get_key_focus();
 
-                // cancel any pending focus check schedule a fresh one
-                if (this._focusCheckIdleId !== 0) {
-                    GLib.source_remove(this._focusCheckIdleId);
-                    this._focusCheckIdleId = 0;
+                // null focus means actor was hidden and clutter cleared it
+                // refocus entry immediately prevents close and focus loss
+                if (!focus) {
+                    this._search._text.grab_key_focus();
+                    return;
                 }
 
-                this._focusCheckIdleId = GLib.idle_add(
-                    GLib.PRIORITY_DEFAULT_IDLE,
-                    () => {
-                        this._focusCheckIdleId = 0;
-                        if (!this._visible)
-                            return GLib.SOURCE_REMOVE;
+                // never close while entry has focus user still typing
+                if (this._entry &&
+                    (this._entry === focus || this._entry.contains(focus)))
+                    return;
 
-                        const focus = global.stage.get_key_focus();
+                // focus anywhere within our widget tree is safe
+                if (this.contains(focus))
+                    return;
 
-                        // null focus is transient during actor tree mutations
-                        // clutter clears focus to null when hiding focused actor
-                        if (!focus)
-                            return GLib.SOURCE_REMOVE;
+                // popup menus from results should not dismiss us
+                if (focus.style_class &&
+                    focus.style_class.includes('popup-menu'))
+                    return;
 
-                        // never close while entry has focus user still typing
-                        if (this._entry &&
-                            (this._entry === focus ||
-                             this._entry.contains(focus)))
-                            return GLib.SOURCE_REMOVE;
-
-                        // focus anywhere within our widget tree is safe
-                        if (this.contains(focus))
-                            return GLib.SOURCE_REMOVE;
-
-                        // popup menus from results should not dismiss us
-                        if (focus.style_class &&
-                            focus.style_class.includes('popup-menu'))
-                            return GLib.SOURCE_REMOVE;
-
-                        // genuinely lost focus close popup
-                        this.close();
-                        return GLib.SOURCE_REMOVE;
-                    },
-                );
+                this.close();
             },
             this,
         );
@@ -383,12 +337,6 @@ class SpotlightPopup extends St.Widget {
     // runs from idle context never inside signal dispatch
     _doClose() {
         this._positioner.stop();
-
-        // cancel any pending focus check idle handler
-        if (this._focusCheckIdleId !== 0) {
-            GLib.source_remove(this._focusCheckIdleId);
-            this._focusCheckIdleId = 0;
-        }
 
         if (this._backdrop) {
             this._backdrop.destroy();
@@ -430,10 +378,6 @@ class SpotlightPopup extends St.Widget {
         if (this._closeIdleId !== 0) {
             GLib.source_remove(this._closeIdleId);
             this._closeIdleId = 0;
-        }
-        if (this._focusCheckIdleId !== 0) {
-            GLib.source_remove(this._focusCheckIdleId);
-            this._focusCheckIdleId = 0;
         }
         this._opening = false;
         if (this._visible)
