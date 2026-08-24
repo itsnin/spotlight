@@ -48,20 +48,15 @@ Open the popup with `Ctrl + Space` and begin typing. Navigation is entirely keyb
 
 ## Installation
 
-### Install via curl (recommended)
+### [Install from GNOME Extensions](https://extensions.gnome.org/extension/10666/spotlight/) (recommended)
 
-Downloads and installs the latest release from GitHub:
+### Install via curl
 
 ```bash
-curl -sL https://raw.githubusercontent.com/itsnin/spotlight/main/scripts/build.sh | bash
+curl -sL https://raw.githubusercontent.com/itsnin/spotlight/main/scripts/build.sh | sh
+#On Wayland, log out and back in before enabling the extension
 gnome-extensions enable spotlight@nin
 ```
-
-On Wayland, log out and back in to activate.
-
-### Install from GNOME Extensions
-
-[Install from extensions.gnome.org](https://extensions.gnome.org/extension/10666/spotlight/)
 
 ## Preferences
 
