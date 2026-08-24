@@ -342,3 +342,13 @@
 .spotlight-container.theme-light StScrollView StScrollBar.slider {
   background-color: rgba(0, 0, 0, 0.2);
 }
+
+/* emoji tooltip shared global label */
+.emoji-tooltip {
+  background-color: #222222;
+  color: #ffffff;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 13px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+}

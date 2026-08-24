@@ -10,10 +10,13 @@ export class ClipboardManager {
         this._settings = settings;
         this._clipboard = St.Clipboard.get_default();
         this._history = [];
-        this._maxSize = 20;
+        this._maxSize = settings.get_int('clipboard-history-size');
         this._listeners = new Set();
         this._signalId = 0;
         this._ignoreCount = 0;
+        this._settingsChangedId = settings.connect('changed::clipboard-history-size', () => {
+            this.setMaxSize(settings.get_int('clipboard-history-size'));
+        });
     }
 
     start() {
@@ -38,6 +41,10 @@ export class ClipboardManager {
 
     destroy() {
         this.stop();
+        if (this._settingsChangedId) {
+            this._settings.disconnect(this._settingsChangedId);
+            this._settingsChangedId = 0;
+        }
         this._history = [];
     }
 
@@ -98,9 +105,11 @@ export class ClipboardManager {
     }
 
     // set clipboard content without adding to history used by emoji selector
-    setText(text, type = CLIPBOARD_TYPE) {
+    // sets both clipboard and primary selections atomically
+    setText(text) {
         this._ignoreCount++;
-        this._clipboard.set_text(type, text);
+        this._clipboard.set_text(CLIPBOARD_TYPE, text);
+        this._clipboard.set_text(St.ClipboardType.PRIMARY, text);
     }
 
     deleteEntry(index) {

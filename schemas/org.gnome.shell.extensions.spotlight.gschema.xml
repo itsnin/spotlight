@@ -38,5 +38,11 @@
       <summary>Recently used emojis</summary>
       <description>Emojis recently selected by the user.</description>
     </key>
+    <!-- paste on select automatically paste after selecting clipboard entry or emoji -->
+    <key name="paste-on-select" type="b">
+      <default>false</default>
+      <summary>Paste on select</summary>
+      <description>Automatically paste after selecting a clipboard history entry or emoji.</description>
+    </key>
   </schema>
 </schemalist>

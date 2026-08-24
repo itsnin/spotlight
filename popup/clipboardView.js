@@ -3,10 +3,11 @@
 import St from 'gi://St';
 import Clutter from 'gi://Clutter';
 import GObject from 'gi://GObject';
+import {triggerPaste} from '../services/virtualKeyboard.js';
 
 export const ClipboardView = GObject.registerClass(
 class ClipboardView extends St.ScrollView {
-    _init(clipboardManager, onSelect) {
+    _init(clipboardManager, settings, onSelect) {
         super._init({
             style_class: 'spotlight-clipboard-view',
             x_align: Clutter.ActorAlign.FILL,
@@ -14,6 +15,7 @@ class ClipboardView extends St.ScrollView {
             visible: false,
         });
         this._clipboardManager = clipboardManager;
+        this._settings = settings;
         this._onSelect = onSelect;
         this._filterText = '';
         this._items = [];
@@ -96,8 +98,24 @@ class ClipboardView extends St.ScrollView {
 
         item.connect('clicked', () => {
             this._clipboardManager.selectEntry(originalIndex);
+            if (this._settings.get_boolean('paste-on-select'))
+                triggerPaste();
             if (this._onSelect)
                 this._onSelect();
+        });
+
+        // keyboard support enter activates item
+        item.connect('key-press-event', (actor, event) => {
+            const symbol = event.get_key_symbol();
+            if (symbol === Clutter.KEY_Return || symbol === Clutter.KEY_KP_Enter) {
+                this._clipboardManager.selectEntry(originalIndex);
+                if (this._settings.get_boolean('paste-on-select'))
+                    triggerPaste();
+                if (this._onSelect)
+                    this._onSelect();
+                return Clutter.EVENT_STOP;
+            }
+            return Clutter.EVENT_PROPAGATE;
         });
 
         return item;

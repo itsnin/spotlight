@@ -23,7 +23,9 @@ export default class SpotlightPreferences extends ExtensionPreferences {
             title: 'Appearance',
             icon_name: 'applications-graphics-symbolic',
         });
-        appearancePage.add(buildAppearancePage(settings));
+        const appearanceGroups = buildAppearancePage(settings);
+        for (const group of appearanceGroups)
+            appearancePage.add(group);
         window.add(appearancePage);
 
         const aboutPage = new Adw.PreferencesPage({

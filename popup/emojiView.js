@@ -2,14 +2,38 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import St from 'gi://St';
 import Clutter from 'gi://Clutter';
+import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
 import { CATEGORIES } from '../services/emojiData.js';
+import {triggerPaste} from '../services/virtualKeyboard.js';
 
 const COLUMNS = 10;
 
+// shared tooltip label for all emoji buttons added to global stage
+let _tooltipLabel = null;
+
+function getTooltipLabel() {
+    if (!_tooltipLabel) {
+        _tooltipLabel = new St.Label({
+            style_class: 'emoji-tooltip',
+            visible: false,
+            opacity: 230,
+        });
+        global.stage.add_child(_tooltipLabel);
+    }
+    return _tooltipLabel;
+}
+
+export function destroyTooltip() {
+    if (_tooltipLabel) {
+        _tooltipLabel.destroy();
+        _tooltipLabel = null;
+    }
+}
+
 export const EmojiView = GObject.registerClass(
 class EmojiView extends St.BoxLayout {
-    _init(emojiData, clipboardManager, onSelect) {
+    _init(emojiData, clipboardManager, settings, onSelect) {
         super._init({
             style_class: 'spotlight-emoji-view',
             vertical: true,
@@ -19,11 +43,13 @@ class EmojiView extends St.BoxLayout {
         });
         this._emojiData = emojiData;
         this._clipboardManager = clipboardManager;
+        this._settings = settings;
         this._onSelect = onSelect;
         this._filterText = '';
         this._activeCategory = null;
         this._buttons = [];
         this._categoryButtons = [];
+        this._tooltipTimeoutId = 0;
 
         // category buttons row
         this._categoryRow = new St.ScrollView({
@@ -106,6 +132,14 @@ class EmojiView extends St.BoxLayout {
     }
 
     _render() {
+        // cancel pending tooltip
+        if (this._tooltipTimeoutId) {
+            GLib.source_remove(this._tooltipTimeoutId);
+            this._tooltipTimeoutId = 0;
+        }
+        const tooltip = getTooltipLabel();
+        tooltip.visible = false;
+
         // clear existing buttons
         for (const btn of this._buttons)
             btn.destroy();
@@ -117,10 +151,13 @@ class EmojiView extends St.BoxLayout {
         } else if (this._activeCategory) {
             emojis = this._emojiData.getCategory(this._activeCategory);
         } else {
-            // show recently used first then some smileys
+            // show recently used first then smileys
             const recents = this._emojiData.getRecentlyUsed();
-            const recentEmojis = recents.map(e => ({ e }));
-            const smileys = this._emojiData.getCategory('Smileys & Emotion').slice(0, 30);
+            const recentEmojis = recents.map(e => {
+                const found = this._emojiData._emojis.find(x => x.e === e);
+                return found || { e };
+            });
+            const smileys = this._emojiData.getCategory('Smileys & Emotion').slice(0, 40);
             emojis = [...recentEmojis, ...smileys];
         }
 
@@ -137,29 +174,74 @@ class EmojiView extends St.BoxLayout {
                 this._gridBox.add_child(rowBox);
                 this._buttons.push(rowBox);
             }
-            const emojiData = emojis[i];
-            const btn = new St.Button({
-                style_class: 'spotlight-emoji-btn',
-                can_focus: true,
-                label: emojiData.e,
-                accessible_name: emojiData.d || emojiData.e,
-            });
-            btn.connect('clicked', () => this._onEmojiClicked(emojiData.e));
+            const emojiItem = emojis[i];
+            const btn = this._createEmojiButton(emojiItem);
             rowBox.add_child(btn);
             this._buttons.push(btn);
         }
     }
 
-    _onEmojiClicked(emojiChar) {
+    _createEmojiButton(emojiItem) {
+        const btn = new St.Button({
+            style_class: 'spotlight-emoji-btn',
+            can_focus: true,
+            label: emojiItem.e,
+            accessible_name: emojiItem.d || emojiItem.e,
+        });
+
+        // tooltip on hover
+        btn.connect('notify::hover', (actor) => {
+            if (this._tooltipTimeoutId) {
+                GLib.source_remove(this._tooltipTimeoutId);
+                this._tooltipTimeoutId = 0;
+            }
+            const tooltip = getTooltipLabel();
+            if (actor.hover && emojiItem.d) {
+                this._tooltipTimeoutId = GLib.timeout_add(
+                    GLib.PRIORITY_DEFAULT, 400, () => {
+                        const [x, y] = global.get_pointer();
+                        const words = emojiItem.d.split(' ');
+                        tooltip.text = `${words[0] || ''} ${words[1] || ''}`.trim();
+                        tooltip.set_position(x + 16, y - 8);
+                        tooltip.visible = true;
+                        this._tooltipTimeoutId = 0;
+                        return GLib.SOURCE_REMOVE;
+                    });
+            } else {
+                tooltip.visible = false;
+            }
+        });
+
+        btn.connect('clicked', () => this._activateEmoji(emojiItem.e));
+
+        // keyboard support enter activates
+        btn.connect('key-press-event', (actor, event) => {
+            const symbol = event.get_key_symbol();
+            if (symbol === Clutter.KEY_Return || symbol === Clutter.KEY_KP_Enter) {
+                this._activateEmoji(emojiItem.e);
+                return Clutter.EVENT_STOP;
+            }
+            return Clutter.EVENT_PROPAGATE;
+        });
+
+        return btn;
+    }
+
+    _activateEmoji(emojiChar) {
         // copy to clipboard without adding to clipboard history
-        this._clipboardManager.setText(emojiChar, St.ClipboardType.CLIPBOARD);
-        this._clipboardManager.setText(emojiChar, St.ClipboardType.PRIMARY);
+        this._clipboardManager.setText(emojiChar);
         this._emojiData.addRecentlyUsed(emojiChar);
+        if (this._settings.get_boolean('paste-on-select'))
+            triggerPaste();
         if (this._onSelect)
             this._onSelect();
     }
 
     destroy() {
+        if (this._tooltipTimeoutId) {
+            GLib.source_remove(this._tooltipTimeoutId);
+            this._tooltipTimeoutId = 0;
+        }
         for (const btn of this._buttons)
             btn.destroy();
         this._buttons = [];
