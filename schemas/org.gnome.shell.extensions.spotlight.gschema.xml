@@ -13,5 +13,30 @@
       <summary>Theme preference</summary>
       <description>Color theme for Spotlight. Values: default (follows system), dark, light.</description>
     </key>
+    <!-- clipboard view shortcut default alt 1 -->
+    <key name="clipboard-shortcut" type="as">
+      <default>['&lt;Alt&gt;1']</default>
+      <summary>Clipboard view shortcut</summary>
+      <description>Keyboard shortcut to open Spotlight in clipboard history mode.</description>
+    </key>
+    <!-- emoji view shortcut default alt 2 -->
+    <key name="emoji-shortcut" type="as">
+      <default>['&lt;Alt&gt;2']</default>
+      <summary>Emoji view shortcut</summary>
+      <description>Keyboard shortcut to open Spotlight in emoji selector mode.</description>
+    </key>
+    <!-- clipboard history size -->
+    <key name="clipboard-history-size" type="i">
+      <default>20</default>
+      <summary>Clipboard history size</summary>
+      <description>Maximum number of entries to keep in clipboard history.</description>
+      <range min="5" max="100"/>
+    </key>
+    <!-- recently used emojis -->
+    <key name="recently-used-emojis" type="as">
+      <default>[]</default>
+      <summary>Recently used emojis</summary>
+      <description>Emojis recently selected by the user.</description>
+    </key>
   </schema>
 </schemalist>

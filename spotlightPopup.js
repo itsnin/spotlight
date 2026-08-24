@@ -29,9 +29,10 @@ class SpotlightPopup extends St.Widget {
         this._openIdleId = 0;
         this._closeIdleId = 0;
         this._opening = false;
-
+        // current mode search clipboard or emoji
+        this._mode = 'search';
         // popup structure: outer St.Widget handles positioning via chrome
-        // inner St.BoxLayout holds entry plus gnome search results
+        // inner St.BoxLayout holds header box plus content stack
         // inner content box what the user actually sees
         this._content = new St.BoxLayout({
             style_class: 'spotlight-container',
@@ -39,6 +40,32 @@ class SpotlightPopup extends St.Widget {
             width: 520,
         });
         this.add_child(this._content);
+
+        // header box holds search entry plus mode buttons horizontally
+        this._headerBox = new St.BoxLayout({
+            style_class: 'spotlight-header-box',
+            vertical: false,
+            x_align: Clutter.ActorAlign.FILL,
+        });
+        this._content.add_child(this._headerBox);
+
+        // content stack holds one view at a time search clipboard or emoji
+        this._contentStack = new St.Widget({
+            layout_manager: new Clutter.BinLayout(),
+            style_class: 'spotlight-content-stack',
+            x_align: Clutter.ActorAlign.FILL,
+        });
+        this._content.add_child(this._contentStack);
+
+        // mode buttons round icons beside search entry
+        this._buttonClipboard = this._createModeButton(
+            'edit-paste-symbolic',
+            'clipboard',
+        );
+        this._buttonEmoji = this._createModeButton(
+            'face-smile-symbolic',
+            'emoji',
+        );
 
         // stolen overview widgets taken once in stealOverviewSearch
         // kept until returnOverviewSearch called from disable()
@@ -51,6 +78,10 @@ class SpotlightPopup extends St.Widget {
         this._originalActivateDefault = null;
         this._overviewKeyCaptureId = 0;
 
+        // view widgets created on demand
+        this._clipboardView = null;
+        this._emojiView = null;
+
         // hide popup when new windows appear app launched from result
         global.display.connectObject(
             'window-created', () => {
@@ -59,7 +90,6 @@ class SpotlightPopup extends St.Widget {
             },
             this,
         );
-
         // hide popup when app state changes
         Shell.AppSystem.get_default().connectObject(
             'app-state-changed', () => {
@@ -68,6 +98,51 @@ class SpotlightPopup extends St.Widget {
             },
             this,
         );
+    }
+
+    // creates a round mode button with icon
+    _createModeButton(iconName, mode) {
+        const button = new St.Button({
+            style_class: 'spotlight-mode-button',
+            can_focus: true,
+            toggle_mode: true,
+            child: new St.Icon({
+                icon_name: iconName,
+                icon_size: 16,
+            }),
+            accessible_name: mode,
+        });
+        button.connect('clicked', () => {
+            if (button.checked)
+                this._switchMode(mode);
+            else
+                this._switchMode('search');
+        });
+        return button;
+    }
+
+    // switches between search clipboard and emoji modes
+    _switchMode(mode) {
+        this._mode = mode;
+        // update button states
+        this._buttonClipboard.checked = (mode === 'clipboard');
+        this._buttonEmoji.checked = (mode === 'emoji');
+
+        // show appropriate view hide others
+        if (this._search)
+            this._search.visible = (mode === 'search');
+        if (this._clipboardView)
+            this._clipboardView.visible = (mode === 'clipboard');
+        if (this._emojiView)
+            this._emojiView.visible = (mode === 'emoji');
+
+        // clear search text when switching modes fresh start
+        if (this._entry)
+            this._entry.set_text('');
+
+        // focus stays in entry user can type to filter current mode
+        if (this._entry)
+            this._entry.grab_key_focus();
     }
 
     // called once from extension.enable()
@@ -85,13 +160,14 @@ class SpotlightPopup extends St.Widget {
     // public entry point defers actual work to idle so actor tree
     // mutations never happen inside a signal dispatch which would
     // sigabrt on gnome 50 clutter 18
-    open() {
+    open(mode = 'search') {
         if (this._visible || this._opening || this._openIdleId !== 0)
             return;
         // widgets should already be stolen by stealOverviewSearch in enable
         if (!this._entry || !this._search)
             return;
         this._opening = true;
+        this._pendingMode = mode;
         this._openIdleId = GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
             this._openIdleId = 0;
             this._doOpen();
@@ -102,16 +178,19 @@ class SpotlightPopup extends St.Widget {
     // reparents already-stolen widgets into our popup and shows it
     // runs from idle context never inside signal dispatch
     _doOpen() {
-        // reparent entry into our container
+        // build header entry first then buttons
         if (this._entry.get_parent())
             this._entry.get_parent().remove_child(this._entry);
         this._entry.visible = true;
-        this._content.add_child(this._entry);
+        this._entry.x_expand = true;
+        this._headerBox.add_child(this._entry);
+        this._headerBox.add_child(this._buttonClipboard);
+        this._headerBox.add_child(this._buttonEmoji);
 
-        // reparent search results into our container
+        // reparent search results into content stack
         if (this._search.get_parent())
             this._search.get_parent().remove_child(this._search);
-        this._content.add_child(this._search);
+        this._contentStack.add_child(this._search);
 
         // apply theme before showing so colors are correct on first paint
         ThemeManager.apply(this._content, this._settings, this._ifaceSettings);
@@ -132,8 +211,11 @@ class SpotlightPopup extends St.Widget {
 
         // clear any previous search text start with empty
         this._search._text.set_text('');
-        // hide results area when empty keeps popup compact at idle
-        this._search.visible = false;
+
+        // switch to requested mode or default to search
+        const mode = this._pendingMode || 'search';
+        this._pendingMode = null;
+        this._switchMode(mode);
 
         // toggle results visibility based on text content
         // hide when empty keeps popup compact show when typed gives results
@@ -141,17 +223,31 @@ class SpotlightPopup extends St.Widget {
             this._textChangedEventId = this._search._text.connect(
                 'text-changed',
                 () => {
-                    const hasText = this._search._text.get_text().length > 0;
-                    this._search.visible = hasText;
+                    const text = this._search._text.get_text();
+                    const hasText = text.length > 0;
+
+                    if (this._mode === 'search') {
+                        this._search.visible = hasText;
+                    } else if (this._mode === 'clipboard') {
+                        if (this._clipboardView && this._clipboardView.filter)
+                            this._clipboardView.filter(text);
+                    } else if (this._mode === 'emoji') {
+                        if (this._emojiView && this._emojiView.filter)
+                            this._emojiView.filter(text);
+                    }
                 },
             );
         }
 
-        // capture esc key to close the popup
+        // capture esc key first press switches mode to search second closes
         global.stage.connectObject(
             'captured-event', (actor, event) => {
                 if (event.type() === Clutter.EventType.KEY_PRESS &&
                     event.get_key_symbol() === Clutter.KEY_Escape) {
+                    if (this._mode !== 'search') {
+                        this._switchMode('search');
+                        return Clutter.EVENT_STOP;
+                    }
                     this.close();
                     return Clutter.EVENT_STOP;
                 }
@@ -222,19 +318,26 @@ class SpotlightPopup extends St.Widget {
             this._backdrop.destroy();
             this._backdrop = null;
         }
-
         // disconnect stage signals they get reconnected on next open
         global.stage.disconnectObject(this);
 
-        // remove entry from our container hide it keep it stolen
-        // hide before detach prevents clutter 18 unrealize assertion
+        // reset mode to search for next open
+        this._mode = 'search';
+        this._buttonClipboard.checked = false;
+        this._buttonEmoji.checked = false;
+
+        // remove entry from header hide it keep it stolen
         if (this._entry && this._entry.get_parent()) {
             this._entry.visible = false;
             this._entry.get_parent().remove_child(this._entry);
         }
+        // remove buttons from header
+        if (this._buttonClipboard.get_parent())
+            this._buttonClipboard.get_parent().remove_child(this._buttonClipboard);
+        if (this._buttonEmoji.get_parent())
+            this._buttonEmoji.get_parent().remove_child(this._buttonEmoji);
 
-        // remove search from our container hide it keep it stolen
-        // hide before detach prevents clutter 18 unrealize assertion
+        // remove search from content stack hide it keep it stolen
         if (this._search && this._search.get_parent()) {
             this._search.hide();
             this._search.get_parent().remove_child(this._search);
@@ -275,6 +378,15 @@ class SpotlightPopup extends St.Widget {
         global.display.disconnectObject(this);
         Shell.AppSystem.get_default().disconnectObject(this);
         global.stage.disconnectObject(this);
+        // clean up views
+        if (this._clipboardView) {
+            this._clipboardView.destroy();
+            this._clipboardView = null;
+        }
+        if (this._emojiView) {
+            this._emojiView.destroy();
+            this._emojiView = null;
+        }
         // clean up interface settings
         this._ifaceSettings = null;
         // clean up content reference
