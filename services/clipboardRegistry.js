@@ -15,15 +15,49 @@ export class Registry {
             this._cacheDir,
             'registry.txt',
         ]);
+        this._debounceId = 0;
+        this._pendingEntries = null;
     }
 
-    // save entries to disk asynchronously
+    // save entries to disk debounced batches multiple rapid changes
+    // into single write avoids excessive disk io
     write(entries) {
+        this._pendingEntries = entries;
+        if (this._debounceId !== 0)
+            return;
+        // 500ms window batches rapid successive copies
+        this._debounceId = GLib.timeout_add(
+            GLib.PRIORITY_DEFAULT,
+            500,
+            () => {
+                this._debounceId = 0;
+                this._flush();
+                return GLib.SOURCE_REMOVE;
+            },
+        );
+    }
+
+    // immediately flush pending writes called on destroy
+    flush() {
+        if (this._debounceId !== 0) {
+            GLib.source_remove(this._debounceId);
+            this._debounceId = 0;
+        }
+        if (this._pendingEntries)
+            this._flush();
+    }
+
+    _flush() {
+        if (!this._pendingEntries)
+            return;
+        const entries = this._pendingEntries;
+        this._pendingEntries = null;
+
         const registryContent = entries.map(e => e.toJSON());
         const json = JSON.stringify(registryContent);
         const contents = new GLib.Bytes(json);
 
-        // ensure cache directory exists
+        // ensure cache directory exists replace_async fails if parent missing
         GLib.mkdir_with_parents(this._cacheDir, parseInt('0775', 8));
 
         const file = Gio.file_new_for_path(this._registryPath);
@@ -48,8 +82,10 @@ export class Registry {
     }
 
     _writeImageFile(entry) {
-        const hash = entry.asBytes().hash();
-        const path = GLib.build_filenamev([this._cacheDir, String(hash)]);
+        const hash = entry.getContentHash();
+        if (!hash)
+            return;
+        const path = GLib.build_filenamev([this._cacheDir, hash]);
         const file = Gio.file_new_for_path(path);
 
         if (GLib.file_test(path, GLib.FileTest.EXISTS)) {

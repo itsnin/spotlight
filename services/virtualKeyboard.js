@@ -28,7 +28,12 @@ export function destroyDevice() {
 // used by both clipboard history and emoji selector on select
 export function triggerPaste(callback) {
     const device = getDevice();
-    const eventTime = Clutter.get_current_event_time() * 1000;
+    // get_current_event_time valid when called from signal handlers
+    // falls back to clutter current time if called outside event context
+    let eventTime = Clutter.get_current_event_time();
+    if (eventTime === 0)
+        eventTime = Clutter.CURRENT_TIME;
+    eventTime = eventTime * 1000;
 
     // shift insert paste sequence
     device.notify_keyval(

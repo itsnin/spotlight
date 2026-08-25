@@ -23,6 +23,11 @@ const TONE_COLORS = [
 let _tooltipLabel = null;
 
 function getTooltipLabel() {
+    // check parent actor survives disable enable cycles
+    // if tooltip was destroyed or removed from stage recreate it
+    if (_tooltipLabel && !_tooltipLabel.get_parent()) {
+        _tooltipLabel = null;
+    }
     if (!_tooltipLabel) {
         _tooltipLabel = new St.Label({
             style_class: 'emoji-tooltip',

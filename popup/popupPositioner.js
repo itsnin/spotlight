@@ -55,10 +55,13 @@ export class PopupPositioner {
 
     _center(popupWidth, monitor) {
         const [, naturalHeight] = this._popup.get_preferred_height(popupWidth);
-        this._popup.set_position(
-            Math.floor(monitor.x + (monitor.width - popupWidth) / 2),
-            Math.floor(monitor.y + (monitor.height - naturalHeight) / 2),
-        );
+        // clamp height to 85 percent of monitor so it never overflows
+        const maxHeight = Math.floor(monitor.height * 0.85);
+        const clampedHeight = Math.min(naturalHeight, maxHeight);
+        // center horizontally position vertically within monitor bounds
+        const x = Math.floor(monitor.x + (monitor.width - popupWidth) / 2);
+        const y = Math.floor(monitor.y + (monitor.height - clampedHeight) / 2);
+        this._popup.set_position(x, y);
     }
 
     stop() {

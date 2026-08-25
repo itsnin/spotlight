@@ -16,6 +16,22 @@ export const GENDERS2 = ['🧑', '👩', '👨'];
 // tone characters used to detect if emoji already has a tone
 const TONE_CHARS = new Set(['🏻', '🏼', '🏽', '🏾', '🏿']);
 
+// people and body emojis that do not accept skin tone modifiers
+// unicode emoji modifier base property excludes these body parts
+// false negatives harmless user just wont get tone option false positives broken
+const NOT_TONABLE_KEYWORDS = [
+    'eye', 'eyes', 'ear', 'brain', 'heart', 'lungs', 'tooth',
+    'bone', 'tongue', 'mouth', 'nose', 'lips', 'kiss', 'foot',
+    'feet', 'leg', 'hearing aid', 'mustache', 'glasses',
+];
+
+// emojis already gender specific should not get additional gender suffix
+const ALREADY_GENDERED_KEYWORDS = [
+    'woman', 'man', 'girl', 'boy', 'lady', 'gentleman',
+    'princess', 'prince', 'queen', 'king', 'bride', 'groom',
+    'santa', 'mrs. claus',
+];
+
 // keywords that indicate an emoji can take gender suffix
 const GENRABLE_KEYWORDS = [
     'person', 'worker', 'farmer', 'cook', 'student', 'teacher',
@@ -56,6 +72,7 @@ export class EmojiData {
         this._settings = settings;
         this._emojis = [];
         this._byCategory = new Map();
+        this._byChar = new Map();
         this._clickCounts = new Map();
         this._load(extensionPath);
         this._loadClickCounts();
@@ -75,6 +92,7 @@ export class EmojiData {
                     if (!this._byCategory.has(emoji.g))
                         this._byCategory.set(emoji.g, []);
                     this._byCategory.get(emoji.g).push(emoji);
+                    this._byChar.set(emoji.e, emoji);
                 }
             }
         } catch (e) {
@@ -89,15 +107,23 @@ export class EmojiData {
 
         // tonable people and body emojis without existing tone
         const hasTone = [...char].some(c => TONE_CHARS.has(c));
-        emoji.tonable = (emoji.g === 'People & Body') && !hasTone;
+        const isNonTonableBodyPart = NOT_TONABLE_KEYWORDS.some(kw =>
+            desc.includes(kw)
+        );
+        emoji.tonable = (emoji.g === 'People & Body') &&
+                        !hasTone &&
+                        !isNonTonableBodyPart;
 
         // gendered contains neutral person character that can be replaced
         emoji.gendered = char.includes('🧑');
 
         // genrable description suggests gender variant exists
-        // but exclude already gendered emojis
+        // exclude already gendered emojis and gendered base characters
         if (!emoji.gendered && emoji.g === 'People & Body') {
-            emoji.genrable = GENRABLE_KEYWORDS.some(kw =>
+            const alreadyGendered = ALREADY_GENDERED_KEYWORDS.some(kw =>
+                desc.includes(kw)
+            );
+            emoji.genrable = !alreadyGendered && GENRABLE_KEYWORDS.some(kw =>
                 desc.includes(kw.toLowerCase())
             );
         } else {
@@ -132,9 +158,8 @@ export class EmojiData {
     incrementClick(emojiChar) {
         const current = this._clickCounts.get(emojiChar) || 0;
         this._clickCounts.set(emojiChar, current + 1);
-        // save periodically every 10 clicks to avoid excessive writes
-        if ((current + 1) % 10 === 0)
-            this._saveClickCounts();
+        // save on every click gsettings writes are cheap for small strings
+        this._saveClickCounts();
     }
 
     getClickCount(emojiChar) {
@@ -219,8 +244,7 @@ export class EmojiData {
 
     // get full emoji data object by character
     getEmoji(char) {
-        // linear search acceptable for one off lookups
-        return this._emojis.find(e => e.e === char) || null;
+        return this._byChar.get(char) || null;
     }
 
     // get recently used emojis from settings

@@ -20,12 +20,15 @@ const IMAGE_MIMETYPES = [
     'image/svg+xml',
 ];
 
+// unique id counter incremented for each new entry
+let _nextEntryId = 1;
+
 export class ClipboardEntry {
     constructor(mimetype, bytes, favorite = false) {
         this._mimetype = mimetype;
         this._bytes = bytes;
         this._favorite = favorite;
-        this._id = Date.now() + Math.random();
+        this._id = _nextEntryId++;
         this._imagePath = null;
     }
 
@@ -127,19 +130,38 @@ export class ClipboardEntry {
         return this._imagePath || null;
     }
 
+    // compute sha256 hash of bytes used as filename for image cache
+    // prevents collisions that 32-bit bytes.hash would allow
+    getContentHash() {
+        const bytes = this.getBytes();
+        if (!bytes)
+            return null;
+        const cs = GLib.Checksum.new(GLib.ChecksumType.SHA256);
+        cs.update(bytes);
+        return cs.get_string();
+    }
+
     equals(other) {
         if (!other)
             return false;
         if (this.isText() && other.isText())
             return this.getStringValue() === other.getStringValue();
         if (this.isImage() && other.isImage()) {
+            // same path means same image file on disk
+            if (this._imagePath && other._imagePath &&
+                this._imagePath === other._imagePath)
+                return true;
+            // mimetype must match for images to be equal
+            if (this._mimetype !== other._mimetype)
+                return false;
+            // compare actual bytes loading from disk if needed
             const myBytes = this.getBytes();
             const otherBytes = other.getBytes();
             if (!myBytes || !otherBytes)
                 return false;
-            return this._mimetype === other._mimetype &&
-                   myBytes.length === otherBytes.length &&
-                   myBytes.every((v, i) => v === otherBytes[i]);
+            if (myBytes.length !== otherBytes.length)
+                return false;
+            return myBytes.every((v, i) => v === otherBytes[i]);
         }
         return false;
     }

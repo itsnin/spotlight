@@ -1,6 +1,8 @@
 // spotlight - clipboard history manager
 // SPDX-License-Identifier: GPL-3.0-or-later
 import St from 'gi://St';
+import Meta from 'gi://Meta';
+import Shell from 'gi://Shell';
 import GLib from 'gi://GLib';
 import {ClipboardEntry, readClipboardContent} from './clipboardEntry.js';
 import {Registry} from './clipboardRegistry.js';
@@ -44,25 +46,34 @@ export class ClipboardManager {
     start() {
         if (this._signalId !== 0)
             return;
-        // listen for clipboard content changes
-        this._signalId = this._clipboard.connect(
-            'selection-owner-changed',
-            () => this._onClipboardChanged(),
+        // use meta selection owner changed signal same approach as clipboard indicator
+        // this signal fires once per ownership change and tells us which selection type
+        // avoids the dual signal problem when setting both clipboard and primary
+        const metaDisplay = Shell.Global.get().get_display();
+        this._metaSelection = metaDisplay.get_selection();
+        this._signalId = this._metaSelection.connect(
+            'owner-changed',
+            (selection, selectionType, selectionSource) => {
+                if (selectionType === Meta.SelectionType.SELECTION_CLIPBOARD)
+                    this._onClipboardChanged();
+            },
         );
     }
 
     stop() {
         if (this._signalId !== 0) {
-            this._clipboard.disconnect(this._signalId);
+            this._metaSelection.disconnect(this._signalId);
             this._signalId = 0;
+            this._metaSelection = null;
         }
         this._listeners.clear();
     }
 
     destroy() {
         this.stop();
-        // persist current history to disk
+        // persist current history to disk flush debounced writes immediately
         this._registry.write(this._history);
+        this._registry.flush();
         if (this._settingsChangedId) {
             this._settings.disconnect(this._settingsChangedId);
             this._settingsChangedId = 0;
@@ -87,6 +98,9 @@ export class ClipboardManager {
             this._ignoreCount--;
             return;
         }
+        // safety guard ignore count should never go negative
+        if (this._ignoreCount < 0)
+            this._ignoreCount = 0;
         try {
             const entry = await readClipboardContent(this._clipboard);
             if (!entry)
