@@ -83,6 +83,12 @@ function _buildShortcutRow(settings, key, title, subtitle, defaultAccel) {
             accelerator += '<Alt>';
         if (state & Gdk.ModifierType.META_MASK)
             accelerator += '<Meta>';
+        // require at least one modifier prevents bare keys like g or space
+        // which would cause accidental triggering during normal typing
+        if (accelerator.length === 0) {
+            shortcutLabel.label = 'Modifier required';
+            return true;
+        }
         accelerator += Gdk.keyval_name(keyval).toLowerCase();
 
         settings.set_strv(key, [accelerator]);

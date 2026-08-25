@@ -249,25 +249,17 @@ export class EmojiData {
 
     // get recently used emojis from settings
     getRecentlyUsed() {
-        try {
-            return this._settings.get_strv('recently-used-emojis') || [];
-        } catch {
-            return [];
-        }
+        return this._settings.get_strv('recently-used-emojis');
     }
 
     // add emoji to recently used moves to top
     addRecentlyUsed(emojiChar) {
-        try {
-            const recents = this._settings.get_strv('recently-used-emojis') || [];
-            const filtered = recents.filter(e => e !== emojiChar);
-            filtered.unshift(emojiChar);
-            // keep only last 20
-            const trimmed = filtered.slice(0, 20);
-            this._settings.set_strv('recently-used-emojis', trimmed);
-        } catch {
-            // settings key may not exist yet
-        }
+        const recents = this._settings.get_strv('recently-used-emojis');
+        const filtered = recents.filter(e => e !== emojiChar);
+        filtered.unshift(emojiChar);
+        // keep only last 20
+        const trimmed = filtered.slice(0, 20);
+        this._settings.set_strv('recently-used-emojis', trimmed);
     }
 
     getCategories() {

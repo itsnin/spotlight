@@ -98,6 +98,22 @@ class SpotlightPopup extends St.Widget {
             },
             this,
         );
+        // live theme updates reapply when system color scheme changes
+        this._ifaceSettings.connectObject(
+            'changed::color-scheme', () => {
+                if (this._visible)
+                    ThemeManager.apply(this._content, this._settings, this._ifaceSettings);
+            },
+            this,
+        );
+        // live theme updates reapply when user changes theme preference
+        this._settings.connectObject(
+            'changed::theme-preference', () => {
+                if (this._visible)
+                    ThemeManager.apply(this._content, this._settings, this._ifaceSettings);
+            },
+            this,
+        );
     }
 
     // creates a round mode button with icon
@@ -378,6 +394,8 @@ class SpotlightPopup extends St.Widget {
         global.display.disconnectObject(this);
         Shell.AppSystem.get_default().disconnectObject(this);
         global.stage.disconnectObject(this);
+        this._ifaceSettings.disconnectObject(this);
+        this._settings.disconnectObject(this);
         // clean up views
         if (this._clipboardView) {
             this._clipboardView.destroy();
