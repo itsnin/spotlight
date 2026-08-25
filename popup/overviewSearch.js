@@ -35,12 +35,13 @@ export function steal(popup) {
         };
     }
     // Main.toggleOverview is what super key binding actually invokes
-    // close popup first then let original flow show the overview
+    // when spotlight is open super does nothing same behavior as macos
+    // when spotlight is closed original flow shows the overview normally
     if (Main.toggleOverview && !Main._originalToggleOverview) {
         Main._originalToggleOverview = Main.toggleOverview;
         Main.toggleOverview = () => {
             if (popup._visible)
-                popup.close();
+                return;
             Main._originalToggleOverview();
         };
     }

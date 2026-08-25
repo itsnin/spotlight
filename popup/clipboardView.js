@@ -24,7 +24,7 @@ class ClipboardView extends St.ScrollView {
             vertical: true,
             style_class: 'spotlight-clipboard-list',
         });
-        this.add_actor(this._box);
+        this.set_child(this._box);
 
         // empty state shown when no clipboard history
         this._emptyLabel = new St.Label({

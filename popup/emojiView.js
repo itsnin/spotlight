@@ -79,7 +79,7 @@ class EmojiView extends St.BoxLayout {
             vertical: false,
             spacing: 2,
         });
-        this._categoryRow.add_actor(this._categoryBox);
+        this._categoryRow.set_child(this._categoryBox);
         this.add_child(this._categoryRow);
 
         // skin tone selector row
@@ -105,7 +105,7 @@ class EmojiView extends St.BoxLayout {
             style_class: 'spotlight-emoji-grid',
             spacing: 2,
         });
-        this._scroll.add_actor(this._gridBox);
+        this._scroll.set_child(this._gridBox);
         this.add_child(this._scroll);
 
         // empty state
