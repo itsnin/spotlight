@@ -9,34 +9,27 @@ export function steal(popup) {
     if (popup._entry)
         return;
 
-    // override overview methods two level override distinguishes call paths
+    // two separate toggle entry points exist in gnome shell
     // Main.toggleOverview called by super key activities button hot corner
     // Main.overview.toggle called directly by individual search results
+    // both must be overridden to prevent overview from appearing
+
+    // Main.overview.toggle called by SearchResult.activate after launching result
+    // close popup do not open overview since we are not in overview to begin with
     if (!Main.overview._originalToggle) {
         Main.overview._originalToggle = Main.overview.toggle;
         Main.overview.toggle = () => {
-            // individual search results call this directly on activate
-            // close popup and return overview should not appear after launching result
             if (popup._visible) {
                 popup.close();
-                // safety net if Main.toggleOverview does not exist on this version
-                // inspect call stack to distinguish super key from search activation
-                if (!Main._originalToggleOverview) {
-                    const stack = new Error().stack;
-                    const fromSearch = stack.includes('activateResult') ||
-                                      stack.includes('SearchResult') ||
-                                      stack.includes('activateDefault');
-                    if (!fromSearch)
-                        Main.overview._originalToggle.call(Main.overview);
-                }
                 return;
             }
             Main.overview._originalToggle.call(Main.overview);
         };
     }
-    // Main.toggleOverview is what super key binding actually invokes
-    // when spotlight is open super does nothing same behavior as macos
-    // when spotlight is closed original flow shows the overview normally
+
+    // Main.toggleOverview called by super key activities button hot corner
+    // when spotlight is open super does nothing matches macos behavior
+    // when spotlight is closed original behavior opens overview normally
     if (Main.toggleOverview && !Main._originalToggleOverview) {
         Main._originalToggleOverview = Main.toggleOverview;
         Main.toggleOverview = () => {
