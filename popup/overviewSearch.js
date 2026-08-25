@@ -56,13 +56,6 @@ export function steal(popup) {
         popup._search.get_parent().remove_child(popup._search);
     popup._search.hide();
 
-    // override activateDefault let Main.overview.toggle handle closing
-    // closing here would make toggle override think popup is already gone
-    popup._originalActivateDefault = popup._searchResults.activateDefault;
-    popup._searchResults.activateDefault = () => {
-        popup._originalActivateDefault.call(popup._searchResults);
-    };
-
     // prevent search controller from cancelling itself
     if (!popup._search._originalSearchCancelled) {
         popup._search._originalSearchCancelled = popup._search._searchCancelled;
@@ -122,12 +115,6 @@ export function return_(popup) {
         if (popup._search._originalSearchCancelled) {
             popup._search._searchCancelled = popup._search._originalSearchCancelled;
             popup._search._originalSearchCancelled = null;
-        }
-
-        // restore original activateDefault
-        if (popup._originalActivateDefault) {
-            popup._searchResults.activateDefault = popup._originalActivateDefault;
-            popup._originalActivateDefault = null;
         }
 
         if (popup._search.get_parent())
