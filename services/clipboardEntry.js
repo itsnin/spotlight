@@ -30,6 +30,11 @@ export class ClipboardEntry {
         this._favorite = favorite;
         this._id = _nextEntryId++;
         this._imagePath = null;
+        this._contentHash = null;
+        this._size = bytes ? bytes.length : 0;
+        // precompute hash when bytes available avoids sync disk io in equals
+        if (bytes)
+            this._contentHash = this._computeHash(bytes);
     }
 
     static fromJSON(jsonEntry) {
@@ -43,8 +48,15 @@ export class ClipboardEntry {
             bytes = null;
         }
         const entry = new ClipboardEntry(mimetype, bytes, favorite);
-        if (jsonEntry.imagePath)
+        if (jsonEntry.imagePath) {
             entry._imagePath = jsonEntry.imagePath;
+            // image path is already a sha256 hash from registry write
+            // extract basename use as content hash avoids disk read in equals
+            const parts = jsonEntry.imagePath.split('/');
+            entry._contentHash = parts[parts.length - 1];
+            if (jsonEntry.size)
+                entry._size = jsonEntry.size;
+        }
         return entry;
     }
 
@@ -57,8 +69,15 @@ export class ClipboardEntry {
             item.contents = this.getStringValue();
         } else if (this.isImage() && this._imagePath) {
             item.imagePath = this._imagePath;
+            item.size = this._size;
         }
         return item;
+    }
+
+    _computeHash(bytes) {
+        const cs = GLib.Checksum.new(GLib.ChecksumType.SHA256);
+        cs.update(bytes);
+        return cs.get_string();
     }
 
     static _isTextMimetype(mimetype) {
@@ -103,6 +122,9 @@ export class ClipboardEntry {
             const [success, contents] = file.load_contents(null);
             if (success) {
                 this._bytes = contents;
+                this._size = contents.length;
+                if (!this._contentHash)
+                    this._contentHash = this._computeHash(contents);
                 return true;
             }
         } catch {
@@ -133,12 +155,17 @@ export class ClipboardEntry {
     // compute sha256 hash of bytes used as filename for image cache
     // prevents collisions that 32-bit bytes.hash would allow
     getContentHash() {
+        if (this._contentHash)
+            return this._contentHash;
         const bytes = this.getBytes();
         if (!bytes)
             return null;
-        const cs = GLib.Checksum.new(GLib.ChecksumType.SHA256);
-        cs.update(bytes);
-        return cs.get_string();
+        this._contentHash = this._computeHash(bytes);
+        return this._contentHash;
+    }
+
+    getSize() {
+        return this._size;
     }
 
     equals(other) {
@@ -154,14 +181,23 @@ export class ClipboardEntry {
             // mimetype must match for images to be equal
             if (this._mimetype !== other._mimetype)
                 return false;
-            // compare actual bytes loading from disk if needed
-            const myBytes = this.getBytes();
-            const otherBytes = other.getBytes();
-            if (!myBytes || !otherBytes)
+            // different sizes cannot be equal
+            if (this._size > 0 && other._size > 0 &&
+                this._size !== other._size)
                 return false;
-            if (myBytes.length !== otherBytes.length)
-                return false;
-            return myBytes.every((v, i) => v === otherBytes[i]);
+            // compare by content hash if both have it avoids sync disk io
+            if (this._contentHash && other._contentHash)
+                return this._contentHash === other._contentHash;
+            // fall back to byte comparison only if both have bytes in memory
+            // never load from disk during equality check would block main thread
+            if (this._bytes && other._bytes) {
+                if (this._bytes.length !== other._bytes.length)
+                    return false;
+                return this._bytes.every((v, i) => v === other._bytes[i]);
+            }
+            // cannot determine equality without loading from disk
+            // assume different to avoid false duplicates
+            return false;
         }
         return false;
     }

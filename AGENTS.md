@@ -85,14 +85,23 @@ spotlight/
         themeManager.js       theme detection and application
         popupBackdrop.js      transparent click outside detection
         popupPositioner.js    positions centers and shows the popup
+        clipboardView.js      clipboard history list view
+        emojiView.js          emoji selector grid view
     services/
         keybinding.js         keybinding manager
+        clipboardEntry.js     clipboard entry wraps text or image data
+        clipboardManager.js   clipboard history tracking deduplication
+        clipboardRegistry.js  disk persistence saves loads json to cache dir
+        emojiData.js          emoji data loading tagging search popularity
+        virtualKeyboard.js    virtual input device for paste simulation
     schemas/                  gsettings schema
         org.gnome.shell.extensions.spotlight.gschema.xml
     prefs/                    preference pages
         shortcutPage.js
         appearancePage.js
         aboutPage.js
+    data/
+        emojis.json           bundled emoji data unicode plus keywords
     locale/                   translation source files gettext
         spotlight.pot         translation template
     scripts/
@@ -123,11 +132,13 @@ search priority and behavior are entirely controlled by gnome shell not by spotl
 
 ### signal management
 
-all signal connections on gobjects use `connectObject` and `disconnectObject` not `connect` and `disconnect` this is a gnome shell 42 plus api that auto-disconnects all signals connected with a given owner object see https://gjs.guide/extensions/upgrading/gnome-shell-42.html
+for signals on long lived objects like `global.stage` `global.display` `Shell.AppSystem` that outlive our extension use `connectObject` and `disconnectObject` this is a gnome shell 42 plus api that auto-disconnects all signals connected with a given owner object see https://gjs.guide/extensions/upgrading/gnome-shell-42.html
 
 in `disable()` or `destroy()` we call `disconnectObject(this)` which removes every signal connected with `this` as the owner this prevents signal leaks if you forget to disconnect one manually
 
-do not use plain `connect` with manual disconnect for any new signal always use `connectObject`
+for signals connected to short lived widgets like buttons list items that our code destroys plain `connect` is safe because gobject automatically disconnects all signal handlers when the emitting object is finalized verified via https://discourse.gnome.org/t/run-dispose-in-gjs/16722 and official gobject signal documentation
+
+do not use plain `connect` for signals from long lived objects always use `connectObject` for those
 
 ### popup positioning
 
@@ -231,6 +242,14 @@ see https://gjs.guide/extensions/development/preferences.html#gsettings
   - `'default'` follows gnome system color scheme via `org.gnome.desktop.interface color-scheme`
   - `'dark'` always uses dark appearance
   - `'light'` always uses light appearance
+- `clipboard-shortcut` type `as` default `['<Alt>1']` keyboard shortcut to open in clipboard history mode
+- `emoji-shortcut` type `as` default `['<Alt>2']` keyboard shortcut to open in emoji selector mode
+- `clipboard-history-size` type `i` default `20` range `5-100` maximum number of clipboard entries to keep
+- `recently-used-emojis` type `as` default `[]` emojis recently selected by user
+- `paste-on-select` type `b` default `false` automatically paste after selecting clipboard entry or emoji
+- `emoji-skin-tone` type `i` default `0` range `0-5` default skin tone `0` none `1-5` light to dark
+- `emoji-gender` type `i` default `0` range `0-2` default gender `0` neutral `1` women `2` men
+- `emoji-click-counts` type `s` default `''` json string mapping emoji characters to click counts for search ranking
 
 ## appearance theme
 
