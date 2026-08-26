@@ -4,6 +4,7 @@ import St from 'gi://St';
 import Meta from 'gi://Meta';
 import Shell from 'gi://Shell';
 import GLib from 'gi://GLib';
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import {ClipboardEntry, readClipboardContent} from './clipboardEntry.js';
 import {Registry} from './clipboardRegistry.js';
 
@@ -19,11 +20,17 @@ export class ClipboardManager {
         this._signalId = 0;
         this._ignoreCount = 0;
         this._loading = false;
+        this._privateMode = false;
         this._registry = new Registry(uuid);
 
         this._settingsChangedId = settings.connect(
             'changed::clipboard-history-size',
             () => this.setMaxSize(settings.get_int('clipboard-history-size')),
+        );
+        this._excludedApps = settings.get_strv('clipboard-excluded-apps');
+        this._excludedAppsChangedId = settings.connect(
+            'changed::clipboard-excluded-apps',
+            () => this._excludedApps = settings.get_strv('clipboard-excluded-apps'),
         );
 
         // load persisted history from disk
@@ -72,11 +79,20 @@ export class ClipboardManager {
     destroy() {
         this.stop();
         // persist current history to disk flush debounced writes immediately
-        this._registry.write(this._history);
+        if (this._settings.get_boolean('clipboard-cache-only-favorites')) {
+            const favsOnly = this._history.filter(e => e.isFavorite());
+            this._registry.write(favsOnly);
+        } else {
+            this._persist();
+        }
         this._registry.flush();
         if (this._settingsChangedId) {
             this._settings.disconnect(this._settingsChangedId);
             this._settingsChangedId = 0;
+        }
+        if (this._excludedAppsChangedId) {
+            this._settings.disconnect(this._excludedAppsChangedId);
+            this._excludedAppsChangedId = 0;
         }
         this._history = [];
     }
@@ -92,6 +108,15 @@ export class ClipboardManager {
             cb(this._history);
     }
 
+    _persist() {
+        if (this._settings.get_boolean('clipboard-cache-only-favorites')) {
+            const favsOnly = this._history.filter(e => e.isFavorite());
+            this._registry.write(favsOnly);
+        } else {
+            this._persist();
+        }
+    }
+
     // called when clipboard content changes
     async _onClipboardChanged() {
         if (this._ignoreCount > 0) {
@@ -101,10 +126,32 @@ export class ClipboardManager {
         // safety guard ignore count should never go negative
         if (this._ignoreCount < 0)
             this._ignoreCount = 0;
+        // private mode skip tracking entirely
+        if (this._privateMode)
+            return;
+        // check excluded apps
+        try {
+            const focussedWindow = Shell.Global.get().display.focusWindow;
+            const wmClass = focussedWindow?.get_wm_class();
+            if (wmClass && this.isExcludedApp(wmClass))
+                return;
+        } catch {}
         try {
             const entry = await readClipboardContent(this._clipboard);
             if (!entry)
                 return;
+            // strip whitespace if enabled
+            if (entry.isText() && this._settings.get_boolean('clipboard-strip-text')) {
+                const stripped = entry.getStringValue().trim();
+                if (stripped.length === 0)
+                    return;
+                if (stripped !== entry.getStringValue()) {
+                    entry.setText(stripped);
+                    this._ignoreCount++;
+                    this._clipboard.set_text(CLIPBOARD_TYPE, stripped);
+                    this._clipboard.set_text(St.ClipboardType.PRIMARY, stripped);
+                }
+            }
             // ignore empty text
             if (entry.isText() && entry.getStringValue().trim().length === 0)
                 return;
@@ -138,7 +185,12 @@ export class ClipboardManager {
         }
         this._notify();
         // persist to disk
-        this._registry.write(this._history);
+        if (this._settings.get_boolean('clipboard-cache-only-favorites')) {
+            const favsOnly = this._history.filter(e => e.isFavorite());
+            this._registry.write(favsOnly);
+        } else {
+            this._persist();
+        }
     }
 
     getHistory() {
@@ -168,7 +220,12 @@ export class ClipboardManager {
         this._history.splice(index, 1);
         this._history.unshift(entry);
         this._notify();
-        this._registry.write(this._history);
+        if (this._settings.get_boolean('clipboard-cache-only-favorites')) {
+            const favsOnly = this._history.filter(e => e.isFavorite());
+            this._registry.write(favsOnly);
+        } else {
+            this._persist();
+        }
         return entry;
     }
 
@@ -186,7 +243,12 @@ export class ClipboardManager {
         const entry = this._history[index];
         entry.setFavorite(!entry.isFavorite());
         this._notify();
-        this._registry.write(this._history);
+        if (this._settings.get_boolean('clipboard-cache-only-favorites')) {
+            const favsOnly = this._history.filter(e => e.isFavorite());
+            this._registry.write(favsOnly);
+        } else {
+            this._persist();
+        }
     }
 
     deleteEntry(index) {
@@ -194,14 +256,24 @@ export class ClipboardManager {
             return;
         this._history.splice(index, 1);
         this._notify();
-        this._registry.write(this._history);
+        if (this._settings.get_boolean('clipboard-cache-only-favorites')) {
+            const favsOnly = this._history.filter(e => e.isFavorite());
+            this._registry.write(favsOnly);
+        } else {
+            this._persist();
+        }
     }
 
     clearHistory() {
         // preserve favorites same behavior as clipboard indicator
         this._history = this._history.filter(e => e.isFavorite());
         this._notify();
-        this._registry.write(this._history);
+        if (this._settings.get_boolean('clipboard-cache-only-favorites')) {
+            const favsOnly = this._history.filter(e => e.isFavorite());
+            this._registry.write(favsOnly);
+        } else {
+            this._persist();
+        }
     }
 
     setMaxSize(size) {
@@ -209,5 +281,20 @@ export class ClipboardManager {
         while (this._history.length > this._maxSize)
             this._history.pop();
         this._notify();
+    }
+
+    isPrivateMode() {
+        return this._privateMode;
+    }
+
+    setPrivateMode(val) {
+        this._privateMode = !!val;
+        this._notify();
+    }
+
+    isExcludedApp(wmClass) {
+        if (!wmClass)
+            return false;
+        return this._excludedApps.includes(wmClass);
     }
 }

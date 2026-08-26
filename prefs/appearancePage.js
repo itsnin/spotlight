@@ -18,7 +18,6 @@ export function buildAppearancePage(settings) {
         title: 'Appearance',
         description: 'Choose the visual style',
     });
-
     const themeRow = new Adw.ComboRow({
         title: 'Theme',
         subtitle: 'Dark, light, or follow system',
@@ -48,32 +47,135 @@ export function buildAppearancePage(settings) {
         title: 'Paste on select',
         subtitle: 'Automatically paste after selecting a clipboard entry or emoji',
     });
-    settings.bind(
-        'paste-on-select',
-        pasteRow,
-        'active',
-        Gio.SettingsBindFlags.DEFAULT,
-    );
+    settings.bind('paste-on-select', pasteRow, 'active', Gio.SettingsBindFlags.DEFAULT);
     behaviorGroup.add(pasteRow);
 
     const historyRow = new Adw.SpinRow({
         title: 'Clipboard history size',
         subtitle: 'Maximum number of entries to keep in clipboard history',
         adjustment: new Gtk.Adjustment({
-            lower: 5,
-            upper: 100,
-            step_increment: 1,
-            page_increment: 5,
+            lower: 5, upper: 100, step_increment: 1, page_increment: 5,
         }),
     });
-    settings.bind(
-        'clipboard-history-size',
-        historyRow,
-        'value',
-        Gio.SettingsBindFlags.DEFAULT,
-    );
+    settings.bind('clipboard-history-size', historyRow, 'value', Gio.SettingsBindFlags.DEFAULT);
     behaviorGroup.add(historyRow);
+
+    const moveFirstRow = new Adw.SwitchRow({
+        title: 'Move selected to top',
+        subtitle: 'Move items to the top of the list when selected',
+    });
+    settings.bind('clipboard-move-first', moveFirstRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+    behaviorGroup.add(moveFirstRow);
+
+    const stripRow = new Adw.SwitchRow({
+        title: 'Strip whitespace',
+        subtitle: 'Remove leading and trailing whitespace from copied text',
+    });
+    settings.bind('clipboard-strip-text', stripRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+    behaviorGroup.add(stripRow);
+
+    const cacheFavRow = new Adw.SwitchRow({
+        title: 'Cache only favorites',
+        subtitle: 'Only persist pinned favorites to disk non favorites are memory only',
+    });
+    settings.bind('clipboard-cache-only-favorites', cacheFavRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+    behaviorGroup.add(cacheFavRow);
+
     groups.push(behaviorGroup);
+
+    // clipboard search group
+    const searchGroup = new Adw.PreferencesGroup({
+        title: 'Clipboard search',
+        description: 'Search behavior in clipboard history',
+    });
+
+    const regexRow = new Adw.SwitchRow({
+        title: 'Regex search',
+        subtitle: 'Allow regular expressions in clipboard search',
+    });
+    settings.bind('clipboard-regex-search', regexRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+    searchGroup.add(regexRow);
+
+    const caseRow = new Adw.SwitchRow({
+        title: 'Case sensitive search',
+        subtitle: 'Make clipboard search case sensitive',
+    });
+    settings.bind('clipboard-case-sensitive', caseRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+    searchGroup.add(caseRow);
+
+    groups.push(searchGroup);
+
+    // clipboard confirmation group
+    const confirmGroup = new Adw.PreferencesGroup({
+        title: 'Clipboard confirmations',
+        description: 'Confirmation dialogs for destructive actions',
+    });
+
+    const confirmClearRow = new Adw.SwitchRow({
+        title: 'Confirm clear history',
+        subtitle: 'Show confirmation dialog when clearing clipboard history',
+    });
+    settings.bind('clipboard-confirm-clear', confirmClearRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+    confirmGroup.add(confirmClearRow);
+
+    const confirmPinnedRow = new Adw.SwitchRow({
+        title: 'Confirm delete pinned',
+        subtitle: 'Show confirmation dialog when deleting a pinned favorite item',
+    });
+    settings.bind('clipboard-confirm-pinned-delete', confirmPinnedRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+    confirmGroup.add(confirmPinnedRow);
+
+    groups.push(confirmGroup);
+
+    // clipboard display group
+    const clipDisplayGroup = new Adw.PreferencesGroup({
+        title: 'Clipboard display',
+        description: 'Show or hide interface elements',
+    });
+
+    const pinnedBottomRow = new Adw.SwitchRow({
+        title: 'Pinned items on bottom',
+        subtitle: 'Display the pinned favorites section below the history section',
+    });
+    settings.bind('clipboard-pinned-on-bottom', pinnedBottomRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+    clipDisplayGroup.add(pinnedBottomRow);
+
+    const showPinRow = new Adw.SwitchRow({
+        title: 'Show pin button',
+        subtitle: 'Show the pin favorite button on each clipboard item',
+    });
+    settings.bind('clipboard-show-pin-button', showPinRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+    clipDisplayGroup.add(showPinRow);
+
+    const showDeleteRow = new Adw.SwitchRow({
+        title: 'Show delete button',
+        subtitle: 'Show the delete button on each clipboard item',
+    });
+    settings.bind('clipboard-show-delete-button', showDeleteRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+    clipDisplayGroup.add(showDeleteRow);
+
+    const showPasteRow = new Adw.SwitchRow({
+        title: 'Show paste button',
+        subtitle: 'Show the paste button on each clipboard item',
+    });
+    settings.bind('clipboard-show-paste-button', showPasteRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+    clipDisplayGroup.add(showPasteRow);
+
+    const showEditRow = new Adw.SwitchRow({
+        title: 'Show edit button',
+        subtitle: 'Show the edit button on text clipboard items',
+    });
+    settings.bind('clipboard-show-edit-button', showEditRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+    clipDisplayGroup.add(showEditRow);
+
+    const showTagRow = new Adw.SwitchRow({
+        title: 'Show tag button',
+        subtitle: 'Show the tag button on each clipboard item',
+    });
+    settings.bind('clipboard-show-tag-button', showTagRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+    clipDisplayGroup.add(showTagRow);
+
+    groups.push(clipDisplayGroup);
 
     // emoji defaults group
     const emojiGroup = new Adw.PreferencesGroup({
@@ -121,8 +223,50 @@ export function buildAppearancePage(settings) {
         settings.set_int('emoji-gender', genderRow.get_selected());
     });
     emojiGroup.add(genderRow);
+
     groups.push(emojiGroup);
 
+    // emoji display group
+    const emojiDisplayGroup = new Adw.PreferencesGroup({
+        title: 'Emoji display',
+        description: 'Emoji grid appearance and behavior',
+    });
+
+    const emojiSizeRow = new Adw.SpinRow({
+        title: 'Emoji size',
+        subtitle: 'Size of emoji buttons in pixels',
+        adjustment: new Gtk.Adjustment({
+            lower: 16, upper: 48, step_increment: 1, page_increment: 2,
+        }),
+    });
+    settings.bind('emoji-size', emojiSizeRow, 'value', Gio.SettingsBindFlags.DEFAULT);
+    emojiDisplayGroup.add(emojiSizeRow);
+
+    const emojiColsRow = new Adw.SpinRow({
+        title: 'Emoji columns',
+        subtitle: 'Number of emojis per row in the grid',
+        adjustment: new Gtk.Adjustment({
+            lower: 6, upper: 16, step_increment: 1, page_increment: 2,
+        }),
+    });
+    settings.bind('emoji-columns', emojiColsRow, 'value', Gio.SettingsBindFlags.DEFAULT);
+    emojiDisplayGroup.add(emojiColsRow);
+
+    const keepOpenRow = new Adw.SwitchRow({
+        title: 'Keep emoji panel open',
+        subtitle: 'Keep the emoji panel open after selecting an emoji allows picking multiple',
+    });
+    settings.bind('emoji-keep-open', keepOpenRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+    emojiDisplayGroup.add(keepOpenRow);
+
+    const tooltipsRow = new Adw.SwitchRow({
+        title: 'Show emoji tooltips',
+        subtitle: 'Show emoji name tooltips on hover',
+    });
+    settings.bind('emoji-show-tooltips', tooltipsRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+    emojiDisplayGroup.add(tooltipsRow);
+
+    groups.push(emojiDisplayGroup);
 
     // caffeine group standalone feature toggle
     const caffeineGroup = new Adw.PreferencesGroup({
@@ -133,14 +277,10 @@ export function buildAppearancePage(settings) {
         title: 'Enable Caffeine',
         subtitle: 'When off Caffeine has no impact on the system',
     });
-    settings.bind(
-        'caffeine-enabled',
-        caffeineRow,
-        'active',
-        Gio.SettingsBindFlags.DEFAULT,
-    );
+    settings.bind('caffeine-enabled', caffeineRow, 'active', Gio.SettingsBindFlags.DEFAULT);
     caffeineGroup.add(caffeineRow);
     groups.push(caffeineGroup);
+
     return groups;
 }
 

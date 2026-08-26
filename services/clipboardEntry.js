@@ -24,10 +24,11 @@ const IMAGE_MIMETYPES = [
 let _nextEntryId = 1;
 
 export class ClipboardEntry {
-    constructor(mimetype, bytes, favorite = false) {
+    constructor(mimetype, bytes, favorite = false, tag = null) {
         this._mimetype = mimetype;
         this._bytes = bytes;
         this._favorite = favorite;
+        this._tag = tag;
         this._id = _nextEntryId++;
         this._imagePath = null;
         this._contentHash = null;
@@ -40,6 +41,7 @@ export class ClipboardEntry {
     static fromJSON(jsonEntry) {
         const mimetype = jsonEntry.mimetype || 'text/plain;charset=utf-8';
         const favorite = jsonEntry.favorite || false;
+        const tag = jsonEntry.tag || null;
         let bytes;
         if (ClipboardEntry._isTextMimetype(mimetype)) {
             bytes = new TextEncoder().encode(jsonEntry.contents);
@@ -47,7 +49,7 @@ export class ClipboardEntry {
             // image entries store filename not contents bytes loaded lazily
             bytes = null;
         }
-        const entry = new ClipboardEntry(mimetype, bytes, favorite);
+        const entry = new ClipboardEntry(mimetype, bytes, favorite, tag);
         if (jsonEntry.imagePath) {
             entry._imagePath = jsonEntry.imagePath;
             // image path is already a sha256 hash from registry write
@@ -63,6 +65,7 @@ export class ClipboardEntry {
     toJSON() {
         const item = {
             favorite: this._favorite,
+            tag: this._tag,
             mimetype: this._mimetype,
         };
         if (this.isText()) {
@@ -103,6 +106,19 @@ export class ClipboardEntry {
 
     setFavorite(val) {
         this._favorite = !!val;
+    }
+    getTag() {
+        return this._tag;
+    }
+    setTag(val) {
+        this._tag = val ? String(val).trim() || null : null;
+    }
+    setText(text) {
+        if (!this.isText())
+            return;
+        this._bytes = new TextEncoder().encode(text);
+        this._contentHash = this._computeHash(this._bytes);
+        this._size = this._bytes.length;
     }
 
     getStringValue() {

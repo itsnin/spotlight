@@ -197,5 +197,112 @@
       <default>false</default>
       <summary>Command line key to toggle state</summary>
     </key>
+
+    <!-- === clipboard indicator features === -->
+    <key type="b" name="clipboard-private-mode">
+      <default>false</default>
+      <summary>Private mode</summary>
+      <description>When enabled clipboard changes are not tracked in history</description>
+    </key>
+    <key type="b" name="clipboard-move-first">
+      <default>true</default>
+      <summary>Move selected item to top</summary>
+      <description>Move items to the top of the list when selected</description>
+    </key>
+    <key type="b" name="clipboard-strip-text">
+      <default>false</default>
+      <summary>Strip whitespace</summary>
+      <description>Remove leading and trailing whitespace from copied text</description>
+    </key>
+    <key type="b" name="clipboard-confirm-clear">
+      <default>true</default>
+      <summary>Confirm before clearing history</summary>
+      <description>Show confirmation dialog when clearing clipboard history</description>
+    </key>
+    <key type="b" name="clipboard-confirm-pinned-delete">
+      <default>false</default>
+      <summary>Confirm before deleting pinned items</summary>
+      <description>Show confirmation dialog when deleting a pinned favorite item</description>
+    </key>
+    <key type="b" name="clipboard-regex-search">
+      <default>false</default>
+      <summary>Regex search</summary>
+      <description>Allow regular expressions in clipboard search</description>
+    </key>
+    <key type="b" name="clipboard-case-sensitive">
+      <default>false</default>
+      <summary>Case sensitive search</summary>
+      <description>Make clipboard search case sensitive</description>
+    </key>
+    <key type="b" name="clipboard-cache-only-favorites">
+      <default>false</default>
+      <summary>Cache only favorites</summary>
+      <description>Only persist favorite pinned entries to disk non favorites are memory only</description>
+    </key>
+    <key type="b" name="clipboard-pinned-on-bottom">
+      <default>false</default>
+      <summary>Pinned items on bottom</summary>
+      <description>Display the pinned favorites section below the history section</description>
+    </key>
+    <key type="b" name="clipboard-show-pin-button">
+      <default>true</default>
+      <summary>Show pin button</summary>
+      <description>Show the pin favorite button on each clipboard item</description>
+    </key>
+    <key type="b" name="clipboard-show-delete-button">
+      <default>true</default>
+      <summary>Show delete button</summary>
+      <description>Show the delete button on each clipboard item</description>
+    </key>
+    <key type="b" name="clipboard-show-paste-button">
+      <default>true</default>
+      <summary>Show paste button</summary>
+      <description>Show the paste button on each clipboard item</description>
+    </key>
+    <key type="b" name="clipboard-show-edit-button">
+      <default>true</default>
+      <summary>Show edit button</summary>
+      <description>Show the edit button on text clipboard items</description>
+    </key>
+    <key type="b" name="clipboard-show-tag-button">
+      <default>true</default>
+      <summary>Show tag button</summary>
+      <description>Show the tag button on each clipboard item</description>
+    </key>
+    <key type="as" name="clipboard-excluded-apps">
+      <default>[]</default>
+      <summary>Excluded applications</summary>
+      <description>Applications whose clipboard changes are not tracked in history</description>
+    </key>
+
+    <!-- === emoji copy features === -->
+    <key type="i" name="emoji-size">
+      <default>28</default>
+      <summary>Emoji size</summary>
+      <description>Size of emoji buttons in pixels</description>
+      <range min="16" max="48"/>
+    </key>
+    <key type="i" name="emoji-columns">
+      <default>10</default>
+      <summary>Emoji columns</summary>
+      <description>Number of emojis per row in the grid</description>
+      <range min="6" max="16"/>
+    </key>
+    <key type="b" name="emoji-keep-open">
+      <default>false</default>
+      <summary>Keep emoji panel open</summary>
+      <description>Keep the emoji panel open after selecting an emoji allows picking multiple</description>
+    </key>
+    <key type="b" name="emoji-show-tooltips">
+      <default>true</default>
+      <summary>Show emoji tooltips</summary>
+      <description>Show emoji name tooltips on hover</description>
+    </key>
+    <key type="as" name="emoji-recently-used">
+      <default>[]</default>
+      <summary>Recently used emojis</summary>
+      <description>Emojis recently selected by the user</description>
+    </key>
+
   </schema>
 </schemalist>
