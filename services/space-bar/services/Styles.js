@@ -53,7 +53,7 @@ export class Styles {
             themeContext.get_theme().load_stylesheet(file);
         }
         catch (e) {
-            console.error('Failed to load stylesheet');
+            log('[spotlight-space-bar] Failed to load stylesheet');
             if (this._settings.customStylesEnabled.value) {
                 this._settings.customStylesEnabled.value = false;
                 this._settings.customStylesFailed.value = true;
@@ -71,7 +71,7 @@ export class Styles {
                 this._dynamicStyleSheet.delete(null);
             }
             catch (e) {
-                console.warn('Failed to delete temporary stylesheet file:', e);
+                log('[spotlight-space-bar] Failed to delete temporary stylesheet file: ' + e.message);
             }
             this._dynamicStyleSheet = undefined;
         }
