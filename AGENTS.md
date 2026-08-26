@@ -52,9 +52,9 @@ the codebase calls `set_vertical(true)` after `_init()` for st box layouts not `
 
 `vertical` and `set_vertical()` are confirmed to exist across the full 45 through 50 range so this is the correct choice do not switch back to `orientation` in the constructor without first confirming it against the actual minimum supported version not just the newest one
 
-similarly `St.BoxLayout` uses `set_spacing(value)` method not `spacing: value` in the constructor the `spacing` gobject property was added in gnome shell 47 and does not exist on 45 and 46 a real user report hit `Error: No property spacing on StBoxLayout` always call `set_spacing()` after construction
+similarly `St.BoxLayout` has no `spacing` gobject property and no `set_spacing()` method spacing must be set via css using the `style` property for example `box.style = 'spacing: 10px;'` real user reports hit both `Error: No property spacing on StBoxLayout` and `TypeError: set_spacing is not a function` always use css for spacing
 
-keybinding validation in preferences uses two layers first require at least one modifier to prevent bare keys like g or space that would cause accidental triggering during typing second validate via `Gtk.accelerator_valid(keyval, modifiers)` which rejects modifier only keys and other invalid combinations
+keybinding validation in preferences uses two layers first require at least one modifier to prevent bare keys like g or space that would cause accidental triggering during typing second validate via `Gtk.accelerator_valid(keyval, modifiers)` which rejects modifier only keys and other invalid combinations note `Gtk.accelerator_valid` does not reject bare alphanumeric keys it only rejects modifier only keys so the manual modifier check is still required
 
 ### single package for all versions
 

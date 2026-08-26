@@ -78,7 +78,7 @@ class EmojiView extends St.BoxLayout {
         this._categoryBox = new St.BoxLayout({
             vertical: false,
         });
-        this._categoryBox.set_spacing(2);
+        this._categoryBox.style = 'spacing: 2px;';
         this._categoryRow.set_child(this._categoryBox);
         this.add_child(this._categoryRow);
 
@@ -90,7 +90,7 @@ class EmojiView extends St.BoxLayout {
             padding_top: 4,
             padding_bottom: 4,
         });
-        this._toneRow.set_spacing(4);
+        this._toneRow.style = 'spacing: 4px;';
         this._buildToneButtons();
         this.add_child(this._toneRow);
 
@@ -104,7 +104,7 @@ class EmojiView extends St.BoxLayout {
             vertical: true,
             style_class: 'spotlight-emoji-grid',
         });
-        this._gridBox.set_spacing(2);
+        this._gridBox.style = 'spacing: 2px;';
         this._scroll.set_child(this._gridBox);
         this.add_child(this._scroll);
 
@@ -237,7 +237,7 @@ class EmojiView extends St.BoxLayout {
                 rowBox = new St.BoxLayout({
                     vertical: false,
                 });
-                rowBox.set_spacing(2);
+                rowBox.style = 'spacing: 2px;';
                 this._gridBox.add_child(rowBox);
                 this._buttons.push(rowBox);
             }
