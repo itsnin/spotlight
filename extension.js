@@ -3,6 +3,8 @@
 import {Extension, gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 import Gio from 'gi://Gio';
 import Meta from 'gi://Meta';
+import GLib from 'gi://GLib';
+import St from 'gi://St';
 import Shell from 'gi://Shell';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import {SpotlightPopup} from './spotlightPopup.js';
@@ -36,6 +38,7 @@ class SpaceBarAdapter {
         };
         this.workspacesBar = null;
         this.scrollHandler = null;
+        this._baseStyleSheet = null;
     }
 
     getSettings(schemaName) {
@@ -46,7 +49,31 @@ class SpaceBarAdapter {
         this._spotlight.openPreferences();
     }
 
+    _loadBaseStylesheet() {
+        const stylesheetPath = GLib.build_filenamev([
+            this._spotlight.path,
+            'services',
+            'space-bar',
+            'stylesheet.css',
+        ]);
+        const file = Gio.File.new_for_path(stylesheetPath);
+        if (file.query_exists(null)) {
+            const themeContext = St.ThemeContext.get_for_stage(global.stage);
+            themeContext.get_theme().load_stylesheet(file);
+            this._baseStyleSheet = file;
+        }
+    }
+
+    _unloadBaseStylesheet() {
+        if (this._baseStyleSheet) {
+            const themeContext = St.ThemeContext.get_for_stage(global.stage);
+            themeContext.get_theme().unload_stylesheet(this._baseStyleSheet);
+            this._baseStyleSheet = null;
+        }
+    }
+
     enable() {
+        this._loadBaseStylesheet();
         SpaceBarSettings.init(this);
         SpaceBarTopBarAdjustments.init();
         SpaceBarWorkspaces.init();
@@ -69,6 +96,7 @@ class SpaceBarAdapter {
         this.scrollHandler = null;
         this.workspacesBar?.destroy();
         this.workspacesBar = null;
+        this._unloadBaseStylesheet();
     }
 }
 
