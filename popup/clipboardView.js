@@ -82,8 +82,8 @@ class ClipboardView extends St.ScrollView {
         const hbox = new St.BoxLayout({
             vertical: false,
             x_align: Clutter.ActorAlign.FILL,
-            spacing: 10,
         });
+        hbox.set_spacing(10);
         item.set_child(hbox);
 
         // type icon

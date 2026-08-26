@@ -52,6 +52,10 @@ the codebase calls `set_vertical(true)` after `_init()` for st box layouts not `
 
 `vertical` and `set_vertical()` are confirmed to exist across the full 45 through 50 range so this is the correct choice do not switch back to `orientation` in the constructor without first confirming it against the actual minimum supported version not just the newest one
 
+similarly `St.BoxLayout` uses `set_spacing(value)` method not `spacing: value` in the constructor the `spacing` gobject property was added in gnome shell 47 and does not exist on 45 and 46 a real user report hit `Error: No property spacing on StBoxLayout` always call `set_spacing()` after construction
+
+keybinding validation in preferences uses two layers first require at least one modifier to prevent bare keys like g or space that would cause accidental triggering during typing second validate via `Gtk.accelerator_valid(keyval, modifiers)` which rejects modifier only keys and other invalid combinations
+
 ### single package for all versions
 
 ego supports multi-versioning where you upload separate zips for different gnome versions spotlight does not do this one zip works on all supported versions if a future gnome version breaks something fix it in the same codebase do not maintain a fork
@@ -201,6 +205,13 @@ see https://gjs.guide/extensions/review-guidelines/review-guidelines.html#only-u
 
 - do not wrap standard api calls in try/catch blocks
 - do not use try/catch to silence errors that should never happen return null instead
+- try/catch is legitimate only for genuine external failure points:
+  - file io loading saving to disk files can be deleted corrupt or permission denied
+  - json parsing of data that originated outside our code
+  - clipboard reading content owned by other applications
+  - settings string values that users could manually edit
+- when catching always explain why the operation can genuinely fail
+- for bundled resource failures use logError so the error appears in journal
 - do not use optional chaining `?.` or nullish coalescing `??` for methods that are guaranteed to exist
 - do not add defensive null checks that mask bugs instead of handling them
 - do not add "just in case" code for situations that cannot occur

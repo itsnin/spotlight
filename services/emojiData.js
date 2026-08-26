@@ -96,7 +96,9 @@ export class EmojiData {
                 }
             }
         } catch (e) {
-            // data file missing or corrupt fail silently
+            // bundled data file should never fail with proper installation
+            // if it does log error so it shows in journal for debugging
+            logError(e, 'spotlight: failed to load bundled emoji data');
         }
     }
 

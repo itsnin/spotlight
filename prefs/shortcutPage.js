@@ -89,6 +89,16 @@ function _buildShortcutRow(settings, key, title, subtitle, defaultAccel) {
             shortcutLabel.label = 'Modifier required';
             return true;
         }
+        // validate at gtk level rejects invalid key combinations
+        const mods = state & (Gdk.ModifierType.SUPER_MASK |
+                              Gdk.ModifierType.CONTROL_MASK |
+                              Gdk.ModifierType.SHIFT_MASK |
+                              Gdk.ModifierType.MOD1_MASK |
+                              Gdk.ModifierType.META_MASK);
+        if (!Gtk.accelerator_valid(keyval, mods)) {
+            shortcutLabel.label = 'Invalid shortcut';
+            return true;
+        }
         accelerator += Gdk.keyval_name(keyval).toLowerCase();
 
         settings.set_strv(key, [accelerator]);
