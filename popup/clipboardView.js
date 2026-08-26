@@ -7,7 +7,7 @@ import {triggerPaste} from '../services/virtualKeyboard.js';
 
 export const ClipboardView = GObject.registerClass(
 class ClipboardView extends St.ScrollView {
-    _init(clipboardManager, settings, onSelect) {
+    _init(clipboardManager, settings, onSelect, _ = s => s) {
         super._init({
             style_class: 'spotlight-clipboard-view',
             x_align: Clutter.ActorAlign.FILL,
@@ -17,6 +17,7 @@ class ClipboardView extends St.ScrollView {
         this._clipboardManager = clipboardManager;
         this._settings = settings;
         this._onSelect = onSelect;
+        this._ = _;
         this._filterText = '';
         this._items = [];
 
@@ -29,7 +30,7 @@ class ClipboardView extends St.ScrollView {
         // empty state shown when no clipboard history
         this._emptyLabel = new St.Label({
             style_class: 'spotlight-clipboard-empty',
-            text: 'No clipboard history',
+            text: _('No clipboard history'),
             x_align: Clutter.ActorAlign.CENTER,
             x_expand: true,
         });

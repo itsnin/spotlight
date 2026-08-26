@@ -1,0 +1,8 @@
+# List of source files containing translatable strings
+extension.js
+prefs.js
+prefs/shortcutPage.js
+prefs/appearancePage.js
+prefs/aboutPage.js
+popup/clipboardView.js
+popup/emojiView.js

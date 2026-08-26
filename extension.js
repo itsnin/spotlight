@@ -1,6 +1,6 @@
 // spotlight - a compact launcher for gnome shell
 // SPDX-License-Identifier: GPL-3.0-or-later
-import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
+import {Extension, gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 import {SpotlightPopup} from './spotlightPopup.js';
 import {KeybindingManager} from './services/keybinding.js';
 import {ClipboardManager} from './services/clipboardManager.js';
@@ -25,6 +25,7 @@ export default class SpotlightExtension extends Extension {
             this._clipboardManager,
             this._settings,
             () => this._popup.close(),
+            _,
         );
         this._popup._contentStack.add_child(this._clipboardView);
         this._popup._clipboardView = this._clipboardView;
@@ -34,6 +35,7 @@ export default class SpotlightExtension extends Extension {
             this._clipboardManager,
             this._settings,
             () => this._popup.close(),
+            _,
         );
         this._popup._contentStack.add_child(this._emojiView);
         this._popup._emojiView = this._emojiView;

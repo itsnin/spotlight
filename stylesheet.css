@@ -14,36 +14,63 @@
 
 /* container - single unified window dark default */
 .spotlight-container {
-  background-color: #1c1c1e;
-  border-radius: 36px;
-  padding: 10px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  background-color: rgba(28, 28, 30, 0.92);
+  border-radius: 22px;
+  padding: 14px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
   color: #f5f5f7;
   max-height: 480px;
+  backdrop-filter: blur(40px);
 }
 
 /* light theme overrides applied when container has theme-light class */
 .spotlight-container.theme-light {
-  background-color: #ffffff;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+  background-color: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
   color: #1d1d1f;
 }
 
 /* header box holds entry plus mode buttons horizontally */
-.spotlight-header-box {
-  spacing: 8px;
+/* top bar holds search bar plus buttons side by side macos layout */
+.spotlight-top-bar {
   padding: 2px;
 }
 
-/* search entry - make it blend into unified window dark default */
+/* search bar pill shaped container matches macos spotlight */
+.spotlight-search-bar {
+  background-color: rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  padding: 10px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.spotlight-container.theme-light .spotlight-search-bar {
+  background-color: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.spotlight-search-icon {
+  color: rgba(245, 245, 247, 0.5);
+}
+
+.spotlight-container.theme-light .spotlight-search-icon {
+  color: rgba(29, 29, 31, 0.45);
+}
+
+/* buttons box sits to the right of search bar */
+.spotlight-buttons-box {
+  padding: 0 2px;
+}
+
+/* search entry blends into search bar pill dark default */
 .spotlight-container StEntry,
 .spotlight-container StEntry:focus {
   background-color: transparent;
   color: #f5f5f7;
   border: none;
-  border-radius: 14px;
-  padding: 12px 16px;
-  font-size: 18px;
+  border-radius: 0;
+  padding: 0;
+  font-size: 17px;
   font-weight: 400;
   caret-color: #ffffff;
   selection-background-color: #0a84ff;
@@ -64,13 +91,13 @@
   color: rgba(29, 29, 31, 0.35);
 }
 
-/* mode buttons round icons beside search entry */
+/* mode buttons round icons to the right of search bar macos style */
 .spotlight-mode-button {
-  width: 36px;
-  height: 36px;
-  border-radius: 18px;
-  background-color: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   color: #f5f5f7;
   padding: 0;
   margin: 0;
@@ -78,7 +105,7 @@
 }
 
 .spotlight-container.theme-light .spotlight-mode-button {
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: rgba(0, 0, 0, 0.06);
   border: 1px solid rgba(0, 0, 0, 0.08);
   color: #1d1d1f;
 }
@@ -105,7 +132,7 @@
 
 /* content stack area holds search clipboard or emoji view */
 .spotlight-content-stack {
-  margin-top: 4px;
+  margin-top: 12px;
 }
 
 /* search results area - transparent so it blends with container */

@@ -32,7 +32,6 @@ class SpotlightPopup extends St.Widget {
         // current mode search clipboard or emoji
         this._mode = 'search';
         // popup structure: outer St.Widget handles positioning via chrome
-        // inner St.BoxLayout holds header box plus content stack
         // inner content box what the user actually sees
         this._content = new St.BoxLayout({
             style_class: 'spotlight-container',
@@ -41,13 +40,40 @@ class SpotlightPopup extends St.Widget {
         });
         this.add_child(this._content);
 
-        // header box holds search entry plus mode buttons horizontally
-        this._headerBox = new St.BoxLayout({
-            style_class: 'spotlight-header-box',
+        // top bar holds search bar pill plus mode buttons side by side
+        // matches macos layout buttons sit to the right of search bar
+        this._topBar = new St.BoxLayout({
+            style_class: 'spotlight-top-bar',
             vertical: false,
             x_align: Clutter.ActorAlign.FILL,
         });
-        this._content.add_child(this._headerBox);
+        this._topBar.style = 'spacing: 10px;';
+        this._content.add_child(this._topBar);
+
+        // search bar pill shaped container holds the entry plus magnifier icon
+        this._searchBarBox = new St.BoxLayout({
+            style_class: 'spotlight-search-bar',
+            vertical: false,
+            x_expand: true,
+        });
+        this._searchBarBox.style = 'spacing: 8px;';
+        this._topBar.add_child(this._searchBarBox);
+
+        // magnifying glass icon matches macos spotlight appearance
+        this._searchIcon = new St.Icon({
+            icon_name: 'system-search-symbolic',
+            icon_size: 18,
+            style_class: 'spotlight-search-icon',
+        });
+        this._searchBarBox.add_child(this._searchIcon);
+
+        // buttons container sits to the right of search bar
+        this._buttonsBox = new St.BoxLayout({
+            style_class: 'spotlight-buttons-box',
+            vertical: false,
+        });
+        this._buttonsBox.style = 'spacing: 8px;';
+        this._topBar.add_child(this._buttonsBox);
 
         // content stack holds one view at a time search clipboard or emoji
         this._contentStack = new St.Widget({
@@ -57,7 +83,7 @@ class SpotlightPopup extends St.Widget {
         });
         this._content.add_child(this._contentStack);
 
-        // mode buttons round icons beside search entry
+        // mode buttons round icons to the right of search bar
         this._buttonClipboard = this._createModeButton(
             'edit-paste-symbolic',
             'clipboard',
@@ -66,6 +92,8 @@ class SpotlightPopup extends St.Widget {
             'face-smile-symbolic',
             'emoji',
         );
+        this._buttonsBox.add_child(this._buttonClipboard);
+        this._buttonsBox.add_child(this._buttonEmoji);
 
         // stolen overview widgets taken once in stealOverviewSearch
         // kept until returnOverviewSearch called from disable()
@@ -194,14 +222,13 @@ class SpotlightPopup extends St.Widget {
     // reparents already-stolen widgets into our popup and shows it
     // runs from idle context never inside signal dispatch
     _doOpen() {
-        // build header entry first then buttons
+        // add entry to search bar pill
         if (this._entry.get_parent())
             this._entry.get_parent().remove_child(this._entry);
         this._entry.visible = true;
         this._entry.x_expand = true;
-        this._headerBox.add_child(this._entry);
-        this._headerBox.add_child(this._buttonClipboard);
-        this._headerBox.add_child(this._buttonEmoji);
+        this._searchBarBox.add_child(this._entry);
+        // buttons already in buttonsBox from _init no need to re-add
 
         // reparent search results into content stack
         if (this._search.get_parent())
@@ -342,16 +369,12 @@ class SpotlightPopup extends St.Widget {
         this._buttonClipboard.checked = false;
         this._buttonEmoji.checked = false;
 
-        // remove entry from header hide it keep it stolen
+        // remove entry from search bar hide it keep it stolen
         if (this._entry && this._entry.get_parent()) {
             this._entry.visible = false;
             this._entry.get_parent().remove_child(this._entry);
         }
-        // remove buttons from header
-        if (this._buttonClipboard.get_parent())
-            this._buttonClipboard.get_parent().remove_child(this._buttonClipboard);
-        if (this._buttonEmoji.get_parent())
-            this._buttonEmoji.get_parent().remove_child(this._buttonEmoji);
+        // buttons stay in buttonsBox no need to remove they persist across opens
 
         // remove search from content stack hide it keep it stolen
         if (this._search && this._search.get_parent()) {

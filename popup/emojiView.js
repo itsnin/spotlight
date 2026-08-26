@@ -48,7 +48,7 @@ export function destroyTooltip() {
 
 export const EmojiView = GObject.registerClass(
 class EmojiView extends St.BoxLayout {
-    _init(emojiData, clipboardManager, settings, onSelect) {
+    _init(emojiData, clipboardManager, settings, onSelect, _ = s => s) {
         super._init({
             style_class: 'spotlight-emoji-view',
             vertical: true,
@@ -60,6 +60,7 @@ class EmojiView extends St.BoxLayout {
         this._clipboardManager = clipboardManager;
         this._settings = settings;
         this._onSelect = onSelect;
+        this._ = _;
         this._filterText = '';
         this._activeCategory = null;
         this._buttons = [];
@@ -109,7 +110,7 @@ class EmojiView extends St.BoxLayout {
         // empty state
         this._emptyLabel = new St.Label({
             style_class: 'spotlight-emoji-empty',
-            text: 'No emojis found',
+            text: _('No emojis found'),
             x_align: Clutter.ActorAlign.CENTER,
             x_expand: true,
         });
@@ -161,7 +162,7 @@ class EmojiView extends St.BoxLayout {
                 style_class: 'spotlight-emoji-tone-btn',
                 can_focus: true,
                 toggle_mode: true,
-                accessible_name: `Skin tone ${i}`,
+                accessible_name: _('Skin tone %d').replace('%d', i),
                 style: `background-color: ${TONE_COLORS[i]};`,
             });
             const idx = i;
