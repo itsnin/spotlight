@@ -1,5 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
+  <!-- caffeine enums copied from caffeine extension v60 -->
+  <enum id="org.gnome.shell.extensions.spotlight.caffeine.context-control">
+    <value value="0" nick="never"/>
+    <value value="1" nick="always"/>
+    <value value="2" nick="for-apps"/>
+  </enum>
+  <enum id="org.gnome.shell.extensions.spotlight.caffeine.show-indicator">
+    <value value="0" nick="only-active"/>
+    <value value="1" nick="always"/>
+    <value value="2" nick="never"/>
+  </enum>
+  <enum id="org.gnome.shell.extensions.spotlight.caffeine.app-trigger-mode">
+    <value value="0" nick="on-running"/>
+    <value value="1" nick="on-focus"/>
+    <value value="2" nick="on-active-workspace"/>
+  </enum>
+
   <schema id="org.gnome.shell.extensions.spotlight" path="/org/gnome/shell/extensions/spotlight/">
     <!-- default is ctrl space super space has timing issues on some gnome 50 setups -->
     <key name="toggle-shortcut" type="as">
@@ -63,6 +80,117 @@
       <default>''</default>
       <summary>Emoji click counts</summary>
       <description>JSON mapping of emoji characters to click counts for search ranking.</description>
+    </key>
+
+    <!-- === caffeine keys copied from caffeine extension v60 === -->
+    <key type="as" name="inhibit-apps">
+      <default>[ ]</default>
+      <summary>Application list</summary>
+      <description>A list of strings each containing an application id desktop file name</description>
+    </key>
+    <key type="b" name="user-enabled">
+      <default>false</default>
+      <summary>Store caffeine user state</summary>
+      <description></description>
+    </key>
+    <key type="ai" name="duration-timer-list">
+      <default>[900, 1800, 3600]</default>
+      <summary>List of duration timer</summary>
+      <description>Specify the short medium and long duration for the timer countdown in seconds</description>
+    </key>
+    <key type="b" name="use-custom-duration">
+      <default>false</default>
+      <summary>Use custom duration values for the timer</summary>
+      <description></description>
+    </key>
+    <key type="i" name="countdown-timer">
+      <default>0</default>
+      <summary>Specify time in seconds for the timer countdown</summary>
+      <description>Specify time in seconds for the timer countdown</description>
+    </key>
+    <key type="i" name="duration-timer">
+      <default>2</default>
+      <summary>Specify index of duration range for the timer</summary>
+      <description>Specify index of duration range for the timer</description>
+    </key>
+    <key type="b" name="restore-state">
+      <default>false</default>
+      <summary>Restore caffeine state</summary>
+      <description></description>
+    </key>
+    <key name="show-indicator" enum="org.gnome.shell.extensions.spotlight.caffeine.show-indicator">
+      <default>"only-active"</default>
+      <summary>Show indicator</summary>
+      <description>Show the indicator on the top panel</description>
+    </key>
+    <key type="b" name="show-notifications">
+      <default>true</default>
+      <summary>Show notifications</summary>
+      <description>Show notifications when enabled or disabled</description>
+    </key>
+    <key type="b" name="show-timer">
+      <default>true</default>
+      <summary>Show timer</summary>
+      <description>Show timer when enabled or disabled</description>
+    </key>
+    <key type="b" name="show-toggle">
+      <default>true</default>
+      <summary>Show toggle</summary>
+      <description>Show the quick settings toggle</description>
+    </key>
+    <key type="b" name="enable-fullscreen">
+      <default>true</default>
+      <summary>Enable when a fullscreen application is running</summary>
+      <description>Enable when a fullscreen application is running</description>
+    </key>
+    <key type="b" name="enable-mpris">
+      <default>false</default>
+      <summary>Enable when an application is playing media</summary>
+      <description>Enable when an application is reporting playback status via MPRIS</description>
+    </key>
+    <key name="nightlight-control" enum="org.gnome.shell.extensions.spotlight.caffeine.context-control">
+      <default>"never"</default>
+      <summary>Night Light control mode</summary>
+      <description>Set the way Caffeine interacts with the Night light setting</description>
+    </key>
+    <key name="screen-blank" enum="org.gnome.shell.extensions.spotlight.caffeine.context-control">
+      <default>"never"</default>
+      <summary>Allow screen blank</summary>
+      <description>Allow turning off screen when Caffeine is enabled</description>
+    </key>
+    <key name="trigger-apps-mode" enum="org.gnome.shell.extensions.spotlight.caffeine.app-trigger-mode">
+      <default>"on-running"</default>
+      <summary>Trigger App control mode</summary>
+      <description>Set the trigger method for apps</description>
+    </key>
+    <key type="as" name="caffeine-toggle-shortcut">
+      <default><![CDATA[[]]]></default>
+      <summary>Caffeine toggle shortcut</summary>
+      <description>Shortcut to toggle Caffeine</description>
+    </key>
+    <key type="i" name="prefs-default-width">
+      <default>570</default>
+      <summary>Default width for the preferences window</summary>
+    </key>
+    <key type="i" name="prefs-default-height">
+      <default>590</default>
+      <summary>Default height for the preferences window</summary>
+    </key>
+    <key type="i" name="indicator-position">
+      <default>0</default>
+      <summary>Visible position offset of status icon in indicator menu</summary>
+    </key>
+    <key type="i" name="indicator-position-index">
+      <default>0</default>
+      <summary>Real position offset of status icon in indicator menu that include invisible one</summary>
+    </key>
+    <key type="i" name="indicator-position-max">
+      <default>1</default>
+      <summary>Last item index in indicator menu</summary>
+    </key>
+    <key type="b" name="cli-toggle">
+      <default>false</default>
+      <summary>Command line key to toggle state</summary>
     </key>
   </schema>
 </schemalist>

@@ -6,3 +6,8 @@ prefs/appearancePage.js
 prefs/aboutPage.js
 popup/clipboardView.js
 popup/emojiView.js
+services/caffeine/caffeineIndicator.js
+prefs/caffeine/generalPage.js
+prefs/caffeine/displayPage.js
+prefs/caffeine/timerPage.js
+prefs/caffeine/appsPage.js
