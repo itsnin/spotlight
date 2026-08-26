@@ -87,10 +87,8 @@ class EmojiView extends St.BoxLayout {
             style_class: 'spotlight-emoji-tones',
             vertical: false,
             x_align: Clutter.ActorAlign.CENTER,
-            padding_top: 4,
-            padding_bottom: 4,
         });
-        this._toneRow.style = 'spacing: 4px;';
+        this._toneRow.style = 'spacing: 4px; padding-top: 4px; padding-bottom: 4px;';
         this._buildToneButtons();
         this.add_child(this._toneRow);
 

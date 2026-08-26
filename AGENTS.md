@@ -54,6 +54,10 @@ the codebase calls `set_vertical(true)` after `_init()` for st box layouts not `
 
 similarly `St.BoxLayout` has no `spacing` gobject property and no `set_spacing()` method spacing must be set via css using the `style` property for example `box.style = 'spacing: 10px;'` real user reports hit both `Error: No property spacing on StBoxLayout` and `TypeError: set_spacing is not a function` always use css for spacing
 
+also `padding_top` `padding_bottom` `margin_top` `margin_bottom` and other box model properties are css properties not gobject properties they must be set via the `style` property not in the constructor real user report hit `Error: No property padding_top on StBoxLayout`
+
+general rule if a property sounds like css it probably is css use `actor.style = 'property: value;'` not constructor properties only use constructor properties that are explicitly documented in the official st or clutter api docs
+
 keybinding validation in preferences uses two layers first require at least one modifier to prevent bare keys like g or space that would cause accidental triggering during typing second validate via `Gtk.accelerator_valid(keyval, modifiers)` which rejects modifier only keys and other invalid combinations note `Gtk.accelerator_valid` does not reject bare alphanumeric keys it only rejects modifier only keys so the manual modifier check is still required
 
 ### single package for all versions
