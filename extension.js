@@ -7,6 +7,7 @@ import GLib from 'gi://GLib';
 import St from 'gi://St';
 import Shell from 'gi://Shell';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import {WindowPreview} from 'resource:///org/gnome/shell/ui/windowPreview.js';
 import {SpotlightPopup} from './spotlightPopup.js';
 import {KeybindingManager} from './services/keybinding.js';
 import {ClipboardManager} from './services/clipboardManager.js';
@@ -283,6 +284,7 @@ export default class SpotlightExtension extends Extension {
         this._dashVisibility = false;
         Main.overview.dash.hide();
         Main.overview.dash.height = 0;
+        this._updateWindowPreviewOverlap();
     }
 
     _disableDisableDash() {
@@ -295,6 +297,29 @@ export default class SpotlightExtension extends Extension {
         Main.overview.dash.height = this._dashOriginalHeight ?? -1;
         Main.overview.dash.setMaxSize(-1, -1);
         this._dashOriginalHeight = null;
+        this._updateWindowPreviewOverlap();
+    }
+
+    /**
+     * Adjust window preview overlap when dash is hidden or shown.
+     * Exact same approach as Just Perfection extension.
+     */
+    _updateWindowPreviewOverlap() {
+        const wpp = WindowPreview.prototype;
+
+        if (this._dashVisibility && wpp.overlapHeightsOld) {
+            wpp.overlapHeights = wpp.overlapHeightsOld;
+            delete wpp.overlapHeightsOld;
+            return;
+        }
+
+        if (!this._dashVisibility) {
+            wpp.overlapHeightsOld = wpp.overlapHeights;
+            wpp.overlapHeights = function () {
+                let [top, bottom] = this.overlapHeightsOld();
+                return [top + 24, bottom + 24];
+            };
+        }
     }
 
     _openPreferences() {

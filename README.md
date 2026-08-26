@@ -4,7 +4,7 @@ A compact, keyboard-driven launcher for GNOME Shell 45 through 50.
 
 [Repository](https://github.com/itsnin/spotlight) • [GNOME Extensions](https://extensions.gnome.org/extension/10666/spotlight/)
 
-**Version:** 2026.08.25
+**Version:** 2026.08.30
 
 ## Keyboard Shortcut
 
@@ -68,8 +68,32 @@ Configurable options:
 
 - The toggle keyboard shortcut (default `Ctrl+Space`)
 - Visual theme: Default (follows GNOME system style), Dark, or Light
+- Clipboard history behavior, search options, display toggles
+- Emoji defaults, grid size, and interaction behavior
 
 Web search is provided by GNOME's registered search providers.
+
+## Standalone Optional Features
+
+Spotlight bundles three optional standalone features that can be individually enabled or disabled in preferences. When disabled they have zero impact on the system. When enabled they behave exactly like their original standalone extensions.
+
+| Feature | Type | Default | Original Extension |
+|---|---|---|---|
+| **Caffeine** | Prevent screen blanking and auto-suspend | Off | [Caffeine](https://extensions.gnome.org/extension/517/caffeine/) v60 |
+| **Space Bar** | Replace top-panel workspace indicator with an i3-like workspaces bar | Off | [Space Bar](https://extensions.gnome.org/extension/5090/space-bar/) v39 |
+| **Disable Dash** | Hide the GNOME dash dock in the overview | Off | [Just Perfection](https://extensions.gnome.org/extension/3843/just-perfection/) v36 (dash feature only) |
+
+### Caffeine
+When enabled, adds a top-panel indicator and Quick Settings toggle to prevent the screen from blanking and the system from auto-suspending. Supports full-screen apps, MPRIS media players, application triggers, timers, and all original Caffeine preferences.
+
+### Space Bar
+When enabled, replaces the default GNOME workspace indicator with a customizable i3-like workspaces bar in the top panel. Features include add/remove/rename workspaces, drag-and-drop reordering, smart workspace names, keyboard shortcuts, scroll-wheel navigation, and full appearance customization. Three dedicated preferences pages (Appearance, Behavior, Shortcuts) provide the complete Space Bar configuration experience.
+
+### Disable Dash
+When enabled, hides the GNOME dash dock in the Activities overview. Implemented using the exact same method as Just Perfection — `Main.overview.dash.hide()` with height adjustment and window-preview overlap compensation.
+
+## Build Note
+Compiled GSettings schemas (`gschemas.compiled`) are **not shipped** in the repository. GNOME Shell automatically compiles all schema XML files from the `schemas/` directory at extension install time. This follows GNOME extension best practices.
 
 ## Architecture
 
@@ -79,17 +103,29 @@ This approach means Spotlight automatically benefits from every search provider 
 
 | File | Responsibility |
 |---|---|
-| `extension.js` | Entry point — constructs popup, delegates to modules |
+| `extension.js` | Entry point — constructs popup, delegates to modules, manages standalone features |
 | `spotlightPopup.js` | Popup lifecycle — open/close/destroy, delegates to helpers |
 | `popup/overviewSearch.js` | Steals and returns Overview search widgets |
 | `popup/themeManager.js` | Theme detection and application (dark/light/system) |
 | `popup/popupBackdrop.js` | Transparent click-outside detection via chrome layer |
 | `popup/popupPositioner.js` | Sizes, centers, and shows the popup via deferred idle callback |
+| `popup/clipboardView.js` | Clipboard history view with favorites, tags, edit, private mode |
+| `popup/emojiView.js` | Emoji picker with categories, skin tones, gender, tooltips |
 | `services/keybinding.js` | Keybinding manager using `Meta.Display.grab_accelerator` |
-| `prefs.js` | Preferences window entry point |
+| `services/clipboardManager.js` | Clipboard history tracking, favorites, persistence |
+| `services/clipboardEntry.js` | Clipboard entry class with tag support |
+| `services/clipboardRegistry.js` | Disk persistence for clipboard history |
+| `services/emojiData.js` | Emoji database, search, modifiers, recently used |
+| `services/virtualKeyboard.js` | Virtual input device for paste-on-select simulation |
+| `services/caffeine/` | Caffeine standalone — indicator, inhibitor manager, MPRIS |
+| `services/space-bar/` | Space Bar standalone — UI, services, utils, styles |
+| `prefs.js` | Preferences window entry point — includes Space Bar prefs pages |
 | `prefs/shortcutPage.js` | Keyboard shortcut configuration |
-| `prefs/appearancePage.js` | Visual theme selection |
+| `prefs/appearancePage.js` | Visual theme, clipboard, emoji, standalone feature toggles |
 | `prefs/aboutPage.js` | About section |
+| `prefs/caffeine/` | Caffeine preferences pages |
+| `prefs/space-bar/` | Space Bar preferences pages |
+| `schemas/*.gschema.xml` | GSettings schema definitions (not pre-compiled) |
 ## Design Principles
 
 - **Dark, not black.** Background `#1c1c1e` with text `#f5f5f7`. Pure black is harsh on OLED and inaccurate on IPS panels.
