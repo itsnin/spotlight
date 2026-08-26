@@ -122,9 +122,20 @@ export class ClipboardManager {
             this._history.splice(existingIndex, 1);
         // add to top
         this._history.unshift(entry);
-        // trim to max size
-        while (this._history.length > this._maxSize)
-            this._history.pop();
+        // trim to max size but preserve favorites
+        while (this._history.length > this._maxSize) {
+            // find last non favorite entry to remove
+            let removeIndex = -1;
+            for (let i = this._history.length - 1; i >= 0; i--) {
+                if (!this._history[i].isFavorite()) {
+                    removeIndex = i;
+                    break;
+                }
+            }
+            if (removeIndex === -1)
+                break; // all are favorites stop trimming
+            this._history.splice(removeIndex, 1);
+        }
         this._notify();
         // persist to disk
         this._registry.write(this._history);
@@ -169,6 +180,15 @@ export class ClipboardManager {
         this._clipboard.set_text(St.ClipboardType.PRIMARY, text);
     }
 
+    toggleFavorite(index) {
+        if (index < 0 || index >= this._history.length)
+            return;
+        const entry = this._history[index];
+        entry.setFavorite(!entry.isFavorite());
+        this._notify();
+        this._registry.write(this._history);
+    }
+
     deleteEntry(index) {
         if (index < 0 || index >= this._history.length)
             return;
@@ -178,7 +198,8 @@ export class ClipboardManager {
     }
 
     clearHistory() {
-        this._history = [];
+        // preserve favorites same behavior as clipboard indicator
+        this._history = this._history.filter(e => e.isFavorite());
         this._notify();
         this._registry.write(this._history);
     }

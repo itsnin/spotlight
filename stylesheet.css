@@ -350,6 +350,58 @@
   color: rgba(29, 29, 31, 0.4);
 }
 
+/* clipboard toolbar */
+.spotlight-clipboard-toolbar {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.spotlight-container.theme-light .spotlight-clipboard-toolbar {
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+.spotlight-clipboard-favcount {
+  color: rgba(245, 245, 247, 0.4);
+  font-size: 12px;
+}
+.spotlight-container.theme-light .spotlight-clipboard-favcount {
+  color: rgba(29, 29, 31, 0.4);
+}
+/* action buttons used in clipboard items */
+.spotlight-action-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(245, 245, 247, 0.7);
+  padding: 0;
+  margin: 0;
+  transition-duration: 120ms;
+}
+.spotlight-container.theme-light .spotlight-action-btn {
+  background-color: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: rgba(29, 29, 31, 0.6);
+}
+.spotlight-action-btn:hover,
+.spotlight-action-btn:focus {
+  background-color: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+.spotlight-container.theme-light .spotlight-action-btn:hover,
+.spotlight-container.theme-light .spotlight-action-btn:focus {
+  background-color: rgba(0, 122, 255, 0.1);
+  color: #000000;
+}
+.spotlight-action-btn.spotlight-fav-active {
+  background-color: rgba(255, 204, 0, 0.18);
+  border-color: rgba(255, 204, 0, 0.35);
+  color: #ffcc00;
+}
+.spotlight-container.theme-light .spotlight-action-btn.spotlight-fav-active {
+  background-color: rgba(255, 149, 0, 0.12);
+  border-color: rgba(255, 149, 0, 0.3);
+  color: #ff9500;
+}
+
 /* scrollbars */
 .spotlight-container StScrollView StScrollBar {
   min-width: 6px;
