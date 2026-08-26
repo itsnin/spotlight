@@ -1,6 +1,9 @@
 // spotlight - a compact launcher for gnome shell
 // SPDX-License-Identifier: GPL-3.0-or-later
 import {Extension, gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
+import Meta from 'gi://Meta';
+import Shell from 'gi://Shell';
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import {SpotlightPopup} from './spotlightPopup.js';
 import {KeybindingManager} from './services/keybinding.js';
 import {ClipboardManager} from './services/clipboardManager.js';
@@ -8,11 +11,16 @@ import {EmojiData} from './services/emojiData.js';
 import {ClipboardView} from './popup/clipboardView.js';
 import {EmojiView, destroyTooltip} from './popup/emojiView.js';
 import {destroyDevice} from './services/virtualKeyboard.js';
-
+import {CaffeineIndicator} from './services/caffeine/caffeineIndicator.js';
+import * as CaffeineKeys from './services/caffeine/inhibitorManager.js';
 // entry point enable and disable are kept next to each other for easy review
 export default class SpotlightExtension extends Extension {
     enable() {
         this._settings = this.getSettings();
+        this._ = _;
+        this._caffeineIndicator = null;
+        this._caffeineKeybindingId = null;
+
         this._popup = new SpotlightPopup(this._settings);
 
         // services
@@ -58,8 +66,15 @@ export default class SpotlightExtension extends Extension {
             () => this._registerShortcuts(),
             'changed::emoji-shortcut',
             () => this._registerShortcuts(),
+            'changed::caffeine-enabled',
+            () => this._toggleCaffeine(),
             this,
         );
+
+        // caffeine standalone when enabled works like having the caffeine
+        // extension installed when disabled it has zero impact on the system
+        if (this._settings.get_boolean('caffeine-enabled'))
+            this._enableCaffeine();
     }
 
     _registerShortcuts() {
@@ -99,8 +114,47 @@ export default class SpotlightExtension extends Extension {
         }
     }
 
+    _toggleCaffeine() {
+        if (this._settings.get_boolean('caffeine-enabled'))
+            this._enableCaffeine();
+        else
+            this._disableCaffeine();
+    }
+
+    _enableCaffeine() {
+        if (this._caffeineIndicator)
+            return;
+
+        this._caffeineIndicator = new CaffeineIndicator(this);
+
+        // register caffeine toggle shortcut
+        const caffeineShortcuts = this._settings.get_strv(CaffeineKeys.TOGGLE_SHORTCUT);
+        if (caffeineShortcuts.length > 0 && caffeineShortcuts[0]) {
+            Main.wm.addKeybinding(
+                CaffeineKeys.TOGGLE_SHORTCUT,
+                this._settings,
+                Meta.KeyBindingFlags.IGNORE_AUTOREPEAT,
+                Shell.ActionMode.ALL,
+                () => this._caffeineIndicator._handleToggleClick(),
+            );
+        }
+    }
+
+    _disableCaffeine() {
+        if (this._caffeineIndicator) {
+            Main.wm.removeKeybinding(CaffeineKeys.TOGGLE_SHORTCUT);
+            this._caffeineIndicator.destroy();
+            this._caffeineIndicator = null;
+        }
+    }
+
+    _openPreferences() {
+        this.openPreferences();
+    }
+
     disable() {
         this._settings.disconnectObject(this);
+
         this._keybindingManager.disable();
         this._keybindingManager = null;
 
@@ -108,16 +162,23 @@ export default class SpotlightExtension extends Extension {
         this._clipboardManager.stop();
         this._clipboardManager.destroy();
         this._clipboardManager = null;
+
         this._emojiData.flush();
         this._emojiData = null;
+
         destroyTooltip();
         destroyDevice();
+
+        // disable caffeine standalone
+        this._disableCaffeine();
 
         // views destroyed by popup destroy
         // return stolen widgets back to overview before destroying
         this._popup.returnOverviewSearch();
         this._popup.destroy();
         this._popup = null;
+
         this._settings = null;
+        this._ = null;
     }
 }

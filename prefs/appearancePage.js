@@ -123,6 +123,24 @@ export function buildAppearancePage(settings) {
     emojiGroup.add(genderRow);
     groups.push(emojiGroup);
 
+
+    // caffeine group standalone feature toggle
+    const caffeineGroup = new Adw.PreferencesGroup({
+        title: 'Caffeine',
+        description: 'Prevent screen blanking and auto suspend',
+    });
+    const caffeineRow = new Adw.SwitchRow({
+        title: 'Enable Caffeine',
+        subtitle: 'When off Caffeine has no impact on the system',
+    });
+    settings.bind(
+        'caffeine-enabled',
+        caffeineRow,
+        'active',
+        Gio.SettingsBindFlags.DEFAULT,
+    );
+    caffeineGroup.add(caffeineRow);
+    groups.push(caffeineGroup);
     return groups;
 }
 
