@@ -304,5 +304,20 @@
       <description>Emojis recently selected by the user</description>
     </key>
 
+
+    <!-- === space bar standalone feature === -->
+    <key type="b" name="space-bar-enabled">
+      <default>false</default>
+      <summary>Enable Space Bar</summary>
+      <description>Replaces the top-panel workspace indicator with an i3-like workspaces bar</description>
+    </key>
+
+    <!-- === just perfection disable dash feature === -->
+    <key type="b" name="disable-dash">
+      <default>false</default>
+      <summary>Disable the dash</summary>
+      <description>Hide the GNOME dash dock in the overview</description>
+    </key>
+
   </schema>
 </schemalist>

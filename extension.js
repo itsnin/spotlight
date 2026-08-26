@@ -1,6 +1,7 @@
 // spotlight - a compact launcher for gnome shell
 // SPDX-License-Identifier: GPL-3.0-or-later
 import {Extension, gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
+import Gio from 'gi://Gio';
 import Meta from 'gi://Meta';
 import Shell from 'gi://Shell';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
@@ -13,6 +14,64 @@ import {EmojiView, destroyTooltip} from './popup/emojiView.js';
 import {destroyDevice} from './services/virtualKeyboard.js';
 import {CaffeineIndicator} from './services/caffeine/caffeineIndicator.js';
 import * as CaffeineKeys from './services/caffeine/inhibitorManager.js';
+
+// Space Bar standalone components
+import {KeyBindings as SpaceBarKeyBindings} from './services/space-bar/services/KeyBindings.js';
+import {ScrollHandler as SpaceBarScrollHandler} from './services/space-bar/services/ScrollHandler.js';
+import {Settings as SpaceBarSettings} from './services/space-bar/services/Settings.js';
+import {Styles as SpaceBarStyles} from './services/space-bar/services/Styles.js';
+import {TopBarAdjustments as SpaceBarTopBarAdjustments} from './services/space-bar/services/TopBarAdjustments.js';
+import {Workspaces as SpaceBarWorkspaces} from './services/space-bar/services/Workspaces.js';
+import {WorkspacesBar as SpaceBarWorkspacesBar} from './services/space-bar/ui/WorkspacesBar.js';
+import {destroyAllHooks as spaceBarDestroyAllHooks} from './services/space-bar/utils/hook.js';
+
+// Space Bar adapter provides the extension interface that Space Bar expects
+class SpaceBarAdapter {
+    constructor(spotlightExtension) {
+        this._spotlight = spotlightExtension;
+        this.metadata = {
+            name: 'Space Bar',
+            'settings-schema': 'org.gnome.shell.extensions.space-bar',
+            version: 39,
+        };
+        this.workspacesBar = null;
+        this.scrollHandler = null;
+    }
+
+    getSettings(schemaName) {
+        return new Gio.Settings({schema: schemaName});
+    }
+
+    openPreferences() {
+        this._spotlight.openPreferences();
+    }
+
+    enable() {
+        SpaceBarSettings.init(this);
+        SpaceBarTopBarAdjustments.init();
+        SpaceBarWorkspaces.init();
+        SpaceBarKeyBindings.init();
+        SpaceBarStyles.init();
+        this.workspacesBar = new SpaceBarWorkspacesBar(this);
+        this.workspacesBar.init();
+        this.scrollHandler = new SpaceBarScrollHandler();
+        this.scrollHandler.init(this.workspacesBar.observeWidget());
+    }
+
+    disable() {
+        spaceBarDestroyAllHooks();
+        SpaceBarSettings.destroy();
+        SpaceBarTopBarAdjustments.destroy();
+        SpaceBarWorkspaces.destroy();
+        SpaceBarKeyBindings.destroy();
+        SpaceBarStyles.destroy();
+        this.scrollHandler?.destroy();
+        this.scrollHandler = null;
+        this.workspacesBar?.destroy();
+        this.workspacesBar = null;
+    }
+}
+
 // entry point enable and disable are kept next to each other for easy review
 export default class SpotlightExtension extends Extension {
     enable() {
@@ -20,6 +79,9 @@ export default class SpotlightExtension extends Extension {
         this._ = _;
         this._caffeineIndicator = null;
         this._caffeineKeybindingId = null;
+        this._spaceBarAdapter = null;
+        this._dashOriginalHeight = null;
+        this._dashVisibility = true;
 
         this._popup = new SpotlightPopup(this._settings);
 
@@ -68,6 +130,10 @@ export default class SpotlightExtension extends Extension {
             () => this._registerShortcuts(),
             'changed::caffeine-enabled',
             () => this._toggleCaffeine(),
+            'changed::space-bar-enabled',
+            () => this._toggleSpaceBar(),
+            'changed::disable-dash',
+            () => this._toggleDash(),
             this,
         );
 
@@ -75,11 +141,19 @@ export default class SpotlightExtension extends Extension {
         // extension installed when disabled it has zero impact on the system
         if (this._settings.get_boolean('caffeine-enabled'))
             this._enableCaffeine();
+
+        // space bar standalone when enabled replaces the workspace indicator
+        // with an i3 like workspaces bar same as the space bar extension
+        if (this._settings.get_boolean('space-bar-enabled'))
+            this._enableSpaceBar();
+
+        // disable dash when enabled hides the gnome dash dock in overview
+        if (this._settings.get_boolean('disable-dash'))
+            this._enableDisableDash();
     }
 
     _registerShortcuts() {
         this._keybindingManager.unlisten();
-
         // main toggle shortcut
         const toggleShortcuts = this._settings.get_strv('toggle-shortcut');
         if (toggleShortcuts.length > 0) {
@@ -90,7 +164,6 @@ export default class SpotlightExtension extends Extension {
                     this._popup.open('search');
             });
         }
-
         // clipboard shortcut
         const clipboardShortcuts = this._settings.get_strv('clipboard-shortcut');
         if (clipboardShortcuts.length > 0) {
@@ -101,7 +174,6 @@ export default class SpotlightExtension extends Extension {
                     this._popup.open('clipboard');
             });
         }
-
         // emoji shortcut
         const emojiShortcuts = this._settings.get_strv('emoji-shortcut');
         if (emojiShortcuts.length > 0) {
@@ -124,9 +196,7 @@ export default class SpotlightExtension extends Extension {
     _enableCaffeine() {
         if (this._caffeineIndicator)
             return;
-
         this._caffeineIndicator = new CaffeineIndicator(this);
-
         // register caffeine toggle shortcut
         const caffeineShortcuts = this._settings.get_strv(CaffeineKeys.TOGGLE_SHORTCUT);
         if (caffeineShortcuts.length > 0 && caffeineShortcuts[0]) {
@@ -146,6 +216,57 @@ export default class SpotlightExtension extends Extension {
             this._caffeineIndicator.destroy();
             this._caffeineIndicator = null;
         }
+    }
+
+    _toggleSpaceBar() {
+        if (this._settings.get_boolean('space-bar-enabled'))
+            this._enableSpaceBar();
+        else
+            this._disableSpaceBar();
+    }
+
+    _enableSpaceBar() {
+        if (this._spaceBarAdapter)
+            return;
+        this._spaceBarAdapter = new SpaceBarAdapter(this);
+        this._spaceBarAdapter.enable();
+    }
+
+    _disableSpaceBar() {
+        if (this._spaceBarAdapter) {
+            this._spaceBarAdapter.disable();
+            this._spaceBarAdapter = null;
+        }
+    }
+
+    _toggleDash() {
+        if (this._settings.get_boolean('disable-dash'))
+            this._enableDisableDash();
+        else
+            this._disableDisableDash();
+    }
+
+    _enableDisableDash() {
+        if (!this._dashVisibility)
+            return;
+        if (!Main.overview.dash)
+            return;
+        this._dashOriginalHeight = Main.overview.dash.height;
+        this._dashVisibility = false;
+        Main.overview.dash.hide();
+        Main.overview.dash.height = 0;
+    }
+
+    _disableDisableDash() {
+        if (this._dashVisibility)
+            return;
+        if (!Main.overview.dash)
+            return;
+        this._dashVisibility = true;
+        Main.overview.dash.show();
+        Main.overview.dash.height = this._dashOriginalHeight ?? -1;
+        Main.overview.dash.setMaxSize(-1, -1);
+        this._dashOriginalHeight = null;
     }
 
     _openPreferences() {
@@ -169,8 +290,10 @@ export default class SpotlightExtension extends Extension {
         destroyTooltip();
         destroyDevice();
 
-        // disable caffeine standalone
+        // disable standalone features
         this._disableCaffeine();
+        this._disableSpaceBar();
+        this._disableDisableDash();
 
         // views destroyed by popup destroy
         // return stolen widgets back to overview before destroying

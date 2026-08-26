@@ -268,6 +268,32 @@ export function buildAppearancePage(settings) {
 
     groups.push(emojiDisplayGroup);
 
+    // space bar group standalone feature toggle
+    const spaceBarGroup = new Adw.PreferencesGroup({
+        title: 'Space Bar',
+        description: 'Replace top-panel workspace indicator with an i3-like workspaces bar',
+    });
+    const spaceBarRow = new Adw.SwitchRow({
+        title: 'Enable Space Bar',
+        subtitle: 'When off the default GNOME workspace indicator is used',
+    });
+    settings.bind('space-bar-enabled', spaceBarRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+    spaceBarGroup.add(spaceBarRow);
+    groups.push(spaceBarGroup);
+
+    // disable dash group standalone feature toggle
+    const dashGroup = new Adw.PreferencesGroup({
+        title: 'Dash',
+        description: 'Control the GNOME dash dock visibility in overview',
+    });
+    const dashRow = new Adw.SwitchRow({
+        title: 'Disable the dash',
+        subtitle: 'Hide the GNOME dash dock in the overview',
+    });
+    settings.bind('disable-dash', dashRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+    dashGroup.add(dashRow);
+    groups.push(dashGroup);
+
     // caffeine group standalone feature toggle
     const caffeineGroup = new Adw.PreferencesGroup({
         title: 'Caffeine',
