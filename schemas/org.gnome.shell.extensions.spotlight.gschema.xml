@@ -43,12 +43,7 @@
       <description>Keyboard shortcut to open Spotlight in emoji selector mode.</description>
     </key>
     <!-- clipboard history size -->
-    <key name="clipboard-history-size" type="i">
-      <default>20</default>
-      <summary>Clipboard history size</summary>
-      <description>Maximum number of entries to keep in clipboard history.</description>
-      <range min="5" max="100"/>
-    </key>
+    
     <!-- recently used emojis -->
     <key name="recently-used-emojis" type="as">
       <default>[]</default>
@@ -62,25 +57,11 @@
       <description>Automatically paste after selecting a clipboard history entry or emoji.</description>
     </key>
     <!-- emoji skin tone 0 none 1 light 2 medium light 3 medium 4 medium dark 5 dark -->
-    <key name="emoji-skin-tone" type="i">
-      <default>0</default>
-      <summary>Emoji skin tone</summary>
-      <description>Default skin tone modifier for applicable emojis. 0 = none, 1-5 = light to dark.</description>
-      <range min="0" max="5"/>
-    </key>
+    
     <!-- emoji gender 0 none 1 women 2 men -->
-    <key name="emoji-gender" type="i">
-      <default>0</default>
-      <summary>Emoji gender</summary>
-      <description>Default gender modifier for applicable emojis. 0 = none, 1 = women, 2 = men.</description>
-      <range min="0" max="2"/>
-    </key>
+    
     <!-- emoji click counts for popularity ranking stored as json string -->
-    <key name="emoji-click-counts" type="s">
-      <default>''</default>
-      <summary>Emoji click counts</summary>
-      <description>JSON mapping of emoji characters to click counts for search ranking.</description>
-    </key>
+    
 
     <!-- === caffeine keys copied from caffeine extension v60 === -->
     <key type="as" name="inhibit-apps">
@@ -199,110 +180,28 @@
     </key>
 
     <!-- === clipboard indicator features === -->
-    <key type="b" name="clipboard-private-mode">
-      <default>false</default>
-      <summary>Private mode</summary>
-      <description>When enabled clipboard changes are not tracked in history</description>
-    </key>
-    <key type="b" name="clipboard-move-first">
-      <default>true</default>
-      <summary>Move selected item to top</summary>
-      <description>Move items to the top of the list when selected</description>
-    </key>
-    <key type="b" name="clipboard-strip-text">
-      <default>false</default>
-      <summary>Strip whitespace</summary>
-      <description>Remove leading and trailing whitespace from copied text</description>
-    </key>
-    <key type="b" name="clipboard-confirm-clear">
-      <default>true</default>
-      <summary>Confirm before clearing history</summary>
-      <description>Show confirmation dialog when clearing clipboard history</description>
-    </key>
-    <key type="b" name="clipboard-confirm-pinned-delete">
-      <default>false</default>
-      <summary>Confirm before deleting pinned items</summary>
-      <description>Show confirmation dialog when deleting a pinned favorite item</description>
-    </key>
-    <key type="b" name="clipboard-regex-search">
-      <default>false</default>
-      <summary>Regex search</summary>
-      <description>Allow regular expressions in clipboard search</description>
-    </key>
-    <key type="b" name="clipboard-case-sensitive">
-      <default>false</default>
-      <summary>Case sensitive search</summary>
-      <description>Make clipboard search case sensitive</description>
-    </key>
-    <key type="b" name="clipboard-cache-only-favorites">
-      <default>false</default>
-      <summary>Cache only favorites</summary>
-      <description>Only persist favorite pinned entries to disk non favorites are memory only</description>
-    </key>
-    <key type="b" name="clipboard-pinned-on-bottom">
-      <default>false</default>
-      <summary>Pinned items on bottom</summary>
-      <description>Display the pinned favorites section below the history section</description>
-    </key>
-    <key type="b" name="clipboard-show-pin-button">
-      <default>true</default>
-      <summary>Show pin button</summary>
-      <description>Show the pin favorite button on each clipboard item</description>
-    </key>
-    <key type="b" name="clipboard-show-delete-button">
-      <default>true</default>
-      <summary>Show delete button</summary>
-      <description>Show the delete button on each clipboard item</description>
-    </key>
-    <key type="b" name="clipboard-show-paste-button">
-      <default>true</default>
-      <summary>Show paste button</summary>
-      <description>Show the paste button on each clipboard item</description>
-    </key>
-    <key type="b" name="clipboard-show-edit-button">
-      <default>true</default>
-      <summary>Show edit button</summary>
-      <description>Show the edit button on text clipboard items</description>
-    </key>
-    <key type="b" name="clipboard-show-tag-button">
-      <default>true</default>
-      <summary>Show tag button</summary>
-      <description>Show the tag button on each clipboard item</description>
-    </key>
-    <key type="as" name="clipboard-excluded-apps">
-      <default>[]</default>
-      <summary>Excluded applications</summary>
-      <description>Applications whose clipboard changes are not tracked in history</description>
-    </key>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
     <!-- === emoji copy features === -->
-    <key type="i" name="emoji-size">
-      <default>28</default>
-      <summary>Emoji size</summary>
-      <description>Size of emoji buttons in pixels</description>
-      <range min="16" max="48"/>
-    </key>
-    <key type="i" name="emoji-columns">
-      <default>10</default>
-      <summary>Emoji columns</summary>
-      <description>Number of emojis per row in the grid</description>
-      <range min="6" max="16"/>
-    </key>
-    <key type="b" name="emoji-keep-open">
-      <default>false</default>
-      <summary>Keep emoji panel open</summary>
-      <description>Keep the emoji panel open after selecting an emoji allows picking multiple</description>
-    </key>
-    <key type="b" name="emoji-show-tooltips">
-      <default>true</default>
-      <summary>Show emoji tooltips</summary>
-      <description>Show emoji name tooltips on hover</description>
-    </key>
-    <key type="as" name="emoji-recently-used">
-      <default>[]</default>
-      <summary>Recently used emojis</summary>
-      <description>Emojis recently selected by the user</description>
-    </key>
+    
+    
+    
+    
+    
 
 
     <!-- === space bar standalone feature === -->
@@ -676,5 +575,350 @@
             <summary>Keybinding to activate workspace 10.</summary>
         </key>
     
+
+
+    <!-- === clipboard feature keys === -->
+        <key name="clipboard-paste-button" type="b">
+        <default>true</default>
+        <summary>Add button to paste an entry</summary>
+        <description>
+            If true, adds another button to each menu entry that lets you immediately paste it
+        </description>
+    </key>
+        <key name="clipboard-pinned-on-bottom" type="b">
+        <default>false</default>
+        <summary>Display the pinned section on the bottom</summary>
+        <description>
+            If true, places the "pinned" section on the bottom
+        </description>
+    </key>
+        <key name="clipboard-enable-deletion" type="b">
+        <default>true</default>
+        <summary>Enable the deletion of clipboard items from your history</summary>
+        <description>
+            If true, displays 'delete' buttons on each item, and a 'Clear History' option
+        </description>
+    </key>
+        <key type="i" name="clipboard-history-size">
+        <default>15</default>
+        <summary>The number of items to save in history</summary>
+        <description></description>
+        <range min="1" max="10000"/>
+    </key>
+        <key type="i" name="clipboard-display-mode">
+        <default>0</default>
+        <summary>What to display in top bar</summary>
+        <range min="0" max="3"/>
+    </key>
+        <key name="clipboard-disable-down-arrow" type="b">
+        <default>true</default>
+        <summary>Remove down arrow in top bar</summary>
+    </key>
+        <key name="clipboard-blink-icon-on-copy" type="b">
+        <default>false</default>
+        <summary>Blink icon on copy</summary>
+        <description>
+            If true, the topbar icon will blink when content is copied to clipboard.
+        </description>
+    </key>
+        <key name="clipboard-show-search-bar" type="b">
+        <default>true</default>
+        <summary>Show the search bar</summary>
+    </key>
+        <key name="clipboard-show-private-mode" type="b">
+        <default>true</default>
+        <summary>Show the private mode toggle</summary>
+    </key>
+        <key name="clipboard-show-settings-button" type="b">
+        <default>true</default>
+        <summary>Show the settings button</summary>
+    </key>
+        <key name="clipboard-show-clear-history-button" type="b">
+        <default>true</default>
+        <summary>Show the clear history button</summary>
+        <description>If true, the clear history button will be displayed.</description>
+    </key>
+        <key name="clipboard-clear-on-boot" type="b">
+        <default>false</default>
+        <summary>Clear clipboard history on every system reboot.</summary>
+    </key>
+        <key name="clipboard-paste-on-select" type="b">
+        <default>false</default>
+        <summary>Paste on select</summary>
+    </key>
+        <key type="i" name="clipboard-preview-size">
+        <default>30</default>
+        <summary>Amount of visible characters for clipboard items </summary>
+        <description>
+            The number of characters to display for every clipboard item in
+            the history menu
+        </description>
+        <range min="10" max="100"/>
+    </key>
+        <key type="i" name="clipboard-topbar-preview-size">
+        <default>10</default>
+        <summary>Amount of visible characters in topbar </summary>
+        <description>
+            The number of characters to display for current clipboard item in the topbar
+        </description>
+        <range min="1" max="100"/>
+    </key>
+        <key type="i" name="clipboard-cache-size">
+        <default>5</default>
+        <summary>The allowed size for the registry cache file in MB</summary>
+        <description>
+            If the cache overflows this limit, the file will be overriden.
+            High limit might cause slowness of shell startup.
+        </description>
+        <range min="1" max="1024"/>
+    </key>
+        <key name="clipboard-cache-only-favorites" type="b">
+        <default>false</default>
+        <summary>Disable the registry cache file for favorites and use memory only</summary>
+        <description>
+            Contents which are not favorites are not stored and retrieved from a cache (registry.txt) file.
+            This can avoid writing passwords to a plaintext file, but at the cost of persistant history.
+            Your clipboard history, except favorite items, is lost after a gnome-shell session ends or the extension is reloaded.
+        </description>
+    </key>
+        <key name="clipboard-notify-on-copy" type="b">
+        <default>false</default>
+        <summary>Show notification on copy to clipboard</summary>
+        <description>
+            If true, a notification is shown when content is copied to clipboard.
+        </description>
+    </key>
+        <key name="clipboard-notify-on-cycle" type="b">
+        <default>true</default>
+        <summary>Show notification when cycling through the entries with hotkeys</summary>
+        <description>
+            If true, a notification is shown when cycling through the clipboard entries using hotkeys.
+        </description>
+    </key>
+        <key name="clipboard-notify-on-clear" type="b">
+        <default>true</default>
+        <summary>Show notification on Clear History</summary>
+        <description>
+            If true, a notification is shown when the history is cleared.
+        </description>
+    </key>
+        <key name="clipboard-confirm-clear" type="b">
+        <default>true</default>
+        <summary>Show confirmation dialog on Clear History</summary>
+        <description>
+            If true, a confirmation dialog is shown when attempting to Clear History.
+        </description>
+    </key>
+        <key name="clipboard-confirm-pinned-delete" type="b">
+        <default>false</default>
+        <summary>Show confirmation dialog on deleting pinned item</summary>
+        <description>
+            If true, a confirmation dialog is shown when attempting to delete a pinned item.
+        </description>
+    </key>
+        <key name="clipboard-strip-text" type="b">
+        <default>false</default>
+        <summary>Remove whitespace around text</summary>
+        <description>
+            If true, white spaces around text will be removed.
+        </description>
+    </key>
+        <key name="clipboard-move-item-first" type="b">
+        <default>false</default>
+        <summary>Move items to the top of the list when selected.</summary>
+        <description>
+            If true, move items to the top of the list when it is selected.
+        </description>
+    </key>
+        <key name="clipboard-keep-selected-on-clear" type="b">
+        <default>false</default>
+        <summary>Keep selected item on clear</summary>
+        <description>
+            Whether to keep the currently selected entry in the clipboard
+            after clearing the history
+        </description>
+    </key>
+        <key name="clipboard-enable-keybindings" type="b">
+        <default>true</default>
+        <summary>Enable the keyboard shortcuts</summary>
+        <description>
+            If true, user can delete and cycle through the history with keyboard shortcuts
+        </description>
+    </key>
+        <key name="clipboard-clear-history" type="as">
+        <default><![CDATA[['<Control>F10']]]></default>
+            <summary>Key to clear the history</summary>
+            <description>
+            </description>
+        </key>
+        <key name="clipboard-prev-entry" type="as">
+        <default><![CDATA[['<Control>F11']]]></default>
+            <summary>Key to cycle to the previous entry in the clipboard</summary>
+            <description>
+            </description>
+        </key>
+        <key name="clipboard-next-entry" type="as">
+        <default><![CDATA[['<Control>F12']]]></default>
+            <summary>Next entry</summary>
+            <description>
+                Key to cycle to the next entry in the clipboard
+            </description>
+        </key>
+        <key name="clipboard-toggle-menu" type="as">
+        <default><![CDATA[['<Control>F9']]]></default>
+            <summary>Toggle the menu</summary>
+            <description>
+                Key to toggle the clipboard menu
+            </description>
+        </key>
+        <key name="clipboard-private-mode-binding" type="as">
+        <default><![CDATA[['<Control>F8']]]></default>
+            <summary>Toggle "Private Mode"</summary>
+            <description>
+                Key to toggle the private mode
+            </description>
+        </key>
+        <key name="clipboard-cache-images" type="b">
+            <default>true</default>
+            <summary>Cache images</summary>
+            <description>
+                Allow caching images to disk
+            </description>
+        </key>
+        <key name="clipboard-excluded-apps" type="as">
+            <default>[]</default>
+            <summary>List of excluded applications</summary>
+            <description>
+                A list of applications that are excluded from clipboard history.
+            </description>
+        </key>
+        <key name="clipboard-clear-history-on-interval" type="b">
+            <default>false</default>
+            <summary>Enable clearing history on interval</summary>
+            <description>
+                If true, clipboard history will be cleared at regular intervals.
+            </description>
+        </key>
+        <key name="clipboard-clear-history-interval" type="i">
+            <default>60</default>
+            <summary>Interval for clearing history in minutes</summary>
+            <description>
+                The interval in minutes at which the clipboard history will be cleared.
+            </description>
+            <range min="1"/>
+        </key>
+        <key name="clipboard-next-history-clear" type="i">
+            <default>-1</default>
+            <summary>Next scheduled history clear time</summary>
+            <description>
+                The timestamp for the next scheduled history clear.
+            </description>
+        </key>
+        <key name="clipboard-case-sensitive-search" type="b">
+            <default>false</default>
+            <summary>Case sensitive search</summary>
+            <description>Make search case sensitive</description>
+        </key>
+        <key name="clipboard-regex-search" type="b">
+            <default>false</default>
+            <summary>Regex-based search</summary>
+            <description>Allow regex in search</description>
+        </key>
+        <key name="clipboard-open-at-cursor" type="b">
+        <default>false</default>
+        <summary>Open menu at cursor position</summary>
+        <description>
+            If true, the menu will open at the cursor position when using the keyboard shortcut.
+        </description>
+    </key>
+        <key name="clipboard-show-delete-button" type="b">
+        <default>true</default>
+        <summary>Show the delete button on each item</summary>
+    </key>
+        <key name="clipboard-show-tag-button" type="b">
+        <default>true</default>
+        <summary>Show the tag button on each item</summary>
+    </key>
+        <key name="clipboard-show-pin-button" type="b">
+        <default>true</default>
+        <summary>Show the pin/favorite button on each item</summary>
+    </key>
+        <key name="clipboard-show-edit-button" type="b">
+        <default>true</default>
+        <summary>Show the edit button on each text item</summary>
+    </key>
+        <key name="clipboard-show-preview-button" type="b">
+        <default>true</default>
+        <summary>Show the preview button on each image item</summary>
+    </key>
+
+    <!-- === emoji feature keys === -->
+        <key type="s" name="emoji-position">
+      <default>'top'</default>
+      <summary>orientation of the interface</summary>
+      <description>Possible values can be 'top' or 'bottom'.</description>
+    </key>
+        <key type="i" name="emoji-nbcols">
+      <default>11</default>
+      <summary>Number of emojis per line</summary>
+      <description>Sets the number of column of emojis to display.</description>
+    </key>
+        <key type="i" name="emoji-emojisize">
+      <default>30</default>
+      <summary>Default size of emojis</summary>
+      <description>Default size of emojis (px) ; doesn't concern recently used items</description>
+    </key>
+        <key type="as" name="emoji-recently-used">
+      <default>
+        ['😂','❤️','😍','😭','😊','😒','😘','😩','🤔','☺️',
+        '👌','😔','😏','😁','😉','👍','😱','😳','😎','👀','💩']
+      </default>
+      <summary>default memorized emojis</summary>
+      <description></description>
+    </key>
+        <key name="emoji-window-location" type="s">
+      <choices>
+        <choice value="top-bar"/>
+        <choice value="cursor"/>
+      </choices>
+      <default>'top-bar'</default>
+      <summary>Window location mode</summary>
+      <description>Where to display the emoji window: 'Top bar', 'Cursor'.</description>
+    </key>
+        <key type="b" name="emoji-paste-on-select">
+      <default>true</default>
+      <summary>if paste on select is enabled</summary>
+      <description>if true, Selecting an emoji will attempt to paste it on the focused textfield</description>
+    </key>
+        <key type="b" name="emoji-keep-open">
+      <default>false</default>
+      <summary>if the menu stays open after selecting an emoji</summary>
+      <description>if true, the emoji menu will stay open after selecting an emoji, allowing to pick several emojis in a row.</description>
+    </key>
+        <key type="b" name="emoji-active-keybind">
+      <default>true</default>
+      <summary>if keybinding is enabled</summary>
+      <description>if true, Super+Period will toggle the menu.</description>
+    </key>
+        <key type="b" name="emoji-always-show">
+      <default>true</default>
+      <summary>if icon should always be shown</summary>
+      <description>if false, Super+Period will be the only way to display the popup menu.</description>
+    </key>
+        <key type="i" name="emoji-skin-tone">
+      <default>0</default>
+      <summary>Favorite skin tone</summary>
+      <description>0 is none, 1 is light, ..., 5 is dark.</description>
+    </key>
+        <key type="i" name="emoji-gender">
+      <default>0</default>
+      <summary>Favorite gender</summary>
+      <description>0 is none, 1 is women, 2 is men.</description>
+    </key>
+        <key name="emoji-emoji-keybind" type="as">
+      <default><![CDATA[['<Super>period']]]></default>
+      <summary>Keyboard shortcut.</summary>
+      <description>Keyboard shortcut which opens the extension's menu.</description>
+    </key>
   </schema>
 </schemalist>

@@ -1,0 +1,99 @@
+.clipboard-indicator-hbox.private-mode {
+    color: rgba(255,255,255,0.3);
+}
+
+.ci-notification-label {
+    font-weight: bold;
+    color: #ffffff;
+    background-color: rgba(10,10,10,0.7);
+    border-radius: 6px;
+    font-size:2em;
+    padding:.5em;
+    width:400px;
+}
+
+.ci-history-menu-section .popup-menu-item {
+    margin-right: .8em;
+}
+
+.popup-menu-item .ci-action-btn StIcon {
+    icon-size:1.2em;
+    margin-left:.25em;
+}
+
+.popup-menu-item StEntry StIcon {
+    icon-size:1em;
+    margin:0 .25em;
+}
+
+.clipboard-indicator-empty-state {
+    width:350px;
+    color:#aaa;
+}
+
+.clipboard-indicator-empty-state StIcon {
+    icon-size:5em;
+    margin-top:3em;
+}
+
+.clipboard-indicator-empty-state StLabel {
+    margin:1em 0 3em 0;
+}
+
+.ci-history-menu-section {
+    max-height:450px;
+}
+
+.ci-main-menu-section StButton.ci-pin-btn {
+    color: rgba(255,255,255,0.3);
+}
+
+.clipboard-hidden {
+    display:none!important;
+}
+
+.clipboard-menu-icon {
+    width:1em;
+    height:1em;
+    margin-right:.5em;
+}
+
+.clipboard-menu-img-preview {
+    border:solid 1px white;
+    overflow:hidden;
+    width:1.5em;
+    height:1.5em;
+    margin:0;
+    padding:0;
+}
+
+.clipboard-indicator-img-preview {
+    border:solid 1px white;
+    width:1em;
+    height:1em;
+    margin-right:.25em;
+}
+
+.clipboard-indicator-hbox {
+    transition: background-color 150ms ease-in-out;
+}
+
+.clipboard-indicator-hbox .clipboard-indicator-icon {
+    transition: color 150ms ease-in-out;
+}
+
+.ci-tag-label {
+    font-size: 0.8em;
+    color: rgba(255, 255, 255, 0.6);
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    padding: 1px 6px;
+    margin: 0 6px;
+}
+
+.ci-edit-textbox {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    padding: 8px;
+    min-width: 384px;
+}

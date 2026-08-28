@@ -4,7 +4,6 @@ import St from 'gi://St';
 import Meta from 'gi://Meta';
 import Shell from 'gi://Shell';
 import GLib from 'gi://GLib';
-import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import {ClipboardEntry, readClipboardContent} from './entry.js';
 import {Registry} from './registry.js';
 
@@ -12,25 +11,32 @@ const CLIPBOARD_TYPE = St.ClipboardType.CLIPBOARD;
 
 export class ClipboardManager {
     constructor(settings, uuid) {
-        this._settings = settings;
+        this._settings = new PrefixedSettings(settings, 'clipboard-');
+        this._uuid = uuid;
         this._clipboard = St.Clipboard.get_default();
         this._history = [];
-        this._maxSize = settings.get_int('clipboard-history-size');
+        this._favorites = [];
+        this._maxSize = this._settings.get_int(PrefsFields.HISTORY_SIZE);
+        this._privateMode = false;
+        this._selection = null;
+        this._changedId = null;
+        this._running = false;
+        this._keyboard = new Keyboard();
+        this._dialogManager = new DialogManager();
         this._listeners = new Set();
         this._signalId = 0;
         this._ignoreCount = 0;
         this._loading = false;
-        this._privateMode = false;
-        this._registry = new Registry(uuid);
+        this._registry = new Registry({ settings: this._settings, uuid });
 
-        this._settingsChangedId = settings.connect(
-            'changed::clipboard-history-size',
-            () => this.setMaxSize(settings.get_int('clipboard-history-size')),
+        this._settingsChangedId = this._settings.connect(
+            `changed::${PrefsFields.HISTORY_SIZE}`,
+            () => this.setMaxSize(this._settings.get_int(PrefsFields.HISTORY_SIZE)),
         );
-        this._excludedApps = settings.get_strv('clipboard-excluded-apps');
-        this._excludedAppsChangedId = settings.connect(
-            'changed::clipboard-excluded-apps',
-            () => this._excludedApps = settings.get_strv('clipboard-excluded-apps'),
+        this._excludedApps = this._settings.get_strv(PrefsFields.EXCLUDED_APPS);
+        this._excludedAppsChangedId = this._settings.connect(
+            `changed::${PrefsFields.EXCLUDED_APPS}`,
+            () => this._excludedApps = this._settings.get_strv(PrefsFields.EXCLUDED_APPS),
         );
 
         // load persisted history from disk
@@ -51,6 +57,8 @@ export class ClipboardManager {
     }
 
     start() {
+        if (this._running) return;
+        this._running = true;
         if (this._signalId !== 0)
             return;
         // use meta selection owner changed signal same approach as clipboard indicator
@@ -68,6 +76,8 @@ export class ClipboardManager {
     }
 
     stop() {
+        if (!this._running) return;
+        this._running = false;
         if (this._signalId !== 0) {
             this._metaSelection.disconnect(this._signalId);
             this._signalId = 0;
@@ -76,11 +86,19 @@ export class ClipboardManager {
         this._listeners.clear();
     }
 
+    _triggerPaste() {
+        const Clutter = imports.gi.Clutter;
+        this._keyboard.press(Clutter.KEY_Shift_L);
+        this._keyboard.press(Clutter.KEY_Insert);
+        this._keyboard.release(Clutter.KEY_Insert);
+        this._keyboard.release(Clutter.KEY_Shift_L);
+    }
+
     destroy() {
         this.stop();
         // persist current history to disk flush debounced writes immediately
-        if (this._settings.get_boolean('clipboard-cache-only-favorites')) {
-            const favsOnly = this._history.filter(e => e.isFavorite());
+        if (this._settings.get_boolean(PrefsFields.CACHE_ONLY_FAVORITE)) {
+            const favsOnly = [...this._favorites];
             this._registry.write(favsOnly);
         } else {
             this._persist();
@@ -94,7 +112,13 @@ export class ClipboardManager {
             this._settings.disconnect(this._excludedAppsChangedId);
             this._excludedAppsChangedId = 0;
         }
+        this._keyboard?.destroy();
+        this._dialogManager?.destroy();
+        this._keyboard = null;
+        this._dialogManager = null;
         this._history = [];
+        this._favorites = [];
+        this._selection = null;
     }
 
     // subscribe to history changes
@@ -109,7 +133,7 @@ export class ClipboardManager {
     }
 
     _persist() {
-        if (this._settings.get_boolean('clipboard-cache-only-favorites')) {
+        if (this._settings.get_boolean(PrefsFields.CACHE_ONLY_FAVORITE)) {
             const favsOnly = this._history.filter(e => e.isFavorite());
             this._registry.write(favsOnly);
         } else {
@@ -141,7 +165,7 @@ export class ClipboardManager {
             if (!entry)
                 return;
             // strip whitespace if enabled
-            if (entry.isText() && this._settings.get_boolean('clipboard-strip-text')) {
+            if (entry.isText() && this._settings.get_boolean(PrefsFields.STRIP_TEXT)) {
                 const stripped = entry.getStringValue().trim();
                 if (stripped.length === 0)
                     return;
@@ -185,7 +209,7 @@ export class ClipboardManager {
         }
         this._notify();
         // persist to disk
-        if (this._settings.get_boolean('clipboard-cache-only-favorites')) {
+        if (this._settings.get_boolean(PrefsFields.CACHE_ONLY_FAVORITE)) {
             const favsOnly = this._history.filter(e => e.isFavorite());
             this._registry.write(favsOnly);
         } else {
@@ -220,7 +244,7 @@ export class ClipboardManager {
         this._history.splice(index, 1);
         this._history.unshift(entry);
         this._notify();
-        if (this._settings.get_boolean('clipboard-cache-only-favorites')) {
+        if (this._settings.get_boolean(PrefsFields.CACHE_ONLY_FAVORITE)) {
             const favsOnly = this._history.filter(e => e.isFavorite());
             this._registry.write(favsOnly);
         } else {
@@ -243,7 +267,7 @@ export class ClipboardManager {
         const entry = this._history[index];
         entry.setFavorite(!entry.isFavorite());
         this._notify();
-        if (this._settings.get_boolean('clipboard-cache-only-favorites')) {
+        if (this._settings.get_boolean(PrefsFields.CACHE_ONLY_FAVORITE)) {
             const favsOnly = this._history.filter(e => e.isFavorite());
             this._registry.write(favsOnly);
         } else {
@@ -256,7 +280,7 @@ export class ClipboardManager {
             return;
         this._history.splice(index, 1);
         this._notify();
-        if (this._settings.get_boolean('clipboard-cache-only-favorites')) {
+        if (this._settings.get_boolean(PrefsFields.CACHE_ONLY_FAVORITE)) {
             const favsOnly = this._history.filter(e => e.isFavorite());
             this._registry.write(favsOnly);
         } else {
@@ -268,7 +292,7 @@ export class ClipboardManager {
         // preserve favorites same behavior as clipboard indicator
         this._history = this._history.filter(e => e.isFavorite());
         this._notify();
-        if (this._settings.get_boolean('clipboard-cache-only-favorites')) {
+        if (this._settings.get_boolean(PrefsFields.CACHE_ONLY_FAVORITE)) {
             const favsOnly = this._history.filter(e => e.isFavorite());
             this._registry.write(favsOnly);
         } else {

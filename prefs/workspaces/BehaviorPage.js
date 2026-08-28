@@ -1,6 +1,6 @@
 import Adw from 'gi://Adw';
 import Gio from 'gi://Gio';
-import { PrefixedSettings } from '../../services/workspaces/services/Settings.js';
+import { PrefixedSettings } from '../../services/prefixedSettings.js';
 import { addCombo, addLinkButton, addSpinButton, addTextEntry, addToggle } from './common.js';
 export const indicatorStyleOptions = {
     'current-workspace': 'Current workspace',

@@ -117,14 +117,17 @@ This approach means Spotlight automatically benefits from every search provider 
 | `services/clipboardRegistry.js` | Disk persistence for clipboard history |
 | `services/emojiData.js` | Emoji database, search, modifiers, recently used |
 | `services/virtualKeyboard.js` | Virtual input device for paste-on-select simulation |
+| `services/core/` | Core Spotlight services — keybinding, virtual keyboard |
+| `services/clipboard/` | Clipboard history feature — entry, manager, registry, keyboard, dialogs |
+| `services/emoji/` | Emoji picker feature — data manager, UI components |
 | `services/caffeine/` | Caffeine feature — indicator, inhibitor manager, MPRIS |
-| `services/space-bar/` | Workspaces bar feature — UI, services, utils, styles |
+| `services/workspaces/` | Workspaces bar feature — UI, services, utils, styles |
 | `prefs.js` | Preferences window entry point — includes workspaces bar prefs pages |
 | `prefs/shortcutPage.js` | Keyboard shortcut configuration |
 | `prefs/appearancePage.js` | Visual theme, clipboard, emoji, standalone feature toggles |
 | `prefs/aboutPage.js` | About section |
 | `prefs/caffeine/` | Caffeine preferences pages |
-| `prefs/space-bar/` | Workspaces bar preferences pages |
+| `prefs/workspaces/` | Workspaces bar preferences pages |
 | `schemas/*.gschema.xml` | GSettings schema definitions (not pre-compiled) |
 ## Design Principles
 

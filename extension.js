@@ -13,7 +13,7 @@ import {KeybindingManager} from './services/core/keybinding.js';
 import {ClipboardManager} from './services/clipboard/manager.js';
 import {EmojiData} from './services/emoji/data.js';
 import {ClipboardView} from './popup/clipboardView.js';
-import {EmojiView, destroyTooltip} from './popup/emojiView.js';
+import {EmojiView} from './popup/emojiView.js';
 import {destroyDevice} from './services/core/virtualKeyboard.js';
 import {CaffeineIndicator} from './services/caffeine/indicator.js';
 import * as CaffeineKeys from './services/caffeine/inhibitorManager.js';
@@ -131,9 +131,9 @@ export default class SpotlightExtension extends Extension {
 
         this._emojiView = new EmojiView(
             this._emojiData,
-            this._clipboardManager,
             this._settings,
             () => this._popup.close(),
+            () => this._triggerPaste(),
             _,
         );
         this._popup._contentStack.add_child(this._emojiView);
@@ -214,6 +214,21 @@ export default class SpotlightExtension extends Extension {
             });
         }
     }
+
+    _triggerPaste() {
+        const Clutter = imports.gi.Clutter;
+        const seat = Clutter.get_default_backend().get_default_seat();
+        if (!seat) return;
+        const device = seat.create_virtual_device(Clutter.InputDeviceType.KEYBOARD_DEVICE);
+        if (!device) return;
+        const time = Clutter.get_current_event_time() * 1000;
+        device.notify_keyval(time, Clutter.KEY_Shift_L, Clutter.KeyState.PRESSED);
+        device.notify_keyval(time, Clutter.KEY_Insert, Clutter.KeyState.PRESSED);
+        device.notify_keyval(time, Clutter.KEY_Insert, Clutter.KeyState.RELEASED);
+        device.notify_keyval(time, Clutter.KEY_Shift_L, Clutter.KeyState.RELEASED);
+        if (!device.is_destroyed()) device.destroy();
+    }
+
 
     _toggleCaffeine() {
         if (this._settings.get_boolean('caffeine-enabled'))
