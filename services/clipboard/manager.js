@@ -6,6 +6,10 @@ import Shell from 'gi://Shell';
 import GLib from 'gi://GLib';
 import {ClipboardEntry} from './registry.js';
 import {Registry} from './registry.js';
+import {Keyboard} from './keyboard.js';
+import {DialogManager} from './confirmDialog.js';
+import {PrefixedSettings} from '../prefixedSettings.js';
+import {PrefsFields} from './constants.js';
 
 const CLIPBOARD_TYPE = St.ClipboardType.CLIPBOARD;
 

@@ -127,7 +127,7 @@ export class Registry {
                             });
                         }
                         else {
-                            log('Clipboard Indicator: failed to open registry file');
+                            log('Spotlight: failed to open registry file');
                         }
                     });
                 });
@@ -273,7 +273,7 @@ export class ClipboardEntry {
                     }
                     else {
                         reject(
-                            new Error('Clipboard Indicator: could not read image file from cache')
+                            new Error('Spotlight: could not read image file from cache')
                         );
                     }
                 }));
