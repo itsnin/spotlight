@@ -87,6 +87,9 @@ class WorkspacesAdapter {
         this.workspacesBar.init();
         this.scrollHandler = new WorkspacesScrollHandler();
         this.scrollHandler.init(this.workspacesBar.observeWidget());
+        // set initial visibility based on setting
+        if (this.workspacesBar._button)
+            this.workspacesBar._button.visible = this._settings.get_boolean('workspaces-bar-enabled');
     }
 
     disable() {
@@ -289,17 +292,13 @@ export default class SpotlightExtension extends Extension {
     }
 
     _enableWorkspaces() {
-        if (this._workspacesAdapter)
-            return;
-        this._workspacesAdapter = new WorkspacesAdapter(this);
-        this._workspacesAdapter.enable();
+        if (this.workspacesBar && this.workspacesBar._button)
+            this.workspacesBar._button.visible = true;
     }
 
     _disableWorkspaces() {
-        if (this._workspacesAdapter) {
-            this._workspacesAdapter.disable();
-            this._workspacesAdapter = null;
-        }
+        if (this.workspacesBar && this.workspacesBar._button)
+            this.workspacesBar._button.visible = false;
     }
 
     _toggleDash() {

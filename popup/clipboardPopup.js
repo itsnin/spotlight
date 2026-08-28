@@ -76,7 +76,8 @@ export class ClipboardPopup extends St.Widget {
 
     open() {
         if (this._visible) return;
-        this._visible = true;
+        try {
+            this._visible = true;
 
         // Add backdrop (show() handles addChrome internally)
         this._backdrop.show();
@@ -98,6 +99,10 @@ export class ClipboardPopup extends St.Widget {
         // Focus the view's search
         if (this._view.focusSearch)
             this._view.focusSearch();
+        } catch (e) {
+            log('Spotlight clipboardPopup open error: ' + e);
+            this._visible = false;
+        }
     }
 
     close() {

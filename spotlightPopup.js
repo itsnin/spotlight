@@ -151,6 +151,8 @@ class SpotlightPopup extends St.Widget {
         const button = new St.Button({
             style_class: 'spotlight-mode-button',
             can_focus: true,
+            reactive: true,
+            track_hover: true,
             child: new St.Icon({
                 icon_name: iconName,
                 icon_size: 18,
@@ -158,7 +160,13 @@ class SpotlightPopup extends St.Widget {
             accessible_name: label,
             style: 'padding: 6px;',
         });
-        button.connect('clicked', callback);
+        button.connect('clicked', () => {
+            try {
+                callback();
+            } catch (e) {
+                log('Spotlight mode button error: ' + e);
+            }
+        });
         return button;
     }
 
