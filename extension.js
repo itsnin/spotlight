@@ -355,7 +355,6 @@ export default class SpotlightExtension extends Extension {
         this._emojiData.flush();
         this._emojiData = null;
 
-        destroyTooltip();
         destroyDevice();
 
         // disable standalone features

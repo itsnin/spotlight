@@ -4,7 +4,7 @@ import St from 'gi://St';
 import Meta from 'gi://Meta';
 import Shell from 'gi://Shell';
 import GLib from 'gi://GLib';
-import {ClipboardEntry, readClipboardContent} from './entry.js';
+import {ClipboardEntry} from './registry.js';
 import {Registry} from './registry.js';
 
 const CLIPBOARD_TYPE = St.ClipboardType.CLIPBOARD;
@@ -47,7 +47,9 @@ export class ClipboardManager {
         this._loading = true;
         try {
             const entries = await this._registry.read();
-            this._history = entries.slice(0, this._maxSize);
+            this._favorites = entries.filter(e => e.isFavorite());
+            const nonFavorites = entries.filter(e => !e.isFavorite());
+            this._history = nonFavorites.slice(0, this._maxSize);
             this._notify();
         } catch {
             // fail silently start with empty history
@@ -84,6 +86,22 @@ export class ClipboardManager {
             this._metaSelection = null;
         }
         this._listeners.clear();
+    }
+
+    getSettings() {
+        return this._settings;
+    }
+
+    getFavorites() {
+        return [...this._favorites];
+    }
+
+    getDialogManager() {
+        return this._dialogManager;
+    }
+
+    getAllEntries() {
+        return [...this._favorites, ...this._history];
     }
 
     _triggerPaste() {
@@ -161,9 +179,12 @@ export class ClipboardManager {
                 return;
         } catch {}
         try {
-            const entry = await readClipboardContent(this._clipboard);
-            if (!entry)
+            const text = await new Promise(resolve => {
+                this._clipboard.get_text(St.ClipboardType.CLIPBOARD, (clip, t) => resolve(t));
+            });
+            if (!text || text.trim().length === 0)
                 return;
+            const entry = new ClipboardEntry('text/plain;charset=utf-8', new TextEncoder().encode(text), false);
             // strip whitespace if enabled
             if (entry.isText() && this._settings.get_boolean(PrefsFields.STRIP_TEXT)) {
                 const stripped = entry.getStringValue().trim();
@@ -222,10 +243,9 @@ export class ClipboardManager {
     }
 
     // copy entry at index back to clipboard
-    selectEntry(index) {
-        if (index < 0 || index >= this._history.length)
+    selectEntry(entry) {
+        if (!entry)
             return null;
-        const entry = this._history[index];
         this._ignoreCount++;
         if (entry.isText()) {
             this._clipboard.set_text(CLIPBOARD_TYPE, entry.getStringValue());
@@ -240,9 +260,12 @@ export class ClipboardManager {
                 );
             }
         }
-        // move to top
-        this._history.splice(index, 1);
-        this._history.unshift(entry);
+        // move to top if in history
+        const historyIdx = this._history.indexOf(entry);
+        if (historyIdx >= 0 && this._settings.get_boolean(PrefsFields.MOVE_ITEM_FIRST)) {
+            this._history.splice(historyIdx, 1);
+            this._history.unshift(entry);
+        }
         this._notify();
         if (this._settings.get_boolean(PrefsFields.CACHE_ONLY_FAVORITE)) {
             const favsOnly = this._history.filter(e => e.isFavorite());

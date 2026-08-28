@@ -64,7 +64,7 @@ export function buildAppearancePage(settings) {
         title: 'Move selected to top',
         subtitle: 'Move items to the top of the list when selected',
     });
-    settings.bind('clipboard-move-first', moveFirstRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+    settings.bind('clipboard-move-item-first', moveFirstRow, 'active', Gio.SettingsBindFlags.DEFAULT);
     behaviorGroup.add(moveFirstRow);
 
     const stripRow = new Adw.SwitchRow({
@@ -100,7 +100,7 @@ export function buildAppearancePage(settings) {
         title: 'Case sensitive search',
         subtitle: 'Make clipboard search case sensitive',
     });
-    settings.bind('clipboard-case-sensitive', caseRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+    settings.bind('clipboard-case-sensitive-search', caseRow, 'active', Gio.SettingsBindFlags.DEFAULT);
     searchGroup.add(caseRow);
 
     groups.push(searchGroup);
@@ -158,7 +158,7 @@ export function buildAppearancePage(settings) {
         title: 'Show paste button',
         subtitle: 'Show the paste button on each clipboard item',
     });
-    settings.bind('clipboard-show-paste-button', showPasteRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+    settings.bind('clipboard-paste-button', showPasteRow, 'active', Gio.SettingsBindFlags.DEFAULT);
     clipDisplayGroup.add(showPasteRow);
 
     const showEditRow = new Adw.SwitchRow({
@@ -239,7 +239,7 @@ export function buildAppearancePage(settings) {
             lower: 16, upper: 48, step_increment: 1, page_increment: 2,
         }),
     });
-    settings.bind('emoji-size', emojiSizeRow, 'value', Gio.SettingsBindFlags.DEFAULT);
+    settings.bind('emoji-emojisize', emojiSizeRow, 'value', Gio.SettingsBindFlags.DEFAULT);
     emojiDisplayGroup.add(emojiSizeRow);
 
     const emojiColsRow = new Adw.SpinRow({
@@ -249,7 +249,7 @@ export function buildAppearancePage(settings) {
             lower: 6, upper: 16, step_increment: 1, page_increment: 2,
         }),
     });
-    settings.bind('emoji-columns', emojiColsRow, 'value', Gio.SettingsBindFlags.DEFAULT);
+    settings.bind('emoji-nbcols', emojiColsRow, 'value', Gio.SettingsBindFlags.DEFAULT);
     emojiDisplayGroup.add(emojiColsRow);
 
     const keepOpenRow = new Adw.SwitchRow({
@@ -259,12 +259,6 @@ export function buildAppearancePage(settings) {
     settings.bind('emoji-keep-open', keepOpenRow, 'active', Gio.SettingsBindFlags.DEFAULT);
     emojiDisplayGroup.add(keepOpenRow);
 
-    const tooltipsRow = new Adw.SwitchRow({
-        title: 'Show emoji tooltips',
-        subtitle: 'Show emoji name tooltips on hover',
-    });
-    settings.bind('emoji-show-tooltips', tooltipsRow, 'active', Gio.SettingsBindFlags.DEFAULT);
-    emojiDisplayGroup.add(tooltipsRow);
 
     groups.push(emojiDisplayGroup);
 
