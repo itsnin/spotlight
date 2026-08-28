@@ -6,7 +6,7 @@ import GObject from 'gi://GObject';
 import Cogl from 'gi://Cogl';
 import * as ModalDialog from 'resource:///org/gnome/shell/ui/modalDialog.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
-import {triggerPaste} from '../services/virtualKeyboard.js';
+import {triggerPaste} from '../services/core/virtualKeyboard.js';
 
 export const ClipboardView = GObject.registerClass(
 class ClipboardView extends St.BoxLayout {

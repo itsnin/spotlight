@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import GLib from 'gi://GLib';
 import Gio from 'gi://Gio';
-import {ClipboardEntry} from './clipboardEntry.js';
+import {ClipboardEntry} from './entry.js';
 
 export class Registry {
     constructor(uuid) {

@@ -5,8 +5,8 @@ import Meta from 'gi://Meta';
 import Shell from 'gi://Shell';
 import GLib from 'gi://GLib';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
-import {ClipboardEntry, readClipboardContent} from './clipboardEntry.js';
-import {Registry} from './clipboardRegistry.js';
+import {ClipboardEntry, readClipboardContent} from './entry.js';
+import {Registry} from './registry.js';
 
 const CLIPBOARD_TYPE = St.ClipboardType.CLIPBOARD;
 

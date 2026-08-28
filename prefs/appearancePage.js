@@ -277,7 +277,7 @@ export function buildAppearancePage(settings) {
         title: 'Enable Workspaces Bar',
         subtitle: 'When off the default GNOME workspace indicator is used',
     });
-    settings.bind('space-bar-enabled', spaceBarRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+    settings.bind('workspaces-bar-enabled', spaceBarRow, 'active', Gio.SettingsBindFlags.DEFAULT);
     spaceBarGroup.add(spaceBarRow);
     groups.push(spaceBarGroup);
 

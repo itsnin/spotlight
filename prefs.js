@@ -7,9 +7,9 @@ import {buildAppearancePage} from './prefs/appearancePage.js';
 import {buildAboutPage} from './prefs/aboutPage.js';
 
 // Workspaces bar preferences pages
-import {AppearancePage as SpaceBarAppearancePage} from './prefs/space-bar/AppearancePage.js';
-import {BehaviorPage as SpaceBarBehaviorPage} from './prefs/space-bar/BehaviorPage.js';
-import {ShortcutsPage as SpaceBarShortcutsPage} from './prefs/space-bar/ShortcutsPage.js';
+import {AppearancePage as SpaceBarAppearancePage} from './prefs/workspaces/AppearancePage.js';
+import {BehaviorPage as SpaceBarBehaviorPage} from './prefs/workspaces/BehaviorPage.js';
+import {ShortcutsPage as SpaceBarShortcutsPage} from './prefs/workspaces/ShortcutsPage.js';
 
 // each category gets its own page tab in the sidebar
 // keyboard shortcuts appearance theme and about

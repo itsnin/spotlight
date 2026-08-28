@@ -1,6 +1,6 @@
 import Adw from 'gi://Adw';
 import Gio from 'gi://Gio';
-import { PrefixedSettings } from '../../services/space-bar/services/Settings.js';
+import { PrefixedSettings } from '../../services/workspaces/services/Settings.js';
 import { addColorButton, addCombo, addSpinButton } from './common.js';
 import { addCustomCssDialogButton } from './custom-styles.js';
 export const fontWeightOptions = {

@@ -306,7 +306,7 @@
 
 
     <!-- === space bar standalone feature === -->
-    <key type="b" name="space-bar-enabled">
+    <key type="b" name="workspaces-bar-enabled">
       <default>false</default>
       <summary>Enable Workspaces Bar</summary>
       <description>Replaces the top-panel workspace indicator with an i3-like workspaces bar</description>

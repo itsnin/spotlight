@@ -9,27 +9,27 @@ import Shell from 'gi://Shell';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import {WindowPreview} from 'resource:///org/gnome/shell/ui/windowPreview.js';
 import {SpotlightPopup} from './spotlightPopup.js';
-import {KeybindingManager} from './services/keybinding.js';
-import {ClipboardManager} from './services/clipboardManager.js';
-import {EmojiData} from './services/emojiData.js';
+import {KeybindingManager} from './services/core/keybinding.js';
+import {ClipboardManager} from './services/clipboard/manager.js';
+import {EmojiData} from './services/emoji/data.js';
 import {ClipboardView} from './popup/clipboardView.js';
 import {EmojiView, destroyTooltip} from './popup/emojiView.js';
-import {destroyDevice} from './services/virtualKeyboard.js';
-import {CaffeineIndicator} from './services/caffeine/caffeineIndicator.js';
+import {destroyDevice} from './services/core/virtualKeyboard.js';
+import {CaffeineIndicator} from './services/caffeine/indicator.js';
 import * as CaffeineKeys from './services/caffeine/inhibitorManager.js';
 
 // Workspaces bar components
-import {KeyBindings as SpaceBarKeyBindings} from './services/space-bar/services/KeyBindings.js';
-import {ScrollHandler as SpaceBarScrollHandler} from './services/space-bar/services/ScrollHandler.js';
-import {Settings as SpaceBarSettings} from './services/space-bar/services/Settings.js';
-import {Styles as SpaceBarStyles} from './services/space-bar/services/Styles.js';
-import {TopBarAdjustments as SpaceBarTopBarAdjustments} from './services/space-bar/services/TopBarAdjustments.js';
-import {Workspaces as SpaceBarWorkspaces} from './services/space-bar/services/Workspaces.js';
-import {WorkspacesBar as SpaceBarWorkspacesBar} from './services/space-bar/ui/WorkspacesBar.js';
-import {destroyAllHooks as spaceBarDestroyAllHooks} from './services/space-bar/utils/hook.js';
+import {KeyBindings as WorkspacesKeyBindings} from './services/workspaces/services/KeyBindings.js';
+import {ScrollHandler as WorkspacesScrollHandler} from './services/workspaces/services/ScrollHandler.js';
+import {Settings as WorkspacesSettings} from './services/workspaces/services/Settings.js';
+import {Styles as WorkspacesStyles} from './services/workspaces/services/Styles.js';
+import {TopBarAdjustments as WorkspacesTopBarAdjustments} from './services/workspaces/services/TopBarAdjustments.js';
+import {Workspaces as WorkspacesWorkspaces} from './services/workspaces/services/Workspaces.js';
+import {WorkspacesBar as WorkspacesWorkspacesBar} from './services/workspaces/ui/WorkspacesBar.js';
+import {destroyAllHooks as workspacesDestroyAllHooks} from './services/workspaces/utils/hook.js';
 
 // Workspaces bar adapter provides the interface that the workspaces bar code expects
-class SpaceBarAdapter {
+class WorkspacesAdapter {
     constructor(spotlightExtension) {
         this._spotlight = spotlightExtension;
         this.metadata = {
@@ -54,7 +54,7 @@ class SpaceBarAdapter {
         const stylesheetPath = GLib.build_filenamev([
             this._spotlight.path,
             'services',
-            'space-bar',
+            'workspaces',
             'stylesheet.css',
         ]);
         const file = Gio.File.new_for_path(stylesheetPath);
@@ -75,24 +75,24 @@ class SpaceBarAdapter {
 
     enable() {
         this._loadBaseStylesheet();
-        SpaceBarSettings.init(this);
-        SpaceBarTopBarAdjustments.init();
-        SpaceBarWorkspaces.init();
-        SpaceBarKeyBindings.init();
-        SpaceBarStyles.init();
-        this.workspacesBar = new SpaceBarWorkspacesBar(this);
+        WorkspacesSettings.init(this);
+        WorkspacesTopBarAdjustments.init();
+        WorkspacesWorkspaces.init();
+        WorkspacesKeyBindings.init();
+        WorkspacesStyles.init();
+        this.workspacesBar = new WorkspacesWorkspacesBar(this);
         this.workspacesBar.init();
-        this.scrollHandler = new SpaceBarScrollHandler();
+        this.scrollHandler = new WorkspacesScrollHandler();
         this.scrollHandler.init(this.workspacesBar.observeWidget());
     }
 
     disable() {
-        spaceBarDestroyAllHooks();
-        SpaceBarSettings.destroy();
-        SpaceBarTopBarAdjustments.destroy();
-        SpaceBarWorkspaces.destroy();
-        SpaceBarKeyBindings.destroy();
-        SpaceBarStyles.destroy();
+        workspacesDestroyAllHooks();
+        WorkspacesSettings.destroy();
+        WorkspacesTopBarAdjustments.destroy();
+        WorkspacesWorkspaces.destroy();
+        WorkspacesKeyBindings.destroy();
+        WorkspacesStyles.destroy();
         this.scrollHandler?.destroy();
         this.scrollHandler = null;
         this.workspacesBar?.destroy();
@@ -108,7 +108,7 @@ export default class SpotlightExtension extends Extension {
         this._ = _;
         this._caffeineIndicator = null;
         this._caffeineKeybindingId = null;
-        this._spaceBarAdapter = null;
+        this._workspacesAdapter = null;
         this._dashOriginalHeight = null;
         this._dashVisibility = true;
 
@@ -159,8 +159,8 @@ export default class SpotlightExtension extends Extension {
             () => this._registerShortcuts(),
             'changed::caffeine-enabled',
             () => this._toggleCaffeine(),
-            'changed::space-bar-enabled',
-            () => this._toggleSpaceBar(),
+            'changed::workspaces-bar-enabled',
+            () => this._toggleWorkspaces(),
             'changed::disable-dash',
             () => this._toggleDash(),
             this,
@@ -173,8 +173,8 @@ export default class SpotlightExtension extends Extension {
 
         // workspaces bar when enabled replaces the workspace indicator
         // with an i3 like workspaces bar
-        if (this._settings.get_boolean('space-bar-enabled'))
-            this._enableSpaceBar();
+        if (this._settings.get_boolean('workspaces-bar-enabled'))
+            this._enableWorkspaces();
 
         // disable dash when enabled hides the gnome dash dock in overview
         if (this._settings.get_boolean('disable-dash'))
@@ -247,24 +247,24 @@ export default class SpotlightExtension extends Extension {
         }
     }
 
-    _toggleSpaceBar() {
-        if (this._settings.get_boolean('space-bar-enabled'))
-            this._enableSpaceBar();
+    _toggleWorkspaces() {
+        if (this._settings.get_boolean('workspaces-bar-enabled'))
+            this._enableWorkspaces();
         else
-            this._disableSpaceBar();
+            this._disableWorkspaces();
     }
 
-    _enableSpaceBar() {
-        if (this._spaceBarAdapter)
+    _enableWorkspaces() {
+        if (this._workspacesAdapter)
             return;
-        this._spaceBarAdapter = new SpaceBarAdapter(this);
-        this._spaceBarAdapter.enable();
+        this._workspacesAdapter = new WorkspacesAdapter(this);
+        this._workspacesAdapter.enable();
     }
 
-    _disableSpaceBar() {
-        if (this._spaceBarAdapter) {
-            this._spaceBarAdapter.disable();
-            this._spaceBarAdapter = null;
+    _disableWorkspaces() {
+        if (this._workspacesAdapter) {
+            this._workspacesAdapter.disable();
+            this._workspacesAdapter = null;
         }
     }
 
@@ -345,7 +345,7 @@ export default class SpotlightExtension extends Extension {
 
         // disable standalone features
         this._disableCaffeine();
-        this._disableSpaceBar();
+        this._disableWorkspaces();
         this._disableDisableDash();
 
         // views destroyed by popup destroy

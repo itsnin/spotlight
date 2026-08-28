@@ -4,8 +4,8 @@ import St from 'gi://St';
 import Clutter from 'gi://Clutter';
 import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
-import { CATEGORIES, TONES, GENDERS } from '../services/emojiData.js';
-import {triggerPaste} from '../services/virtualKeyboard.js';
+import { CATEGORIES, TONES, GENDERS } from '../services/emoji/data.js';
+import {triggerPaste} from '../services/core/virtualKeyboard.js';
 
 // tone preview colors for the selector buttons
 const TONE_COLORS = [
