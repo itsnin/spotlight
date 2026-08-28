@@ -18,7 +18,7 @@ import {destroyDevice} from './services/virtualKeyboard.js';
 import {CaffeineIndicator} from './services/caffeine/caffeineIndicator.js';
 import * as CaffeineKeys from './services/caffeine/inhibitorManager.js';
 
-// Space Bar standalone components
+// Workspaces bar components
 import {KeyBindings as SpaceBarKeyBindings} from './services/space-bar/services/KeyBindings.js';
 import {ScrollHandler as SpaceBarScrollHandler} from './services/space-bar/services/ScrollHandler.js';
 import {Settings as SpaceBarSettings} from './services/space-bar/services/Settings.js';
@@ -28,13 +28,13 @@ import {Workspaces as SpaceBarWorkspaces} from './services/space-bar/services/Wo
 import {WorkspacesBar as SpaceBarWorkspacesBar} from './services/space-bar/ui/WorkspacesBar.js';
 import {destroyAllHooks as spaceBarDestroyAllHooks} from './services/space-bar/utils/hook.js';
 
-// Space Bar adapter provides the extension interface that Space Bar expects
+// Workspaces bar adapter provides the interface that the workspaces bar code expects
 class SpaceBarAdapter {
     constructor(spotlightExtension) {
         this._spotlight = spotlightExtension;
         this.metadata = {
-            name: 'Space Bar',
-            'settings-schema': 'org.gnome.shell.extensions.space-bar',
+            name: 'Workspaces Bar',
+            'settings-schema': 'org.gnome.shell.extensions.spotlight',
             version: 39,
         };
         this.workspacesBar = null;
@@ -171,8 +171,8 @@ export default class SpotlightExtension extends Extension {
         if (this._settings.get_boolean('caffeine-enabled'))
             this._enableCaffeine();
 
-        // space bar standalone when enabled replaces the workspace indicator
-        // with an i3 like workspaces bar same as the space bar extension
+        // workspaces bar when enabled replaces the workspace indicator
+        // with an i3 like workspaces bar
         if (this._settings.get_boolean('space-bar-enabled'))
             this._enableSpaceBar();
 
@@ -302,7 +302,7 @@ export default class SpotlightExtension extends Extension {
 
     /**
      * Adjust window preview overlap when dash is hidden or shown.
-     * Exact same approach as Just Perfection extension.
+     * Adjusts window preview overlap when dash is hidden or shown.
      */
     _updateWindowPreviewOverlap() {
         const wpp = WindowPreview.prototype;

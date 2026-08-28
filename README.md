@@ -73,24 +73,24 @@ Configurable options:
 
 Web search is provided by GNOME's registered search providers.
 
-## Standalone Optional Features
+## Optional Built-in Features
 
-Spotlight bundles three optional standalone features that can be individually enabled or disabled in preferences. When disabled they have zero impact on the system. When enabled they behave exactly like their original standalone extensions.
+Spotlight includes several optional features that can be individually enabled or disabled in preferences. When disabled they have zero impact on the system.
 
-| Feature | Type | Default | Original Extension |
-|---|---|---|---|
-| **Caffeine** | Prevent screen blanking and auto-suspend | Off | [Caffeine](https://extensions.gnome.org/extension/517/caffeine/) v60 |
-| **Space Bar** | Replace top-panel workspace indicator with an i3-like workspaces bar | Off | [Space Bar](https://extensions.gnome.org/extension/5090/space-bar/) v39 |
-| **Disable Dash** | Hide the GNOME dash dock in the overview | Off | [Just Perfection](https://extensions.gnome.org/extension/3843/just-perfection/) v36 (dash feature only) |
+| Feature | Description | Default |
+|---|---|---|
+| **Caffeine** | Prevent screen blanking and auto-suspend | Off |
+| **Workspaces Bar** | Replace top-panel workspace indicator with an i3-like workspaces bar | Off |
+| **Disable Dash** | Hide the GNOME dash dock in the overview | Off |
 
 ### Caffeine
-When enabled, adds a top-panel indicator and Quick Settings toggle to prevent the screen from blanking and the system from auto-suspending. Supports full-screen apps, MPRIS media players, application triggers, timers, and all original Caffeine preferences.
+When enabled, adds a top-panel indicator and Quick Settings toggle to prevent the screen from blanking and the system from auto-suspending. Supports full-screen apps, MPRIS media players, application triggers, timers, and configurable preferences.
 
-### Space Bar
-When enabled, replaces the default GNOME workspace indicator with a customizable i3-like workspaces bar in the top panel. Features include add/remove/rename workspaces, drag-and-drop reordering, smart workspace names, keyboard shortcuts, scroll-wheel navigation, and full appearance customization. Three dedicated preferences pages (Appearance, Behavior, Shortcuts) provide the complete Space Bar configuration experience.
+### Workspaces Bar
+When enabled, replaces the default GNOME workspace indicator with a customizable i3-like workspaces bar in the top panel. Features include add/remove/rename workspaces, drag-and-drop reordering, smart workspace names, keyboard shortcuts, scroll-wheel navigation, and full appearance customization. Three dedicated preferences pages (Appearance, Behavior, Shortcuts) provide complete configuration.
 
 ### Disable Dash
-When enabled, hides the GNOME dash dock in the Activities overview. Implemented using the exact same method as Just Perfection — `Main.overview.dash.hide()` with height adjustment and window-preview overlap compensation.
+When enabled, hides the GNOME dash dock in the Activities overview. Adjusts window preview overlap to maintain proper layout when the dash is hidden.
 
 ## Build Note
 Compiled GSettings schemas (`gschemas.compiled`) are **not shipped** in the repository. GNOME Shell automatically compiles all schema XML files from the `schemas/` directory at extension install time. This follows GNOME extension best practices.
@@ -117,14 +117,14 @@ This approach means Spotlight automatically benefits from every search provider 
 | `services/clipboardRegistry.js` | Disk persistence for clipboard history |
 | `services/emojiData.js` | Emoji database, search, modifiers, recently used |
 | `services/virtualKeyboard.js` | Virtual input device for paste-on-select simulation |
-| `services/caffeine/` | Caffeine standalone — indicator, inhibitor manager, MPRIS |
-| `services/space-bar/` | Space Bar standalone — UI, services, utils, styles |
-| `prefs.js` | Preferences window entry point — includes Space Bar prefs pages |
+| `services/caffeine/` | Caffeine feature — indicator, inhibitor manager, MPRIS |
+| `services/space-bar/` | Workspaces bar feature — UI, services, utils, styles |
+| `prefs.js` | Preferences window entry point — includes workspaces bar prefs pages |
 | `prefs/shortcutPage.js` | Keyboard shortcut configuration |
 | `prefs/appearancePage.js` | Visual theme, clipboard, emoji, standalone feature toggles |
 | `prefs/aboutPage.js` | About section |
 | `prefs/caffeine/` | Caffeine preferences pages |
-| `prefs/space-bar/` | Space Bar preferences pages |
+| `prefs/space-bar/` | Workspaces bar preferences pages |
 | `schemas/*.gschema.xml` | GSettings schema definitions (not pre-compiled) |
 ## Design Principles
 

@@ -1,4 +1,6 @@
 import Adw from 'gi://Adw';
+import Gio from 'gi://Gio';
+import { PrefixedSettings } from '../../services/space-bar/services/Settings.js';
 import { addCombo, addLinkButton, addSpinButton, addTextEntry, addToggle } from './common.js';
 export const indicatorStyleOptions = {
     'current-workspace': 'Current workspace',
@@ -24,7 +26,7 @@ export class BehaviorPage {
     page = new Adw.PreferencesPage();
     _settings;
     constructor(extensionPreferences) {
-        this._settings = extensionPreferences.getSettings(`org.gnome.shell.extensions.space-bar.behavior`);
+        this._settings = new PrefixedSettings(extensionPreferences.getSettings(), 'space-bar-behavior-');
     }
     init() {
         this.page.set_title('_Behavior');

@@ -1,4 +1,6 @@
 import Adw from 'gi://Adw';
+import Gio from 'gi://Gio';
+import { PrefixedSettings } from '../../services/space-bar/services/Settings.js';
 import { addColorButton, addCombo, addSpinButton } from './common.js';
 import { addCustomCssDialogButton } from './custom-styles.js';
 export const fontWeightOptions = {
@@ -19,7 +21,7 @@ export class AppearancePage {
     _settings;
     constructor(_extensionPreferences) {
         this._extensionPreferences = _extensionPreferences;
-        this._settings = _extensionPreferences.getSettings(`org.gnome.shell.extensions.space-bar.appearance`);
+        this._settings = new PrefixedSettings(_extensionPreferences.getSettings(), 'space-bar-appearance-');
     }
     init() {
         this.page.set_title('_Appearance');
@@ -33,7 +35,7 @@ export class AppearancePage {
         this._initCustomStylesGroup();
     }
     _connectEnabledConditions() {
-        const behaviorSettings = this._extensionPreferences.getSettings(`org.gnome.shell.extensions.space-bar.behavior`);
+        const behaviorSettings = new PrefixedSettings(this._extensionPreferences.getSettings(), 'space-bar-behavior-');
         const disabledNoticeGroup = new Adw.PreferencesGroup({
             description: 'Appearance preferences currently support the indicator style "Workspaces bar" only.',
         });

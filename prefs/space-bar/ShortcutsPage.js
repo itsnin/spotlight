@@ -1,11 +1,13 @@
 import Adw from 'gi://Adw';
+import Gio from 'gi://Gio';
+import { PrefixedSettings } from '../../services/space-bar/services/Settings.js';
 import { addKeyboardShortcut, addToggle } from './common.js';
 export class ShortcutsPage {
     window;
     page = new Adw.PreferencesPage();
     _settings;
     constructor(extensionPreferences) {
-        this._settings = extensionPreferences.getSettings(`org.gnome.shell.extensions.space-bar.shortcuts`);
+        this._settings = new PrefixedSettings(extensionPreferences.getSettings(), 'space-bar-shortcuts-');
     }
     init() {
         this.page.set_title('_Shortcuts');

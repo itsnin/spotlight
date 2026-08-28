@@ -6,7 +6,7 @@ import {buildShortcutPage} from './prefs/shortcutPage.js';
 import {buildAppearancePage} from './prefs/appearancePage.js';
 import {buildAboutPage} from './prefs/aboutPage.js';
 
-// Space Bar standalone preferences pages
+// Workspaces bar preferences pages
 import {AppearancePage as SpaceBarAppearancePage} from './prefs/space-bar/AppearancePage.js';
 import {BehaviorPage as SpaceBarBehaviorPage} from './prefs/space-bar/BehaviorPage.js';
 import {ShortcutsPage as SpaceBarShortcutsPage} from './prefs/space-bar/ShortcutsPage.js';
@@ -33,26 +33,26 @@ export default class SpotlightPreferences extends ExtensionPreferences {
             appearancePage.add(group);
         window.add(appearancePage);
 
-        // Space Bar standalone preferences pages
+        // Workspaces bar preferences pages
         // only relevant when space bar is enabled but always accessible
         const sbAppearance = new SpaceBarAppearancePage(this);
         sbAppearance.window = window;
         sbAppearance.init();
-        sbAppearance.page.set_title('Space Bar Appearance');
+        sbAppearance.page.set_title('Workspaces Appearance');
         sbAppearance.page.set_icon_name('applications-graphics-symbolic');
         window.add(sbAppearance.page);
 
         const sbBehavior = new SpaceBarBehaviorPage(this);
         sbBehavior.window = window;
         sbBehavior.init();
-        sbBehavior.page.set_title('Space Bar Behavior');
+        sbBehavior.page.set_title('Workspaces Behavior');
         sbBehavior.page.set_icon_name('preferences-system-symbolic');
         window.add(sbBehavior.page);
 
         const sbShortcuts = new SpaceBarShortcutsPage(this);
         sbShortcuts.window = window;
         sbShortcuts.init();
-        sbShortcuts.page.set_title('Space Bar Shortcuts');
+        sbShortcuts.page.set_title('Workspaces Shortcuts');
         sbShortcuts.page.set_icon_name('preferences-desktop-keyboard-shortcuts-symbolic');
         window.add(sbShortcuts.page);
 

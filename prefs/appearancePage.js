@@ -268,13 +268,13 @@ export function buildAppearancePage(settings) {
 
     groups.push(emojiDisplayGroup);
 
-    // space bar group standalone feature toggle
+    // workspaces bar feature toggle
     const spaceBarGroup = new Adw.PreferencesGroup({
-        title: 'Space Bar',
+        title: 'Workspaces Bar',
         description: 'Replace top-panel workspace indicator with an i3-like workspaces bar',
     });
     const spaceBarRow = new Adw.SwitchRow({
-        title: 'Enable Space Bar',
+        title: 'Enable Workspaces Bar',
         subtitle: 'When off the default GNOME workspace indicator is used',
     });
     settings.bind('space-bar-enabled', spaceBarRow, 'active', Gio.SettingsBindFlags.DEFAULT);
