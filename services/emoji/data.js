@@ -139,7 +139,7 @@ export class EmojiData {
     }
 
     shouldPasteOnSelect() {
-        return this._settings.get_boolean('paste-on-select');
+        return this._settings._settings.get_boolean('clipboard-paste-on-select');
     }
 
     flush() {

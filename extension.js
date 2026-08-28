@@ -5,6 +5,7 @@ import Gio from 'gi://Gio';
 import Meta from 'gi://Meta';
 import GLib from 'gi://GLib';
 import St from 'gi://St';
+import Clutter from 'gi://Clutter';
 import Shell from 'gi://Shell';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import {WindowPreview} from 'resource:///org/gnome/shell/ui/windowPreview.js';
@@ -16,7 +17,7 @@ import {ClipboardView} from './popup/clipboardView.js';
 import {EmojiView} from './popup/emojiView.js';
 import {ClipboardPopup} from './popup/clipboardPopup.js';
 import {EmojiPopup} from './popup/emojiPopup.js';
-import {destroyDevice} from './services/core/virtualKeyboard.js';
+import {destroyDevice, triggerPaste} from './services/core/virtualKeyboard.js';
 import {CaffeineIndicator} from './services/caffeine/indicator.js';
 import * as CaffeineKeys from './services/caffeine/inhibitorManager.js';
 
@@ -235,7 +236,6 @@ export default class SpotlightExtension extends Extension {
     }
 
     _triggerPaste() {
-        const Clutter = imports.gi.Clutter;
         const seat = Clutter.get_default_backend().get_default_seat();
         if (!seat) return;
         const device = seat.create_virtual_device(Clutter.InputDeviceType.KEYBOARD_DEVICE);

@@ -4,6 +4,7 @@ import St from 'gi://St';
 import Meta from 'gi://Meta';
 import Shell from 'gi://Shell';
 import GLib from 'gi://GLib';
+import Clutter from 'gi://Clutter';
 import {ClipboardEntry} from './registry.js';
 import {Registry} from './registry.js';
 import {Keyboard} from './keyboard.js';
@@ -106,14 +107,6 @@ export class ClipboardManager {
 
     getAllEntries() {
         return [...this._favorites, ...this._history];
-    }
-
-    _triggerPaste() {
-        const Clutter = imports.gi.Clutter;
-        this._keyboard.press(Clutter.KEY_Shift_L);
-        this._keyboard.press(Clutter.KEY_Insert);
-        this._keyboard.release(Clutter.KEY_Insert);
-        this._keyboard.release(Clutter.KEY_Shift_L);
     }
 
     destroy() {
@@ -290,18 +283,22 @@ export class ClipboardManager {
         this._clipboard.set_text(St.ClipboardType.PRIMARY, text);
     }
 
-    toggleFavorite(index) {
-        if (index < 0 || index >= this._history.length)
-            return;
-        const entry = this._history[index];
-        entry.setFavorite(!entry.isFavorite());
-        this._notify();
-        if (this._settings.get_boolean(PrefsFields.CACHE_ONLY_FAVORITE)) {
-            const favsOnly = this._history.filter(e => e.isFavorite());
-            this._registry.write(favsOnly);
+    toggleFavorite(entry) {
+        if (!entry) return;
+        entry.toggleFavorite();
+        if (entry.isFavorite()) {
+            // Move from history to favorites
+            const idx = this._history.indexOf(entry);
+            if (idx >= 0) this._history.splice(idx, 1);
+            if (!this._favorites.includes(entry)) this._favorites.unshift(entry);
         } else {
-            this._persist();
+            // Move from favorites to history
+            const idx = this._favorites.indexOf(entry);
+            if (idx >= 0) this._favorites.splice(idx, 1);
+            if (!this._history.includes(entry)) this._history.unshift(entry);
         }
+        this._notify();
+        this._persist();
     }
 
     deleteEntry(index) {

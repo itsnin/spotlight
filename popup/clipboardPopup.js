@@ -78,8 +78,7 @@ export class ClipboardPopup extends St.Widget {
         if (this._visible) return;
         this._visible = true;
 
-        // Add backdrop
-        Main.layoutManager.addChrome(this._backdrop);
+        // Add backdrop (show() handles addChrome internally)
         this._backdrop.show();
 
         // Add and position ourself

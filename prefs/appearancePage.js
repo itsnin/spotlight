@@ -47,7 +47,7 @@ export function buildAppearancePage(settings) {
         title: 'Paste on select',
         subtitle: 'Automatically paste after selecting a clipboard entry or emoji',
     });
-    settings.bind('paste-on-select', pasteRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+    settings.bind('clipboard-paste-on-select', pasteRow, 'active', Gio.SettingsBindFlags.DEFAULT);
     behaviorGroup.add(pasteRow);
 
     const historyRow = new Adw.SpinRow({

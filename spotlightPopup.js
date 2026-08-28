@@ -372,15 +372,6 @@ class SpotlightPopup extends St.Widget {
         global.stage.disconnectObject(this);
         this._ifaceSettings.disconnectObject(this);
         this._settings.disconnectObject(this);
-        // clean up views
-        if (this._clipboardView) {
-            this._clipboardView.destroy();
-            this._clipboardView = null;
-        }
-        if (this._emojiView) {
-            this._emojiView.destroy();
-            this._emojiView = null;
-        }
         // clean up interface settings
         this._ifaceSettings = null;
         // clean up content reference

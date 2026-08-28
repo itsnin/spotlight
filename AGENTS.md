@@ -66,6 +66,16 @@ ego supports multi-versioning where you upload separate zips for different gnome
 
 ## architecture
 
+### three separate popups search clipboard and emoji
+
+spotlight has three independent popup windows
+
+- main spotlight popup search only contains the search bar and mode buttons
+- clipboard popup dedicated standalone window for clipboard history
+- emoji popup dedicated standalone window for emoji picker
+
+clicking a mode button in the main popup closes the main popup and opens the corresponding dedicated popup keyboard shortcuts open their dedicated popup directly
+
 ### spotlight is first-class overview search is second-class
 
 on enable spotlight permanently steals the overview's search entry and search controller and hides them overview search is gone for as long as spotlight is enabled the overview itself stays functional window picker app grid workspaces only its search ui is permanently hijacked
@@ -83,9 +93,9 @@ the popup open and close methods only reparent widgets between our content box a
 
 ```
 spotlight/
-    extension.js              entry point constructs popup delegates to modules
+    extension.js              entry point constructs popups delegates to modules
     prefs.js                  preferences entry point
-    spotlightPopup.js         main popup widget open close destroy lifecycle
+    spotlightPopup.js         main search popup open close destroy lifecycle
     stylesheet.css            spotlight styling
     metadata.json             extension metadata
     popup/                    popup components split for maintainability
@@ -93,23 +103,52 @@ spotlight/
         themeManager.js       theme detection and application
         popupBackdrop.js      transparent click outside detection
         popupPositioner.js    positions centers and shows the popup
+        clipboardPopup.js     standalone clipboard history popup
+        emojiPopup.js         standalone emoji picker popup
         clipboardView.js      clipboard history list view
         emojiView.js          emoji selector grid view
     services/
-        keybinding.js         keybinding manager
-        clipboardEntry.js     clipboard entry wraps text or image data
-        clipboardManager.js   clipboard history tracking deduplication
-        clipboardRegistry.js  disk persistence saves loads json to cache dir
-        emojiData.js          emoji data loading tagging search popularity
-        virtualKeyboard.js    virtual input device for paste simulation
-    schemas/                  gsettings schema
+        prefixedSettings.js   shared utility wraps Gio.Settings with key prefix
+        core/
+            keybinding.js     keybinding manager
+            virtualKeyboard.js virtual input device for paste simulation
+        clipboard/
+            constants.js      clipboard settings key names
+            entry.js          DEPRECATED merged into registry.js
+            manager.js        clipboard history tracking deduplication
+            registry.js       disk persistence and ClipboardEntry class
+            keyboard.js       virtual keyboard helper
+            confirmDialog.js  confirmation dialog helper
+            stylesheet.css    clipboard-specific styles
+        emoji/
+            data.js           emoji data loading tagging search popularity
+            emojiButton.js    individual emoji button (from upstream, unused)
+            emojiCategory.js  emoji category component (from upstream, unused)
+            emojiOptionsBar.js skin tone options bar (from upstream, unused)
+            emojiSearchItem.js search item (from upstream, unused)
+            handlers/sql.js   sqlite handler (from upstream, unused)
+            libs/sql.js       sql.js library (from upstream, unused)
+            stylesheet.css    emoji-specific styles
+        caffeine/
+            indicator.js      quick settings indicator and toggle
+            inhibitorManager.js screen blanking inhibitor manager
+            mprisMediaPlayer2.js MPRIS media player detection
+        workspaces/
+            services/         workspace services keybindings settings styles
+            ui/               workspace bar UI components
+            utils/            utility helpers
+            stylesheet.css    workspaces bar styles
+    schemas/                  gsettings schema single merged schema
         org.gnome.shell.extensions.spotlight.gschema.xml
     prefs/                    preference pages
         shortcutPage.js
         appearancePage.js
         aboutPage.js
+        caffeine/             caffeine preferences pages
+        workspaces/           workspaces bar preferences pages
     data/
         emojis.json           bundled emoji data unicode plus keywords
+        emojis.db             sqlite database (from upstream, unused)
     locale/                   translation source files gettext
         spotlight.pot         translation template
     scripts/
@@ -147,6 +186,21 @@ in `disable()` or `destroy()` we call `disconnectObject(this)` which removes eve
 for signals connected to short lived widgets like buttons list items that our code destroys plain `connect` is safe because gobject automatically disconnects all signal handlers when the emitting object is finalized verified via https://discourse.gnome.org/t/run-dispose-in-gjs/16722 and official gobject signal documentation
 
 do not use plain `connect` for signals from long lived objects always use `connectObject` for those
+
+### prefixed settings utility
+
+since all features share one gsettings schema feature-specific keys use name prefixes to avoid collisions the `PrefixedSettings` class in `services/prefixedSettings.js` wraps a `Gio.Settings` object and transparently prepends a prefix to every key access
+
+```javascript
+import { PrefixedSettings } from '../prefixedSettings.js';
+const settings = new PrefixedSettings(baseSettings, 'clipboard-');
+settings.get_int('history-size'); // reads schema key clipboard-history-size
+settings.set_boolean('private-mode', true); // writes schema key clipboard-private-mode
+```
+
+all methods of `Gio.Settings` are proxied `get_boolean` `set_boolean` `get_int` `set_int` `get_string` `set_string` `get_strv` `set_strv` `get_value` `set_value` `connect` `disconnect` `bind` `reset` `has_key`
+
+always use `PrefixedSettings` for feature-specific settings never access prefixed keys directly with string concatenation
 
 ### popup positioning
 
@@ -252,19 +306,42 @@ see https://gjs.guide/extensions/development/preferences.html#gsettings
 
 ### schema keys
 
+all keys live in a single merged schema `org.gnome.shell.extensions.spotlight` feature-specific keys use name prefixes
+
+core spotlight keys
 - `toggle-shortcut` type `as` default `['<Control>space']` keyboard shortcut to open and close the popup
 - `theme-preference` type `s` default `'default'` controls visual theme
   - `'default'` follows gnome system color scheme via `org.gnome.desktop.interface color-scheme`
   - `'dark'` always uses dark appearance
   - `'light'` always uses light appearance
-- `clipboard-shortcut` type `as` default `['<Alt>1']` keyboard shortcut to open in clipboard history mode
-- `emoji-shortcut` type `as` default `['<Alt>2']` keyboard shortcut to open in emoji selector mode
-- `clipboard-history-size` type `i` default `20` range `5-100` maximum number of clipboard entries to keep
-- `recently-used-emojis` type `as` default `[]` emojis recently selected by user
-- `paste-on-select` type `b` default `false` automatically paste after selecting clipboard entry or emoji
-- `emoji-skin-tone` type `i` default `0` range `0-5` default skin tone `0` none `1-5` light to dark
-- `emoji-gender` type `i` default `0` range `0-2` default gender `0` neutral `1` women `2` men
-- `emoji-click-counts` type `s` default `''` json string mapping emoji characters to click counts for search ranking
+- `clipboard-shortcut` type `as` default `['<Alt>1']` keyboard shortcut to open clipboard popup
+- `emoji-shortcut` type `as` default `['<Alt>2']` keyboard shortcut to open emoji popup
+- `workspaces-bar-enabled` type `b` default `false` enable workspaces bar feature
+- `disable-dash` type `b` default `false` hide dash in overview
+
+clipboard keys prefixed with `clipboard-` accessed via `PrefixedSettings(settings, 'clipboard-')`
+- `clipboard-history-size` type `i` default `20` range `5-100` maximum number of clipboard entries
+- `clipboard-paste-on-select` type `b` default `false` automatically paste after selecting entry
+- `clipboard-strip-text` type `b` default `true` strip whitespace from text entries
+- `clipboard-private-mode` type `b` default `false` do not track clipboard history
+- `clipboard-move-item-first` type `b` default `true` move selected entry to top of history
+- `clipboard-notify-on-copy` type `b` default `true` show notification on copy
+- `clipboard-confirm-on-clear` type `b` default `true` confirm before clearing history
+- `clipboard-cache-only-favorite` type `b` default `false` only persist favorites to disk
+- `clipboard-excluded-apps` type `as` default `[]` wm classes to exclude from tracking
+- plus 30+ more clipboard settings see schema xml for complete list
+
+emoji keys prefixed with `emoji-` accessed via `PrefixedSettings(settings, 'emoji-')`
+- `emoji-emojisize` type `i` default `24` emoji grid size in pixels
+- `emoji-nbcols` type `i` default `8` number of columns in emoji grid
+- `emoji-skin-tone` type `i` default `0` range `0-5` default skin tone
+- `emoji-gender` type `i` default `0` range `0-2` default gender
+- `emoji-paste-on-select` type `b` default `true` paste after selecting emoji
+- `emoji-keep-open` type `b` default `false` keep emoji picker open after selection
+- `emoji-recently-used` type `as` default `[]` recently used emojis
+
+caffeine keys prefixed with `caffeine-`
+workspaces keys prefixed with `space-bar-state-` `space-bar-behavior-` `space-bar-appearance-` `space-bar-shortcuts-`
 
 ## appearance theme
 

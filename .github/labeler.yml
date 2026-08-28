@@ -12,7 +12,30 @@ preferences:
 keybinding:
   - changed-files:
       - any-glob-to-any-file:
-          - services/keybinding.js
+          - services/core/keybinding.js
+clipboard:
+  - changed-files:
+      - any-glob-to-any-file:
+          - services/clipboard/**
+          - popup/clipboardView.js
+          - popup/clipboardPopup.js
+emoji:
+  - changed-files:
+      - any-glob-to-any-file:
+          - services/emoji/**
+          - popup/emojiView.js
+          - popup/emojiPopup.js
+          - data/emojis.json
+caffeine:
+  - changed-files:
+      - any-glob-to-any-file:
+          - services/caffeine/**
+          - prefs/caffeine/**
+workspaces:
+  - changed-files:
+      - any-glob-to-any-file:
+          - services/workspaces/**
+          - prefs/workspaces/**
 metadata and schema:
   - changed-files:
       - any-glob-to-any-file:

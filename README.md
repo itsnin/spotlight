@@ -97,28 +97,27 @@ Compiled GSettings schemas (`gschemas.compiled`) are **not shipped** in the repo
 
 ## Architecture
 
-Spotlight permanently takes over GNOME Overview's search infrastructure. On enable, it steals the Overview's search entry and search controller widgets and hides them. When the popup opens, these already-stolen widgets are reparented into the popup. When the popup closes, they are removed from the popup but kept stolen and hidden. They are only returned to the Overview on disable.
+Spotlight uses three independent popup windows. The main search popup permanently takes over GNOME Overview's search infrastructure. On enable, it steals the Overview's search entry and search controller widgets and hides them. When the popup opens, these already-stolen widgets are reparented into the popup. When the popup closes, they are removed from the popup but kept stolen and hidden. They are only returned to the Overview on disable.
+
+Clicking the clipboard or emoji mode button in the main popup closes the main popup and opens a dedicated standalone popup for that feature. Keyboard shortcuts open their dedicated popup directly.
 
 This approach means Spotlight automatically benefits from every search provider registered with GNOME Shell, with zero custom provider code.
 
 | File | Responsibility |
 |---|---|
-| `extension.js` | Entry point — constructs popup, delegates to modules, manages standalone features |
-| `spotlightPopup.js` | Popup lifecycle — open/close/destroy, delegates to helpers |
+| `extension.js` | Entry point — constructs all three popups, wires callbacks, manages standalone features |
+| `spotlightPopup.js` | Main search popup lifecycle — open/close/destroy, mode buttons as triggers |
+| `popup/clipboardPopup.js` | Standalone clipboard history popup |
+| `popup/emojiPopup.js` | Standalone emoji picker popup |
 | `popup/overviewSearch.js` | Steals and returns Overview search widgets |
 | `popup/themeManager.js` | Theme detection and application (dark/light/system) |
 | `popup/popupBackdrop.js` | Transparent click-outside detection via chrome layer |
-| `popup/popupPositioner.js` | Sizes, centers, and shows the popup via deferred idle callback |
+| `popup/popupPositioner.js` | Sizes, centers, and shows popups |
 | `popup/clipboardView.js` | Clipboard history view with favorites, tags, edit, private mode |
-| `popup/emojiView.js` | Emoji picker with categories, skin tones, gender, tooltips |
-| `services/keybinding.js` | Keybinding manager using `Meta.Display.grab_accelerator` |
-| `services/clipboardManager.js` | Clipboard history tracking, favorites, persistence |
-| `services/clipboardEntry.js` | Clipboard entry class with tag support |
-| `services/clipboardRegistry.js` | Disk persistence for clipboard history |
-| `services/emojiData.js` | Emoji database, search, modifiers, recently used |
-| `services/virtualKeyboard.js` | Virtual input device for paste-on-select simulation |
+| `popup/emojiView.js` | Emoji picker with categories, skin tones, gender |
+| `services/prefixedSettings.js` | Shared utility — wraps Gio.Settings with key name prefixing |
 | `services/core/` | Core Spotlight services — keybinding, virtual keyboard |
-| `services/clipboard/` | Clipboard history feature — entry, manager, registry, keyboard, dialogs |
+| `services/clipboard/` | Clipboard history feature — manager, registry, keyboard, dialogs, constants |
 | `services/emoji/` | Emoji picker feature — data manager, UI components |
 | `services/caffeine/` | Caffeine feature — indicator, inhibitor manager, MPRIS |
 | `services/workspaces/` | Workspaces bar feature — UI, services, utils, styles |
@@ -128,7 +127,7 @@ This approach means Spotlight automatically benefits from every search provider 
 | `prefs/aboutPage.js` | About section |
 | `prefs/caffeine/` | Caffeine preferences pages |
 | `prefs/workspaces/` | Workspaces bar preferences pages |
-| `schemas/*.gschema.xml` | GSettings schema definitions (not pre-compiled) |
+| `schemas/*.gschema.xml` | Single merged GSettings schema definitions (not pre-compiled) |
 ## Design Principles
 
 - **Dark, not black.** Background `#1c1c1e` with text `#f5f5f7`. Pure black is harsh on OLED and inaccurate on IPS panels.

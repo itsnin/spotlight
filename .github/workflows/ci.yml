@@ -20,7 +20,7 @@ jobs:
       - name: Check all JS files parse as ES modules
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq nodejs
-          for f in *.js popup/*.js services/*.js prefs/*.js; do
+          for f in $(find . -name "*.js" -not -path "./.git/*" -not -path "./services/emoji/libs/*"); do
             node --check "$f" || { echo "SYNTAX ERROR in $f"; exit 1; }
           done
           echo "All JS files parse successfully"
@@ -64,7 +64,7 @@ jobs:
 
       - name: Check no try/catch in shell code
         run: |
-          if grep -rn 'try\s*{' *.js; then
+          if grep -rn 'try\s*{' $(find . -name "*.js" -not -path "./.git/*" -not -path "./services/emoji/libs/*" -not -path "./prefs/*"); then
             echo "WARNING: found try/catch in shell code (review needed)"
           else
             echo "No try/catch in shell code"
@@ -72,7 +72,7 @@ jobs:
 
       - name: Check no optional chaining
         run: |
-          if grep -rnE '\?\.' *.js popup/*.js services/*.js prefs/*.js; then
+          if grep -rnE '\?\.' $(find . -name "*.js" -not -path "./.git/*" -not -path "./services/emoji/libs/*"); then
             echo "ERROR: found optional chaining"
             exit 1
           fi
@@ -80,7 +80,7 @@ jobs:
 
       - name: Check no deprecated modules
         run: |
-          if grep -rn "imports.misc.lang\|imports.misc.mainloop\|imports.misc.byteArray" *.js popup/*.js services/*.js prefs/*.js; then
+          if grep -rn "imports.misc.lang\|imports.misc.mainloop\|imports.misc.byteArray" $(find . -name "*.js" -not -path "./.git/*" -not -path "./services/emoji/libs/*"); then
             echo "ERROR: found deprecated module imports"
             exit 1
           fi
@@ -94,7 +94,7 @@ jobs:
             exit 1
           fi
           echo "Checking shell files don't import GTK-only libs..."
-          if grep -rn "from 'gi://Gtk'\|from 'gi://Gdk'\|from 'gi://Adw'" *.js popup/*.js services/*.js; then
+          if grep -rn "from 'gi://Gtk'\|from 'gi://Gdk'\|from 'gi://Adw'" $(find . -name "*.js" -not -path "./.git/*" -not -path "./services/emoji/libs/*" -not -path "./prefs/*"); then
             echo "ERROR: shell files import GTK-only libraries"
             exit 1
           fi
