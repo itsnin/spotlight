@@ -252,14 +252,13 @@ export class ClipboardEntry {
 
             let file = Gio.file_new_for_path(filename);
 
-            const contentType = await file.query_info_async('*', FileQueryInfoFlags.NONE, GLib.PRIORITY_DEFAULT, null, (obj, res) => {
-                try {
-                    const fileInfo = obj.query_info_finish(res);
-                    return fileInfo.get_content_type();
-                } catch (e) {
-                    log(e);
-                }
-            });
+            let contentType;
+            try {
+                const fileInfo = await file.query_info_async('*', FileQueryInfoFlags.NONE, GLib.PRIORITY_DEFAULT, null);
+                contentType = fileInfo.get_content_type();
+            } catch (e) {
+                log(e);
+            }
 
             if (contentType && !contentType.startsWith('image/') && !contentType.startsWith('text/')) {
                 bytes = new TextEncoder().encode(jsonEntry.contents);

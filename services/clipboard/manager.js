@@ -156,10 +156,10 @@ export class ClipboardManager {
 
     _persist() {
         if (this._settings.get_boolean(PrefsFields.CACHE_ONLY_FAVORITE)) {
-            const favsOnly = this._history.filter(e => e.isFavorite());
+            const favsOnly = [...this._favorites];
             this._registry.write(favsOnly);
         } else {
-            this._persist();
+            this._registry.write(this.getAllEntries());
         }
     }
 

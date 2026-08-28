@@ -21,7 +21,7 @@ export class Settings {
     }
 
     init() {
-        const _baseSettings = Settings._extension.getSettings(Settings._extension.metadata['settings-schema']);
+        const _baseSettings = Settings._extension.getSettings();
         this.state = new PrefixedSettings(_baseSettings, 'space-bar-state-');
         this.behaviorSettings = new PrefixedSettings(_baseSettings, 'space-bar-behavior-');
         this.appearanceSettings = new PrefixedSettings(_baseSettings, 'space-bar-appearance-');
