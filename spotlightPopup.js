@@ -75,7 +75,7 @@ class SpotlightPopup extends St.Widget {
         this._buttonsBox.style = 'spacing: 6px; margin-left: 8px;';
         this._topBar.add_child(this._buttonsBox);
 
-        // content stack holds one view at a time search clipboard or emoji
+        // content stack holds search results
         this._contentStack = new St.Widget({
             layout_manager: new Clutter.BinLayout(),
             style_class: 'spotlight-content-stack',
@@ -100,6 +100,7 @@ class SpotlightPopup extends St.Widget {
 
         // stolen overview widgets taken once in stealOverviewSearch
         // kept until returnOverviewSearch called from disable()
+        // search-only popup - clipboard/emoji are in separate popups
         this._entry = null;
         this._entryParent = null;
         this._search = null;

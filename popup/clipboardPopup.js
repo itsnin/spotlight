@@ -26,11 +26,9 @@ export class ClipboardPopup extends St.Widget {
         this._closeIdleId = 0;
 
         // Backdrop for outside-click dismissal
-        this._backdrop = new PopupBackdrop();
-        this._backdrop.connect('button-press-event', () => {
-            this.close();
-            return Clutter.EVENT_PROPAGATE;
-        });
+        const monitor = Main.layoutManager.primaryMonitor ?? Main.layoutManager.monitors[0];
+        if (!monitor) return;
+        this._backdrop = new PopupBackdrop(() => this.close(), monitor);
 
         // Positioner centers the popup
         this._positioner = new PopupPositioner();

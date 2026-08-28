@@ -140,6 +140,24 @@
   background-color: transparent !important;
   border-radius: 12px;
   padding: 2px;
+  max-width: 100%;
+}
+
+/* ensure result rows fit within container and text ellipsizes */
+.spotlight-container .list-search-result,
+.spotlight-container .overview-tile {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.spotlight-container .list-search-result StLabel,
+.spotlight-container .overview-tile StLabel {
+  max-width: 420px;
+}
+
+.spotlight-container .search-provider-icon,
+.spotlight-container .list-search-provider-content {
+  max-width: 100%;
 }
 
 /* individual result rows dark default */

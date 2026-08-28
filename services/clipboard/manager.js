@@ -181,7 +181,9 @@ export class ClipboardManager {
             const wmClass = focussedWindow?.get_wm_class();
             if (wmClass && this.isExcludedApp(wmClass))
                 return;
-        } catch {}
+        } catch (e) {
+            log('Spotlight clipboard: excluded app check failed: ' + e);
+        }
         try {
             const text = await new Promise(resolve => {
                 this._clipboard.get_text(St.ClipboardType.CLIPBOARD, (clip, t) => resolve(t));
@@ -205,8 +207,8 @@ export class ClipboardManager {
             if (entry.isText() && entry.getStringValue().trim().length === 0)
                 return;
             this._addEntry(entry);
-        } catch {
-            // fail silently
+        } catch (e) {
+            log('Spotlight clipboard: failed to read clipboard: ' + e);
         }
     }
 
