@@ -14,6 +14,8 @@ import {ClipboardManager} from './services/clipboard/manager.js';
 import {EmojiData} from './services/emoji/data.js';
 import {ClipboardView} from './popup/clipboardView.js';
 import {EmojiView} from './popup/emojiView.js';
+import {ClipboardPopup} from './popup/clipboardPopup.js';
+import {EmojiPopup} from './popup/emojiPopup.js';
 import {destroyDevice} from './services/core/virtualKeyboard.js';
 import {CaffeineIndicator} from './services/caffeine/indicator.js';
 import * as CaffeineKeys from './services/caffeine/inhibitorManager.js';
@@ -112,32 +114,49 @@ export default class SpotlightExtension extends Extension {
         this._dashOriginalHeight = null;
         this._dashVisibility = true;
 
-        this._popup = new SpotlightPopup(this._settings);
-
         // services
         this._clipboardManager = new ClipboardManager(this._settings, this.uuid);
         this._clipboardManager.start();
         this._emojiData = new EmojiData(this.path, this._settings);
 
-        // views attach to popup content stack
+        // create views for the separate popups
         this._clipboardView = new ClipboardView(
             this._clipboardManager,
             this._settings,
-            () => this._popup.close(),
+            () => this._clipboardPopup.close(),
             _,
         );
-        this._popup._contentStack.add_child(this._clipboardView);
-        this._popup._clipboardView = this._clipboardView;
 
         this._emojiView = new EmojiView(
             this._emojiData,
             this._settings,
-            () => this._popup.close(),
+            () => this._emojiPopup.close(),
             () => this._triggerPaste(),
             _,
         );
-        this._popup._contentStack.add_child(this._emojiView);
-        this._popup._emojiView = this._emojiView;
+
+        // main Spotlight popup = search only
+        // mode buttons trigger separate popups
+        this._popup = new SpotlightPopup(this._settings, {
+            onClipboardClicked: () => {
+                this._popup.close();
+                GLib.timeout_add(GLib.PRIORITY_DEFAULT, 50, () => {
+                    this._clipboardPopup.open();
+                    return GLib.SOURCE_REMOVE;
+                });
+            },
+            onEmojiClicked: () => {
+                this._popup.close();
+                GLib.timeout_add(GLib.PRIORITY_DEFAULT, 50, () => {
+                    this._emojiPopup.open();
+                    return GLib.SOURCE_REMOVE;
+                });
+            },
+        });
+
+        // create separate dedicated popups
+        this._clipboardPopup = new ClipboardPopup(this._clipboardView, _);
+        this._emojiPopup = new EmojiPopup(this._emojiView, _);
 
         // permanently steal overview search widgets on enable
         // overview search is gone for as long as spotlight is enabled
@@ -367,6 +386,10 @@ export default class SpotlightExtension extends Extension {
         this._popup.returnOverviewSearch();
         this._popup.destroy();
         this._popup = null;
+        this._clipboardPopup.destroy();
+        this._clipboardPopup = null;
+        this._emojiPopup.destroy();
+        this._emojiPopup = null;
 
         this._settings = null;
         this._ = null;

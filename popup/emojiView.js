@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import St from 'gi://St';
+import GLib from 'gi://GLib';
 import Clutter from 'gi://Clutter';
 import GObject from 'gi://GObject';
 import { CATEGORIES, TONES } from '../services/emoji/data.js';
@@ -46,8 +47,8 @@ export class EmojiView extends St.BoxLayout {
         for (const cat of CATEGORIES) {
             const tab = new St.Button({
                 style_class: 'button',
-                style: 'padding: 4px 8px; border-radius: 6px; font-size: 16px;',
-                label: cat.icon,
+                style: 'padding: 4px 10px; border-radius: 6px; font-size: 11px;',
+                label: cat.icon + ' ' + cat.name,
                 toggle_mode: true,
             });
             tab._categoryId = cat.id;
@@ -175,12 +176,16 @@ export class EmojiView extends St.BoxLayout {
         // Mark as recently used
         this._data.markUsed(char);
 
-        // Paste if enabled
-        if (this._data.shouldPasteOnSelect()) {
-            this._triggerPaste();
-        }
-
+        // Close popup first so paste doesn't target our search entry
         this._closePopup();
+
+        // Paste if enabled (after small delay to ensure focus shifts)
+        if (this._data.shouldPasteOnSelect()) {
+            GLib.timeout_add(GLib.PRIORITY_DEFAULT, 50, () => {
+                this._triggerPaste();
+                return GLib.SOURCE_REMOVE;
+            });
+        }
     }
 
     focusSearch() {

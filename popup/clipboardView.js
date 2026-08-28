@@ -24,6 +24,13 @@ export class ClipboardView extends St.BoxLayout {
 
         this._buildUI();
         this._refresh();
+
+        // subscribe to manager changes for live updates
+        this._unsubscribe = this._manager.subscribe(() => this._refresh());
+    }
+
+    refresh() {
+        this._refresh();
     }
 
     _buildUI() {
@@ -244,6 +251,10 @@ export class ClipboardView extends St.BoxLayout {
     }
 
     destroy() {
+        if (this._unsubscribe) {
+            this._unsubscribe();
+            this._unsubscribe = null;
+        }
         super.destroy();
     }
 }

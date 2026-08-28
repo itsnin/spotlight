@@ -47,7 +47,7 @@ class SpotlightPopup extends St.Widget {
             vertical: false,
             x_align: Clutter.ActorAlign.FILL,
         });
-        this._topBar.style = 'spacing: 10px;';
+        this._topBar.style = 'spacing: 16px; padding: 0 4px;';
         this._content.add_child(this._topBar);
 
         // search bar pill shaped container holds the entry plus magnifier icon
@@ -72,7 +72,7 @@ class SpotlightPopup extends St.Widget {
             style_class: 'spotlight-buttons-box',
             vertical: false,
         });
-        this._buttonsBox.style = 'spacing: 8px;';
+        this._buttonsBox.style = 'spacing: 6px; margin-left: 8px;';
         this._topBar.add_child(this._buttonsBox);
 
         // content stack holds one view at a time search clipboard or emoji
@@ -84,13 +84,16 @@ class SpotlightPopup extends St.Widget {
         this._content.add_child(this._contentStack);
 
         // mode buttons round icons to the right of search bar
+        // these trigger separate popups, not mode switching
         this._buttonClipboard = this._createModeButton(
             'edit-paste-symbolic',
             'clipboard',
+            () => this._onClipboardClicked(),
         );
         this._buttonEmoji = this._createModeButton(
             'face-smile-symbolic',
             'emoji',
+            () => this._onEmojiClicked(),
         );
         this._buttonsBox.add_child(this._buttonClipboard);
         this._buttonsBox.add_child(this._buttonEmoji);
@@ -106,9 +109,7 @@ class SpotlightPopup extends St.Widget {
         this._originalActivateDefault = null;
         this._overviewKeyCaptureId = 0;
 
-        // view widgets created on demand
-        this._clipboardView = null;
-        this._emojiView = null;
+        // no separate views - search only
 
         // hide popup when new windows appear app launched from result
         global.display.connectObject(
@@ -144,49 +145,20 @@ class SpotlightPopup extends St.Widget {
         );
     }
 
-    // creates a round mode button with icon
-    _createModeButton(iconName, mode) {
+    // creates a round mode button with icon that triggers callbacks
+    _createModeButton(iconName, label, callback) {
         const button = new St.Button({
             style_class: 'spotlight-mode-button',
             can_focus: true,
-            toggle_mode: true,
             child: new St.Icon({
                 icon_name: iconName,
-                icon_size: 16,
+                icon_size: 18,
             }),
-            accessible_name: mode,
+            accessible_name: label,
+            style: 'padding: 6px;',
         });
-        button.connect('clicked', () => {
-            if (button.checked)
-                this._switchMode(mode);
-            else
-                this._switchMode('search');
-        });
+        button.connect('clicked', callback);
         return button;
-    }
-
-    // switches between search clipboard and emoji modes
-    _switchMode(mode) {
-        this._mode = mode;
-        // update button states
-        this._buttonClipboard.checked = (mode === 'clipboard');
-        this._buttonEmoji.checked = (mode === 'emoji');
-
-        // show appropriate view hide others
-        if (this._search)
-            this._search.visible = (mode === 'search');
-        if (this._clipboardView)
-            this._clipboardView.visible = (mode === 'clipboard');
-        if (this._emojiView)
-            this._emojiView.visible = (mode === 'emoji');
-
-        // clear search text when switching modes fresh start
-        if (this._entry)
-            this._entry.set_text('');
-
-        // focus stays in entry user can type to filter current mode
-        if (this._entry)
-            this._entry.grab_key_focus();
     }
 
     // called once from extension.enable()
@@ -204,14 +176,13 @@ class SpotlightPopup extends St.Widget {
     // public entry point defers actual work to idle so actor tree
     // mutations never happen inside a signal dispatch which would
     // sigabrt on gnome 50 clutter 18
-    open(mode = 'search') {
+    open() {
         if (this._visible || this._opening || this._openIdleId !== 0)
             return;
         // widgets should already be stolen by stealOverviewSearch in enable
         if (!this._entry || !this._search)
             return;
         this._opening = true;
-        this._pendingMode = mode;
         this._openIdleId = GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
             this._openIdleId = 0;
             this._doOpen();
@@ -254,43 +225,24 @@ class SpotlightPopup extends St.Widget {
 
         // clear any previous search text start with empty
         this._search._text.set_text('');
+        this._search.visible = false;
 
-        // switch to requested mode or default to search
-        const mode = this._pendingMode || 'search';
-        this._pendingMode = null;
-        this._switchMode(mode);
-
-        // toggle results visibility based on text content
-        // hide when empty keeps popup compact show when typed gives results
+        // show search results when user types
         if (!this._textChangedEventId) {
             this._textChangedEventId = this._search._text.connect(
                 'text-changed',
                 () => {
-                    const text = this._search._text.get_text();
-                    const hasText = text.length > 0;
-
-                    if (this._mode === 'search') {
-                        this._search.visible = hasText;
-                    } else if (this._mode === 'clipboard') {
-                        if (this._clipboardView && this._clipboardView.filter)
-                            this._clipboardView.filter(text);
-                    } else if (this._mode === 'emoji') {
-                        if (this._emojiView && this._emojiView.filter)
-                            this._emojiView.filter(text);
-                    }
+                    const hasText = this._search._text.get_text().length > 0;
+                    this._search.visible = hasText;
                 },
             );
         }
 
-        // capture esc key first press switches mode to search second closes
+        // capture esc key to close
         global.stage.connectObject(
             'captured-event', (actor, event) => {
                 if (event.type() === Clutter.EventType.KEY_PRESS &&
                     event.get_key_symbol() === Clutter.KEY_Escape) {
-                    if (this._mode !== 'search') {
-                        this._switchMode('search');
-                        return Clutter.EVENT_STOP;
-                    }
                     this.close();
                     return Clutter.EVENT_STOP;
                 }
