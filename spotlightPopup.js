@@ -13,7 +13,7 @@ import * as ThemeManager from './popup/themeManager.js';
 
 export const SpotlightPopup = GObject.registerClass(
 class SpotlightPopup extends St.Widget {
-    _init(settings) {
+    _init(settings, callbacks = {}) {
         super._init({
             layout_manager: new Clutter.BinLayout(),
             reactive: true,
@@ -21,6 +21,8 @@ class SpotlightPopup extends St.Widget {
             visible: false,
         });
         this._settings = settings;
+        this._onClipboardClicked = callbacks.onClipboardClicked || (() => {});
+        this._onEmojiClicked = callbacks.onEmojiClicked || (() => {});
         this._backdrop = null;
         this._positioner = new PopupPositioner(this);
         // gnome interface settings used to detect system color scheme
@@ -29,8 +31,6 @@ class SpotlightPopup extends St.Widget {
         this._openIdleId = 0;
         this._closeIdleId = 0;
         this._opening = false;
-        // current mode search clipboard or emoji
-        this._mode = 'search';
         // popup structure: outer St.Widget handles positioning via chrome
         // inner content box what the user actually sees
         this._content = new St.BoxLayout({

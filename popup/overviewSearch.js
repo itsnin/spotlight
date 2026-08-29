@@ -43,6 +43,9 @@ export function steal(popup) {
     popup._entry = Main.overview.searchEntry;
     popup._entryParent = popup._entry.get_parent();
     popup._entry.add_style_class_name('spotlight-entry-stolen');
+    // ensure no background leaks through from system theme
+    popup._entry.set_background_color(null);
+    popup._entry.set_border_width(0);
     if (popup._entry.get_parent())
         popup._entry.get_parent().remove_child(popup._entry);
     // hide it overview will show empty space where search used to be

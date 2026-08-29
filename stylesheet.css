@@ -46,13 +46,21 @@
 
 /* override stolen overview search entry default styling */
 .spotlight-entry-stolen,
-.spotlight-entry-stolen * {
+.spotlight-entry-stolen *,
+.spotlight-entry-stolen StWidget,
+.spotlight-entry-stolen ClutterActor {
   background-color: transparent !important;
+  background: transparent !important;
   border: none !important;
+  border-width: 0 !important;
+  border-radius: 0 !important;
   box-shadow: none !important;
   color: inherit !important;
   caret-color: #f5f5f7 !important;
   font-size: 15px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  min-width: 0 !important;
 }
 
 .spotlight-container.theme-light .spotlight-entry-stolen,
@@ -60,30 +68,15 @@
   caret-color: #1d1d1f !important;
 }
 
-/* mode buttons */
-.spotlight-mode-button {
-  background-color: rgba(255, 255, 255, 0.08);
-  border-radius: 9999px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #f5f5f7;
+/* ensure search bar pill properly contains the stolen entry */
+.spotlight-search-bar {
+  overflow: hidden;
 }
 
-.spotlight-mode-button:hover {
-  background-color: rgba(255, 255, 255, 0.15);
-}
-
-.spotlight-mode-button:active {
-  background-color: rgba(255, 255, 255, 0.2);
-}
-
-.spotlight-container.theme-light .spotlight-mode-button {
-  background-color: rgba(0, 0, 0, 0.06);
-  border-color: rgba(0, 0, 0, 0.1);
-  color: #1d1d1f;
-}
-
-.spotlight-container.theme-light .spotlight-mode-button:hover {
-  background-color: rgba(0, 0, 0, 0.1);
+.spotlight-search-bar StEntry {
+  min-width: 0;
+  background-color: transparent;
+  border: none;
 }
 
 .spotlight-container.theme-light .spotlight-search-bar {

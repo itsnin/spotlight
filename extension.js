@@ -5,7 +5,6 @@ import Gio from 'gi://Gio';
 import Meta from 'gi://Meta';
 import GLib from 'gi://GLib';
 import St from 'gi://St';
-import Clutter from 'gi://Clutter';
 import Shell from 'gi://Shell';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import {WindowPreview} from 'resource:///org/gnome/shell/ui/windowPreview.js';
@@ -31,81 +30,6 @@ import {Workspaces as WorkspacesWorkspaces} from './services/workspaces/services
 import {WorkspacesBar as WorkspacesWorkspacesBar} from './services/workspaces/ui/WorkspacesBar.js';
 import {destroyAllHooks as workspacesDestroyAllHooks} from './services/workspaces/utils/hook.js';
 
-// Workspaces bar adapter provides the interface that the workspaces bar code expects
-class WorkspacesAdapter {
-    constructor(spotlightExtension) {
-        this._spotlight = spotlightExtension;
-        this.metadata = {
-            name: 'Workspaces Bar',
-            'settings-schema': 'org.gnome.shell.extensions.spotlight',
-            version: 39,
-        };
-        this.workspacesBar = null;
-        this.scrollHandler = null;
-        this._baseStyleSheet = null;
-    }
-
-    getSettings(schemaName) {
-        return new Gio.Settings({schema: schemaName});
-    }
-
-    openPreferences() {
-        this._spotlight.openPreferences();
-    }
-
-    _loadBaseStylesheet() {
-        const stylesheetPath = GLib.build_filenamev([
-            this._spotlight.path,
-            'services',
-            'workspaces',
-            'stylesheet.css',
-        ]);
-        const file = Gio.File.new_for_path(stylesheetPath);
-        if (file.query_exists(null)) {
-            const themeContext = St.ThemeContext.get_for_stage(global.stage);
-            themeContext.get_theme().load_stylesheet(file);
-            this._baseStyleSheet = file;
-        }
-    }
-
-    _unloadBaseStylesheet() {
-        if (this._baseStyleSheet) {
-            const themeContext = St.ThemeContext.get_for_stage(global.stage);
-            themeContext.get_theme().unload_stylesheet(this._baseStyleSheet);
-            this._baseStyleSheet = null;
-        }
-    }
-
-    enable() {
-        this._loadBaseStylesheet();
-        WorkspacesSettings.init(this);
-        WorkspacesTopBarAdjustments.init();
-        WorkspacesWorkspaces.init();
-        WorkspacesKeyBindings.init();
-        WorkspacesStyles.init();
-        this.workspacesBar = new WorkspacesWorkspacesBar(this);
-        this.workspacesBar.init();
-        this.scrollHandler = new WorkspacesScrollHandler();
-        this.scrollHandler.init(this.workspacesBar.observeWidget());
-        // set initial visibility based on setting
-        if (this.workspacesBar._button)
-            this.workspacesBar._button.visible = this._settings.get_boolean('workspaces-bar-enabled');
-    }
-
-    disable() {
-        workspacesDestroyAllHooks();
-        WorkspacesSettings.destroy();
-        WorkspacesTopBarAdjustments.destroy();
-        WorkspacesWorkspaces.destroy();
-        WorkspacesKeyBindings.destroy();
-        WorkspacesStyles.destroy();
-        this.scrollHandler?.destroy();
-        this.scrollHandler = null;
-        this.workspacesBar?.destroy();
-        this.workspacesBar = null;
-        this._unloadBaseStylesheet();
-    }
-}
 
 // entry point enable and disable are kept next to each other for easy review
 export default class SpotlightExtension extends Extension {
@@ -212,8 +136,12 @@ export default class SpotlightExtension extends Extension {
             this._keybindingManager.listenFor(toggleShortcuts[0], () => {
                 if (this._popup.visible)
                     this._popup.close();
+                else if (this._clipboardPopup.visible)
+                    this._clipboardPopup.close();
+                else if (this._emojiPopup.visible)
+                    this._emojiPopup.close();
                 else
-                    this._popup.open('search');
+                    this._popup.open();
             });
         }
         // clipboard shortcut
@@ -221,9 +149,13 @@ export default class SpotlightExtension extends Extension {
         if (clipboardShortcuts.length > 0) {
             this._keybindingManager.listenFor(clipboardShortcuts[0], () => {
                 if (this._popup.visible)
-                    this._popup._switchMode('clipboard');
-                else
-                    this._popup.open('clipboard');
+                    this._popup.close();
+                if (this._emojiPopup.visible)
+                    this._emojiPopup.close();
+                GLib.timeout_add(GLib.PRIORITY_DEFAULT, 50, () => {
+                    this._clipboardPopup.open();
+                    return GLib.SOURCE_REMOVE;
+                });
             });
         }
         // emoji shortcut
@@ -231,24 +163,19 @@ export default class SpotlightExtension extends Extension {
         if (emojiShortcuts.length > 0) {
             this._keybindingManager.listenFor(emojiShortcuts[0], () => {
                 if (this._popup.visible)
-                    this._popup._switchMode('emoji');
-                else
-                    this._popup.open('emoji');
+                    this._popup.close();
+                if (this._clipboardPopup.visible)
+                    this._clipboardPopup.close();
+                GLib.timeout_add(GLib.PRIORITY_DEFAULT, 50, () => {
+                    this._emojiPopup.open();
+                    return GLib.SOURCE_REMOVE;
+                });
             });
         }
     }
 
     _triggerPaste() {
-        const seat = Clutter.get_default_backend().get_default_seat();
-        if (!seat) return;
-        const device = seat.create_virtual_device(Clutter.InputDeviceType.KEYBOARD_DEVICE);
-        if (!device) return;
-        const time = Clutter.get_current_event_time() * 1000;
-        device.notify_keyval(time, Clutter.KEY_Shift_L, Clutter.KeyState.PRESSED);
-        device.notify_keyval(time, Clutter.KEY_Insert, Clutter.KeyState.PRESSED);
-        device.notify_keyval(time, Clutter.KEY_Insert, Clutter.KeyState.RELEASED);
-        device.notify_keyval(time, Clutter.KEY_Shift_L, Clutter.KeyState.RELEASED);
-        if (!device.is_destroyed()) device.destroy();
+        triggerPaste();
     }
 
 
