@@ -29,39 +29,41 @@ export class EmojiData {
     }
 
     _loadEmojis() {
-        try {
-            const jsonPath = GLib.build_filenamev([this._path, 'data', 'emojis.json']);
-            const file = Gio.file_new_for_path(jsonPath);
-            const [success, contents] = file.load_contents(null);
-            if (success) {
-                const text = new TextDecoder('utf-8').decode(contents);
-                const raw = JSON.parse(text);
-                const rawList = Array.isArray(raw) ? raw : (raw.emojis || []);
+        const jsonPath = GLib.build_filenamev([this._path, 'data', 'emojis.json']);
+        const file = Gio.File.new_for_path(jsonPath);
+        file.load_contents_async(null, (obj, res) => {
+            try {
+                const [success, contents] = file.load_contents_finish(res);
+                if (success) {
+                    const text = new TextDecoder('utf-8').decode(contents);
+                    const raw = JSON.parse(text);
+                    const rawList = Array.isArray(raw) ? raw : (raw.emojis || []);
 
-                // Map category names to IDs
-                const categoryMap = {};
-                for (const cat of CATEGORIES) {
-                    categoryMap[cat.name] = cat.id;
-                }
-
-                // Convert from raw format {e, d, g, s} to our format {char, category, keywords}
-                this._emojis = rawList.map(item => {
-                    const keywords = item.d ? item.d.split(/\s+/) : [];
-                    // Check for tone/gender markers in keywords
-                    if (item.s && item.s.length > 0) {
-                        keywords.push('HAS_TONE');
+                    // Map category names to IDs
+                    const categoryMap = {};
+                    for (const cat of CATEGORIES) {
+                        categoryMap[cat.name] = cat.id;
                     }
-                    return {
-                        char: item.e,
-                        category: categoryMap[item.g] ?? 0,
-                        keywords,
-                    };
-                });
+
+                    // Convert from raw format {e, d, g, s} to our format {char, category, keywords}
+                    this._emojis = rawList.map(item => {
+                        const keywords = item.d ? item.d.split(/\s+/) : [];
+                        // Check for tone/gender markers in keywords
+                        if (item.s && item.s.length > 0) {
+                            keywords.push('HAS_TONE');
+                        }
+                        return {
+                            char: item.e,
+                            category: categoryMap[item.g] ?? 0,
+                            keywords,
+                        };
+                    });
+                }
+            } catch (e) {
+                log(`[emoji] Failed to load emojis.json: ${e.message}`);
+                this._emojis = this._getFallbackEmojis();
             }
-        } catch (e) {
-            log(`[emoji] Failed to load emojis.json: ${e.message}`);
-            this._emojis = this._getFallbackEmojis();
-        }
+        });
     }
 
     _getFallbackEmojis() {
