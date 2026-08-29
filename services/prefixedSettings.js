@@ -11,6 +11,14 @@ export class PrefixedSettings {
         this._prefix = prefix;
     }
 
+    /**
+     * Returns the underlying raw Gio.Settings GObject instance.
+     * Only for APIs that require a real Gio.Settings (e.g. Main.wm.addKeybinding).
+     */
+    getRawSettings() {
+        return this._settings;
+    }
+
     _k(key) {
         return this._prefix + key;
     }
