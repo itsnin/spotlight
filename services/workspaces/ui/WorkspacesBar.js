@@ -93,7 +93,8 @@ export class WorkspacesBar {
             yAlign: Clutter.ActorAlign.CENTER,
         });
         this._button.add_child(this._wsLabel);
-        this._button._clickGesture.set_enabled(false);
+        if (this._button._clickGesture)
+            this._button._clickGesture.set_enabled(false);
         this._button.connect('button-press-event', (actor, event) => {
             switch (event.get_button()) {
                 case 1:
@@ -112,8 +113,11 @@ export class WorkspacesBar {
         });
     }
     _initWorkspacesBar() {
-        this._button._clickGesture.set_enabled(false);
-        this._button._delegate = this._dragHandler;
+        if (this._button._clickGesture)
+            if (this._button._clickGesture)
+            this._button._clickGesture.set_enabled(false);
+        if (this._button._delegate !== undefined)
+            this._button._delegate = this._dragHandler;
         this._button.trackHover = false;
         this._wsBar = new St.BoxLayout({});
         this._button.add_child(this._wsBar);
