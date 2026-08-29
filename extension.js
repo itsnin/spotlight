@@ -77,6 +77,17 @@ export default class SpotlightExtension extends Extension {
         this._keybindingManager = new KeybindingManager();
         this._keybindingManager.enable();
 
+        // initialize workspaces bar standalone feature
+        WorkspacesSettings.init(this);
+        WorkspacesTopBarAdjustments.init();
+        WorkspacesWorkspaces.init();
+        WorkspacesKeyBindings.init();
+        WorkspacesStyles.init();
+        this.workspacesBar = new WorkspacesWorkspacesBar(this);
+        this.workspacesBar.init();
+        this.scrollHandler = new WorkspacesScrollHandler();
+        this.scrollHandler.init(this.workspacesBar.observeWidget());
+
         // register all shortcuts
         this._registerShortcuts();
 
@@ -101,6 +112,10 @@ export default class SpotlightExtension extends Extension {
         // extension installed when disabled it has zero impact on the system
         if (this._settings.get_boolean('caffeine-enabled'))
             this._enableCaffeine();
+
+        // set initial workspaces bar visibility based on setting
+        if (this.workspacesBar && this.workspacesBar._button)
+            this.workspacesBar._button.visible = this._settings.get_boolean('workspaces-bar-enabled');
 
         // workspaces bar when enabled replaces the workspace indicator
         // with an i3 like workspaces bar
@@ -290,6 +305,18 @@ export default class SpotlightExtension extends Extension {
         this._disableCaffeine();
         this._disableWorkspaces();
         this._disableDisableDash();
+
+        // clean up workspaces
+        workspacesDestroyAllHooks();
+        WorkspacesSettings.destroy();
+        WorkspacesTopBarAdjustments.destroy();
+        WorkspacesWorkspaces.destroy();
+        WorkspacesKeyBindings.destroy();
+        WorkspacesStyles.destroy();
+        this.scrollHandler?.destroy();
+        this.scrollHandler = null;
+        this.workspacesBar?.destroy();
+        this.workspacesBar = null;
 
         // views destroyed by popup destroy
         // return stolen widgets back to overview before destroying
