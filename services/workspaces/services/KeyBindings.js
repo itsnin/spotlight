@@ -46,7 +46,7 @@ export class KeyBindings {
     }
     addKeyBinding(name, handler) {
         Shell.ActionMode;
-        Main.wm.addKeybinding(name, this._settings.shortcutsSettings, Meta.KeyBindingFlags.NONE, Shell.ActionMode.NORMAL | Shell.ActionMode.OVERVIEW, handler);
+        Main.wm.addKeybinding(name, this._settings.shortcutsSettings.getRawSettings(), Meta.KeyBindingFlags.NONE, Shell.ActionMode.NORMAL | Shell.ActionMode.OVERVIEW, handler);
         this._addedKeyBindings.push(name);
     }
     removeKeybinding(name) {
