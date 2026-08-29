@@ -38,6 +38,8 @@ Open the popup with `Ctrl + Space` and begin typing. Navigation is entirely keyb
 | Action | Input |
 |---|---|
 | Open Spotlight | `Ctrl + Space` |
+| Open Clipboard History | `Alt + 1` |
+| Open Emoji Picker | `Alt + 2` |
 | Launch an application | Type its name or abbreviation, then `Enter` |
 | Evaluate an expression | Type the math, then `Enter` |
 | Lock the screen | Type `lock`, then `Enter` |

@@ -13,7 +13,7 @@ import * as ThemeManager from './popup/themeManager.js';
 
 export const SpotlightPopup = GObject.registerClass(
 class SpotlightPopup extends St.Widget {
-    _init(settings, callbacks = {}) {
+    _init(settings) {
         super._init({
             layout_manager: new Clutter.BinLayout(),
             reactive: true,
@@ -21,8 +21,6 @@ class SpotlightPopup extends St.Widget {
             visible: false,
         });
         this._settings = settings;
-        this._onClipboardClicked = callbacks.onClipboardClicked || (() => {});
-        this._onEmojiClicked = callbacks.onEmojiClicked || (() => {});
         this._backdrop = null;
         this._positioner = new PopupPositioner(this);
         // gnome interface settings used to detect system color scheme
@@ -67,14 +65,6 @@ class SpotlightPopup extends St.Widget {
         });
         this._searchBarBox.add_child(this._searchIcon);
 
-        // buttons container sits to the right of search bar
-        this._buttonsBox = new St.BoxLayout({
-            style_class: 'spotlight-buttons-box',
-            vertical: false,
-        });
-        this._buttonsBox.style = 'spacing: 6px; margin-left: 8px;';
-        this._topBar.add_child(this._buttonsBox);
-
         // content stack holds search results
         this._contentStack = new St.Widget({
             layout_manager: new Clutter.BinLayout(),
@@ -82,21 +72,6 @@ class SpotlightPopup extends St.Widget {
             x_align: Clutter.ActorAlign.FILL,
         });
         this._content.add_child(this._contentStack);
-
-        // mode buttons round icons to the right of search bar
-        // these trigger separate popups, not mode switching
-        this._buttonClipboard = this._createModeButton(
-            'edit-paste-symbolic',
-            'clipboard',
-            () => this._onClipboardClicked(),
-        );
-        this._buttonEmoji = this._createModeButton(
-            'face-smile-symbolic',
-            'emoji',
-            () => this._onEmojiClicked(),
-        );
-        this._buttonsBox.add_child(this._buttonClipboard);
-        this._buttonsBox.add_child(this._buttonEmoji);
 
         // stolen overview widgets taken once in stealOverviewSearch
         // kept until returnOverviewSearch called from disable()
@@ -146,30 +121,6 @@ class SpotlightPopup extends St.Widget {
         );
     }
 
-    // creates a round mode button with icon that triggers callbacks
-    _createModeButton(iconName, label, callback) {
-        const button = new St.Button({
-            style_class: 'spotlight-mode-button',
-            can_focus: true,
-            reactive: true,
-            track_hover: true,
-            child: new St.Icon({
-                icon_name: iconName,
-                icon_size: 18,
-            }),
-            accessible_name: label,
-            style: 'padding: 6px;',
-        });
-        button.connect('clicked', () => {
-            try {
-                callback();
-            } catch (e) {
-                log('Spotlight mode button error: ' + e);
-            }
-        });
-        return button;
-    }
-
     // called once from extension.enable()
     // permanently steals overview's search widgets and hides them
     stealOverviewSearch() {
@@ -208,7 +159,7 @@ class SpotlightPopup extends St.Widget {
         this._entry.visible = true;
         this._entry.x_expand = true;
         this._searchBarBox.add_child(this._entry);
-        // buttons already in buttonsBox from _init no need to re-add
+        // widgets already set up no need to re-add
 
         // reparent search results into content stack
         if (this._search.get_parent())
@@ -325,17 +276,12 @@ class SpotlightPopup extends St.Widget {
         // disconnect stage signals they get reconnected on next open
         global.stage.disconnectObject(this);
 
-        // reset mode to search for next open
-        this._mode = 'search';
-        this._buttonClipboard.checked = false;
-        this._buttonEmoji.checked = false;
 
         // remove entry from search bar hide it keep it stolen
         if (this._entry && this._entry.get_parent()) {
             this._entry.visible = false;
             this._entry.get_parent().remove_child(this._entry);
         }
-        // buttons stay in buttonsBox no need to remove they persist across opens
 
         // remove search from content stack hide it keep it stolen
         if (this._search && this._search.get_parent()) {

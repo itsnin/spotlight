@@ -70,11 +70,11 @@ ego supports multi-versioning where you upload separate zips for different gnome
 
 spotlight has three independent popup windows
 
-- main spotlight popup search only contains the search bar and mode buttons
-- clipboard popup dedicated standalone window for clipboard history
-- emoji popup dedicated standalone window for emoji picker
+- main spotlight popup search only contains the search bar no mode buttons
+- clipboard popup dedicated standalone window for clipboard history opened via shortcut
+- emoji popup dedicated standalone window for emoji picker opened via shortcut
 
-clicking a mode button in the main popup closes the main popup and opens the corresponding dedicated popup keyboard shortcuts open their dedicated popup directly
+the main popup is search only keyboard shortcuts open dedicated feature popups directly
 
 ### spotlight is first-class overview search is second-class
 
@@ -291,6 +291,9 @@ the default shortcut is `Ctrl+Space` stored in gsettings as `['<Control>space']`
 the keybinding uses `global.display.grab_accelerator()` not `Main.wm.addKeybinding()` because `addKeybinding` can fail if the schema is not ready at enable time `grab_accelerator` is more reliable
 
 the popup can be closed in three ways pressing the toggle shortcut again pressing `Escape` or clicking outside the popup bounds
+
+clipboard history opens via its own dedicated shortcut default Alt 1
+emoji picker opens via its own dedicated shortcut default Alt 2
 
 see the `keybinding.js` file for the implementation
 

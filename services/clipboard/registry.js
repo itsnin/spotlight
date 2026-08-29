@@ -204,6 +204,10 @@ export class Registry {
         }
     }
 
+    flush() {
+        this.clearCacheFolder();
+    }
+
     clearCacheFolder() {
 
         const CANCELLABLE = null;

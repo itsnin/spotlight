@@ -38,7 +38,6 @@ export default class SpotlightExtension extends Extension {
         this._ = _;
         this._caffeineIndicator = null;
         this._caffeineKeybindingId = null;
-        this._workspacesAdapter = null;
         this._dashOriginalHeight = null;
         this._dashVisibility = true;
 
@@ -65,22 +64,7 @@ export default class SpotlightExtension extends Extension {
 
         // main Spotlight popup = search only
         // mode buttons trigger separate popups
-        this._popup = new SpotlightPopup(this._settings, {
-            onClipboardClicked: () => {
-                this._popup.close();
-                GLib.timeout_add(GLib.PRIORITY_DEFAULT, 50, () => {
-                    this._clipboardPopup.open();
-                    return GLib.SOURCE_REMOVE;
-                });
-            },
-            onEmojiClicked: () => {
-                this._popup.close();
-                GLib.timeout_add(GLib.PRIORITY_DEFAULT, 50, () => {
-                    this._emojiPopup.open();
-                    return GLib.SOURCE_REMOVE;
-                });
-            },
-        });
+        this._popup = new SpotlightPopup(this._settings);
 
         // create separate dedicated popups
         this._clipboardPopup = new ClipboardPopup(this._clipboardView, _);
