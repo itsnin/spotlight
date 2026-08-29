@@ -70,36 +70,23 @@ export default class SpotlightExtension extends Extension {
         this._clipboardPopup = new ClipboardPopup(this._clipboardView, _);
         this._emojiPopup = new EmojiPopup(this._emojiView, _);
 
+        // permanently steal overview search widgets on enable
+        // overview search is gone for as long as spotlight is enabled
+        this._popup.stealOverviewSearch();
+
         this._keybindingManager = new KeybindingManager();
         this._keybindingManager.enable();
 
         // initialize workspaces bar standalone feature
-        // wrapped in try/catch so workspaces failure cannot take down
-        // the entire extension or leave stolen overview widgets unrecoverable
-        try {
-            WorkspacesSettings.init(this);
-            WorkspacesTopBarAdjustments.init();
-            WorkspacesWorkspaces.init();
-            WorkspacesKeyBindings.init();
-            WorkspacesStyles.init();
-            this.workspacesBar = new WorkspacesWorkspacesBar(this);
-            this.workspacesBar.init();
-            this.scrollHandler = new WorkspacesScrollHandler();
-            this.scrollHandler.init(this.workspacesBar.observeWidget());
-            // set initial workspaces bar visibility based on setting
-            if (this.workspacesBar && this.workspacesBar._button)
-                this.workspacesBar._button.visible = this._settings.get_boolean('workspaces-bar-enabled');
-        } catch (e) {
-            log('Spotlight: workspaces init failed: ' + e);
-            this.workspacesBar = null;
-            this.scrollHandler = null;
-        }
-
-        // permanently steal overview search widgets on enable
-        // overview search is gone for as long as spotlight is enabled
-        // this runs AFTER workspaces init so a workspaces failure cannot
-        // leave us in a state where search was stolen but disable() never called
-        this._popup.stealOverviewSearch();
+        WorkspacesSettings.init(this);
+        WorkspacesTopBarAdjustments.init();
+        WorkspacesWorkspaces.init();
+        WorkspacesKeyBindings.init();
+        WorkspacesStyles.init();
+        this.workspacesBar = new WorkspacesWorkspacesBar(this);
+        this.workspacesBar.init();
+        this.scrollHandler = new WorkspacesScrollHandler();
+        this.scrollHandler.init(this.workspacesBar.observeWidget());
 
         // register all shortcuts
         this._registerShortcuts();
@@ -125,6 +112,10 @@ export default class SpotlightExtension extends Extension {
         // extension installed when disabled it has zero impact on the system
         if (this._settings.get_boolean('caffeine-enabled'))
             this._enableCaffeine();
+
+        // set initial workspaces bar visibility based on setting
+        if (this.workspacesBar && this.workspacesBar._button)
+            this.workspacesBar._button.visible = this._settings.get_boolean('workspaces-bar-enabled');
 
         // workspaces bar when enabled replaces the workspace indicator
         // with an i3 like workspaces bar
