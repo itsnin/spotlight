@@ -5,6 +5,7 @@ import Meta from 'gi://Meta';
 import Shell from 'gi://Shell';
 import GLib from 'gi://GLib';
 import Clutter from 'gi://Clutter';
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import {ClipboardEntry} from './registry.js';
 import {Registry} from './registry.js';
 import {Keyboard} from './keyboard.js';
@@ -33,6 +34,10 @@ export class ClipboardManager {
         this._ignoreCount = 0;
         this._loading = false;
         this._registry = new Registry({ settings: this._settings, uuid });
+        this._historyClearTimeoutId = null;
+        this._timerIntervalId = null;
+        this._intervalSettingChangedId = null;
+        this._intervalToggleChangedId = null;
 
         this._settingsChangedId = this._settings.connect(
             `changed::${PrefsFields.HISTORY_SIZE}`,
@@ -46,6 +51,9 @@ export class ClipboardManager {
 
         // load persisted history from disk
         this._loadFromDisk();
+
+        // set up auto-clear history on interval
+        this._setupHistoryIntervalClearing();
     }
 
     async _loadFromDisk() {
@@ -105,8 +113,57 @@ export class ClipboardManager {
         return this._dialogManager;
     }
 
+    getRegistry() {
+        return this._registry;
+    }
+
     getAllEntries() {
         return [...this._favorites, ...this._history];
+    }
+
+    _setupHistoryIntervalClearing() {
+        // clean up existing listeners and timers
+        if (this._intervalSettingChangedId) {
+            this._settings.disconnect(this._intervalSettingChangedId);
+            this._intervalSettingChangedId = null;
+        }
+        if (this._intervalToggleChangedId) {
+            this._settings.disconnect(this._intervalToggleChangedId);
+            this._intervalToggleChangedId = null;
+        }
+        if (this._historyClearTimeoutId) {
+            clearTimeout(this._historyClearTimeoutId);
+            this._historyClearTimeoutId = null;
+        }
+        if (this._timerIntervalId) {
+            clearInterval(this._timerIntervalId);
+            this._timerIntervalId = null;
+        }
+
+        // listen for setting changes
+        this._intervalSettingChangedId = this._settings.connect(
+            `changed::${PrefsFields.CLEAR_HISTORY_INTERVAL}`,
+            () => this._setupHistoryIntervalClearing(),
+        );
+        this._intervalToggleChangedId = this._settings.connect(
+            `changed::${PrefsFields.CLEAR_HISTORY_ON_INTERVAL}`,
+            () => this._setupHistoryIntervalClearing(),
+        );
+
+        if (!this._settings.get_boolean(PrefsFields.CLEAR_HISTORY_ON_INTERVAL)) {
+            return;
+        }
+
+        const intervalMinutes = this._settings.get_int(PrefsFields.CLEAR_HISTORY_INTERVAL);
+        if (intervalMinutes <= 0) return;
+
+        const timeoutMs = intervalMinutes * 60 * 1000;
+        this._historyClearTimeoutId = setTimeout(() => {
+            this.clearHistory();
+            this._historyClearTimeoutId = null;
+            // schedule next clear
+            this._setupHistoryIntervalClearing();
+        }, timeoutMs);
     }
 
     destroy() {
@@ -127,6 +184,23 @@ export class ClipboardManager {
             this._settings.disconnect(this._excludedAppsChangedId);
             this._excludedAppsChangedId = 0;
         }
+        // clean up auto-clear interval
+        if (this._intervalSettingChangedId) {
+            this._settings.disconnect(this._intervalSettingChangedId);
+            this._intervalSettingChangedId = null;
+        }
+        if (this._intervalToggleChangedId) {
+            this._settings.disconnect(this._intervalToggleChangedId);
+            this._intervalToggleChangedId = null;
+        }
+        if (this._historyClearTimeoutId) {
+            clearTimeout(this._historyClearTimeoutId);
+            this._historyClearTimeoutId = null;
+        }
+        if (this._timerIntervalId) {
+            clearInterval(this._timerIntervalId);
+            this._timerIntervalId = null;
+        }
         this._keyboard.destroy();
         this._dialogManager.destroy();
         this._keyboard = null;
@@ -145,6 +219,15 @@ export class ClipboardManager {
     _notify() {
         for (const cb of this._listeners)
             cb(this._history);
+    }
+
+    _showNotification(title, body) {
+        if (!this._settings.get_boolean(PrefsFields.NOTIFY_ON_COPY)) return;
+        try {
+            Main.notify(title, body);
+        } catch (e) {
+            console.warn('clipboard manager: notification failed:', e);
+        }
     }
 
     _persist() {
@@ -230,6 +313,15 @@ export class ClipboardManager {
             this._history.splice(removeIndex, 1);
         }
         this._notify();
+
+        // desktop notification
+        if (entry.isText()) {
+            const preview = entry.getStringValue().substring(0, 60);
+            this._showNotification('Copied to clipboard', preview + (entry.getStringValue().length > 60 ? '...' : ''));
+        } else if (entry.isImage()) {
+            this._showNotification('Image copied to clipboard', '');
+        }
+
         // persist to disk
         if (this._settings.get_boolean(PrefsFields.CACHE_ONLY_FAVORITE)) {
             const favsOnly = this._history.filter(e => e.isFavorite());
@@ -303,10 +395,26 @@ export class ClipboardManager {
         this._persist();
     }
 
-    deleteEntry(index) {
-        if (index < 0 || index >= this._history.length)
-            return;
-        this._history.splice(index, 1);
+    deleteEntry(entryOrIndex) {
+        let entry = null;
+        if (typeof entryOrIndex === 'number') {
+            entry = this._history[entryOrIndex];
+        } else {
+            entry = entryOrIndex;
+        }
+        if (!entry) return;
+
+        // try history first
+        const historyIdx = this._history.indexOf(entry);
+        if (historyIdx >= 0) {
+            this._history.splice(historyIdx, 1);
+        }
+        // also try favorites
+        const favIdx = this._favorites.indexOf(entry);
+        if (favIdx >= 0) {
+            this._favorites.splice(favIdx, 1);
+        }
+
         this._notify();
         if (this._settings.get_boolean(PrefsFields.CACHE_ONLY_FAVORITE)) {
             const favsOnly = this._history.filter(e => e.isFavorite());
@@ -316,10 +424,24 @@ export class ClipboardManager {
         }
     }
 
+    editEntry(entry, newText) {
+        if (!entry || !entry.isText()) return;
+        entry.setText(newText);
+        // also update clipboard immediately
+        this._ignoreCount++;
+        this._clipboard.set_text(CLIPBOARD_TYPE, newText);
+        this._clipboard.set_text(St.ClipboardType.PRIMARY, newText);
+        this._notify();
+        this._persist();
+    }
+
     clearHistory() {
         // preserve favorites same behavior as clipboard indicator
         this._history = this._history.filter(e => e.isFavorite());
         this._notify();
+        if (this._settings.get_boolean(PrefsFields.NOTIFY_ON_CLEAR)) {
+            this._showNotification('Clipboard history cleared', '');
+        }
         if (this._settings.get_boolean(PrefsFields.CACHE_ONLY_FAVORITE)) {
             const favsOnly = this._history.filter(e => e.isFavorite());
             this._registry.write(favsOnly);

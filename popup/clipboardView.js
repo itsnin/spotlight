@@ -118,8 +118,10 @@ export class ClipboardView extends St.BoxLayout {
     }
 
     _refresh() {
-        const searchText = this._searchEntry.get_text().toLowerCase();
-        const pinnedOnBottom = this._manager.getSettings().get_boolean(PrefsFields.PINNED_ON_BOTTOM);
+        const rawSearchText = this._searchEntry.get_text();
+        const useRegex = this._settings.get_boolean(PrefsFields.REGEX_SEARCH);
+        const caseSensitive = this._settings.get_boolean(PrefsFields.CASE_SENSITIVE_SEARCH);
+        const pinnedOnBottom = this._settings.get_boolean(PrefsFields.PINNED_ON_BOTTOM);
 
         // Clear lists
         this._favoritesList.remove_all_children();
@@ -129,10 +131,35 @@ export class ClipboardView extends St.BoxLayout {
         const favorites = this._manager.getFavorites();
         const history = this._manager.getHistory();
 
-        const filter = (entry) => {
-            if (!searchText) return true;
-            return entry.getStringValue().toLowerCase().includes(searchText);
-        };
+        // Build filter function based on settings
+        let filter;
+        if (!rawSearchText) {
+            filter = () => true;
+        } else if (useRegex) {
+            try {
+                const flags = caseSensitive ? '' : 'i';
+                const regex = new RegExp(rawSearchText, flags);
+                filter = (entry) => {
+                    if (entry.isImage()) return false;
+                    return regex.test(entry.getStringValue());
+                };
+            } catch (e) {
+                // invalid regex — fall back to plain text search
+                const searchText = caseSensitive ? rawSearchText : rawSearchText.toLowerCase();
+                filter = (entry) => {
+                    if (entry.isImage()) return false;
+                    const val = caseSensitive ? entry.getStringValue() : entry.getStringValue().toLowerCase();
+                    return val.includes(searchText);
+                };
+            }
+        } else {
+            const searchText = caseSensitive ? rawSearchText : rawSearchText.toLowerCase();
+            filter = (entry) => {
+                if (entry.isImage()) return false;
+                const val = caseSensitive ? entry.getStringValue() : entry.getStringValue().toLowerCase();
+                return val.includes(searchText);
+            };
+        }
 
         // Favorites
         const filteredFavs = favorites.filter(filter);
@@ -174,24 +201,84 @@ export class ClipboardView extends St.BoxLayout {
             track_hover: true,
         });
 
-        // Preview text
-        const previewSize = this._manager.getSettings().get_int(PrefsFields.PREVIEW_SIZE);
-        let text = entry.getStringValue();
-        if (text.length > previewSize) text = text.substring(0, previewSize) + '...';
-        text = text.replace(/\n/g, ' ');
-
-        const label = new St.Label({
-            text,
-            x_expand: true,
-            y_align: Clutter.ActorAlign.CENTER,
-        });
-        item.add_child(label);
+        // Preview content: image thumbnail or text
+        if (entry.isImage()) {
+            // image entry — show thumbnail asynchronously
+            const imgBin = new St.Bin({
+                style: 'min-width: 48px; min-height: 32px;',
+                x_expand: true,
+                y_align: Clutter.ActorAlign.CENTER,
+            });
+            item.add_child(imgBin);
+            this._manager.getRegistry().getEntryAsImage(entry).then(img => {
+                if (img && !item.is_destroyed()) {
+                    img.style = 'max-width: 200px; max-height: 48px;';
+                    imgBin.set_child(img);
+                }
+            }).catch(err => {
+                console.warn('clipboardView: failed to load image thumbnail', err);
+            });
+        } else {
+            // text entry
+            const previewSize = this._settings.get_int(PrefsFields.PREVIEW_SIZE);
+            let text = entry.getStringValue();
+            if (text.length > previewSize) text = text.substring(0, previewSize) + '...';
+            text = text.replace(/\n/g, ' ');
+            const label = new St.Label({
+                text,
+                x_expand: true,
+                y_align: Clutter.ActorAlign.CENTER,
+            });
+            item.add_child(label);
+        }
 
         // Buttons
         const btnBox = new St.BoxLayout({ style: 'spacing: 4px;' });
 
+        // Image preview button (images only)
+        if (entry.isImage() && this._settings.get_boolean(PrefsFields.SHOW_PREVIEW_BUTTON)) {
+            const previewBtn = new St.Button({
+                style_class: 'button',
+                style: 'padding: 2px 6px; border-radius: 4px; font-size: 12px;',
+                label: '🖼',
+            });
+            previewBtn.connect('clicked', (btn) => {
+                btn.stop_signal_emission('button-press-event');
+                this._showImagePreview(entry);
+            });
+            btnBox.add_child(previewBtn);
+        }
+
+        // Edit button (text only)
+        if (entry.isText() && this._settings.get_boolean(PrefsFields.SHOW_EDIT_BUTTON)) {
+            const editBtn = new St.Button({
+                style_class: 'button',
+                style: 'padding: 2px 6px; border-radius: 4px; font-size: 12px;',
+                label: '✎',
+            });
+            editBtn.connect('clicked', (btn) => {
+                btn.stop_signal_emission('button-press-event');
+                this._showEditDialog(entry);
+            });
+            btnBox.add_child(editBtn);
+        }
+
+        // Paste button
+        if (this._settings.get_boolean(PrefsFields.PASTE_BUTTON)) {
+            const pasteBtn = new St.Button({
+                style_class: 'button',
+                style: 'padding: 2px 6px; border-radius: 4px; font-size: 12px;',
+                label: '📋',
+            });
+            pasteBtn.connect('clicked', (btn) => {
+                btn.stop_signal_emission('button-press-event');
+                this._selectAndPaste(entry);
+            });
+            btnBox.add_child(pasteBtn);
+        }
+
         // Pin button
-        if (this._manager.getSettings().get_boolean(PrefsFields.SHOW_PIN_BUTTON)) {
+        if (this._settings.get_boolean(PrefsFields.SHOW_PIN_BUTTON)) {
             const pinBtn = new St.Button({
                 style_class: 'button',
                 style: 'padding: 2px 6px; border-radius: 4px; font-size: 12px;',
@@ -206,7 +293,7 @@ export class ClipboardView extends St.BoxLayout {
         }
 
         // Delete button
-        if (this._manager.getSettings().get_boolean(PrefsFields.SHOW_DELETE_BUTTON)) {
+        if (this._settings.get_boolean(PrefsFields.SHOW_DELETE_BUTTON)) {
             const delBtn = new St.Button({
                 style_class: 'button',
                 style: 'padding: 2px 6px; border-radius: 4px; font-size: 12px;',
@@ -214,7 +301,7 @@ export class ClipboardView extends St.BoxLayout {
             });
             delBtn.connect('clicked', (btn) => {
                 btn.stop_signal_emission('button-press-event');
-                if (entry.isFavorite() && this._manager.getSettings().get_boolean(PrefsFields.CONFIRM_ON_PINNED_DELETE)) {
+                if (entry.isFavorite() && this._settings.get_boolean(PrefsFields.CONFIRM_ON_PINNED_DELETE)) {
                     this._manager.getDialogManager().open(
                         this._('Delete pinned entry?'),
                         this._('Are you sure you want to delete this pinned entry?'),
@@ -330,6 +417,97 @@ export class ClipboardView extends St.BoxLayout {
                 item.style = item.style.replace(/background: [^;]+;/, 'background: transparent;');
             }
         }
+    }
+
+    _showImagePreview(entry) {
+        // simple full-size image preview overlay
+        this._manager.getRegistry().getEntryAsImage(entry).then(img => {
+            if (!img || this.is_destroyed()) return;
+
+            const overlay = new St.Widget({
+                style: 'background: rgba(0, 0, 0, 0.85);',
+                reactive: true,
+            });
+            const bin = new Clutter.BinLayout();
+            overlay.layout_manager = bin;
+
+            img.style = 'padding: 20px;';
+            overlay.add_child(img);
+
+            const parent = this.get_parent();
+            const parentWidth = parent.width;
+            const parentHeight = parent.height;
+            overlay.set_size(parentWidth, parentHeight);
+            overlay.set_position(0, 0);
+
+            overlay.connect('button-press-event', () => {
+                overlay.destroy();
+                return Clutter.EVENT_STOP;
+            });
+
+            parent.add_child(overlay);
+            overlay.raise_top();
+        }).catch(err => {
+            console.warn('clipboardView: failed to show image preview', err);
+        });
+    }
+
+    _showEditDialog(entry) {
+        // simple inline edit: replace item content with a text entry
+        const items = this._getAllFocusableItems();
+        let item = null;
+        for (const it of items) {
+            if (it._entry === entry) {
+                item = it;
+                break;
+            }
+        }
+        if (!item) return;
+
+        // save original children to restore later
+        const originalChildren = [];
+        for (let i = 0; i < item.get_n_children(); i++) {
+            originalChildren.push(item.get_child_at_index(i));
+        }
+        item.remove_all_children();
+
+        const entryWidget = new St.Entry({
+            text: entry.getStringValue(),
+            x_expand: true,
+            can_focus: true,
+        });
+        entryWidget.clutter_text.set_selection(0, -1);
+        item.add_child(entryWidget);
+        entryWidget.grab_key_focus();
+
+        const commitEdit = (save) => {
+            if (save) {
+                const newText = entryWidget.get_text();
+                if (newText && newText !== entry.getStringValue()) {
+                    this._manager.editEntry(entry, newText);
+                }
+            }
+            // restore original layout
+            item.remove_all_children();
+            for (const child of originalChildren) {
+                item.add_child(child);
+            }
+            this._refresh();
+        };
+
+        entryWidget.clutter_text.connect('key-press-event', (actor, event) => {
+            const key = event.get_key_symbol();
+            if (key === Clutter.KEY_Return || key === Clutter.KEY_KP_Enter) {
+                commitEdit(true);
+                return Clutter.EVENT_STOP;
+            } else if (key === Clutter.KEY_Escape) {
+                commitEdit(false);
+                return Clutter.EVENT_STOP;
+            }
+            return Clutter.EVENT_PROPAGATE;
+        });
+
+        entryWidget.connect('button-press-event', () => Clutter.EVENT_STOP);
     }
 
     destroy() {
