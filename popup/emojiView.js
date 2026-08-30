@@ -24,6 +24,7 @@ export class EmojiView extends St.BoxLayout {
         this._ = gettext;
         this._activeCategory = 0;
         this._skinTone = emojiData.getSkinTone();
+        this._focusedIndex = -1;
 
         this._buildUI();
         this._showCategory(0);
@@ -36,7 +37,13 @@ export class EmojiView extends St.BoxLayout {
             can_focus: true,
             hint_text: this._('Search emojis...'),
         });
-        this._searchEntry.clutter_text.connect('text-changed', () => this._onSearch());
+        this._searchEntry.clutter_text.connect('text-changed', () => {
+            this._focusedIndex = -1;
+            this._onSearch();
+        });
+        this._searchEntry.clutter_text.connect('key-press-event', (actor, event) => {
+            return this._handleKeyPress(event);
+        });
         this.add_child(this._searchEntry);
 
         // Category tabs
@@ -129,6 +136,7 @@ export class EmojiView extends St.BoxLayout {
     }
 
     _renderEmojis(emojis) {
+        this._emojiButtons = [];
         if (emojis.length === 0) {
             const emptyLabel = new St.Label({
                 style: 'color: #888; padding: 20px; text-align: center;',
@@ -163,15 +171,17 @@ export class EmojiView extends St.BoxLayout {
             });
             btn._emojiChar = char;
             btn.connect('clicked', (b) => this._onEmojiClicked(b._emojiChar));
+            this._emojiButtons.push(btn);
             row.add_child(btn);
             colCount++;
         }
     }
 
     _onEmojiClicked(char) {
-        // Copy to clipboard
+        // Copy to clipboard (both CLIPBOARD and PRIMARY for Shift+Insert compatibility)
         const clipboard = St.Clipboard.get_default();
         clipboard.set_text(St.ClipboardType.CLIPBOARD, char);
+        clipboard.set_text(St.ClipboardType.PRIMARY, char);
 
         // Mark as recently used
         this._data.markUsed(char);
@@ -190,6 +200,66 @@ export class EmojiView extends St.BoxLayout {
 
     focusSearch() {
         this._searchEntry.grab_key_focus();
+    }
+
+    _handleKeyPress(event) {
+        const key = event.get_key_symbol();
+        const buttons = this._emojiButtons || [];
+        const nbCols = this._data.getNbCols();
+
+        if (buttons.length === 0)
+            return Clutter.EVENT_PROPAGATE;
+
+        if (key === Clutter.KEY_Right || key === Clutter.KEY_KP_Right) {
+            this._focusedIndex = this._focusedIndex < 0 ? 0 : Math.min(this._focusedIndex + 1, buttons.length - 1);
+            this._updateEmojiFocus(buttons);
+            return Clutter.EVENT_STOP;
+        } else if (key === Clutter.KEY_Left || key === Clutter.KEY_KP_Left) {
+            this._focusedIndex = this._focusedIndex <= 0 ? 0 : this._focusedIndex - 1;
+            this._updateEmojiFocus(buttons);
+            return Clutter.EVENT_STOP;
+        } else if (key === Clutter.KEY_Down || key === Clutter.KEY_KP_Down) {
+            if (this._focusedIndex < 0) {
+                this._focusedIndex = 0;
+            } else {
+                this._focusedIndex = Math.min(this._focusedIndex + nbCols, buttons.length - 1);
+            }
+            this._updateEmojiFocus(buttons);
+            return Clutter.EVENT_STOP;
+        } else if (key === Clutter.KEY_Up || key === Clutter.KEY_KP_Up) {
+            if (this._focusedIndex > 0) {
+                this._focusedIndex = Math.max(this._focusedIndex - nbCols, 0);
+                this._updateEmojiFocus(buttons);
+            }
+            return Clutter.EVENT_STOP;
+        } else if (key === Clutter.KEY_Return || key === Clutter.KEY_KP_Enter) {
+            if (this._focusedIndex >= 0 && this._focusedIndex < buttons.length) {
+                this._onEmojiClicked(buttons[this._focusedIndex]._emojiChar);
+            }
+            return Clutter.EVENT_STOP;
+        }
+        return Clutter.EVENT_PROPAGATE;
+    }
+
+    _updateEmojiFocus(buttons) {
+        for (let i = 0; i < buttons.length; i++) {
+            const btn = buttons[i];
+            if (i === this._focusedIndex) {
+                btn.style = btn.style.replace(/background: [^;]+;/, 'background: rgba(255, 255, 255, 0.2);');
+                btn.grab_key_focus();
+                // ensure visible in scroll view
+                const adjustment = this._scrollView.vscroll.adjustment;
+                const btnY = btn.get_allocation_box().y1;
+                const viewHeight = this._scrollView.height;
+                if (btnY < adjustment.value) {
+                    adjustment.value = btnY;
+                } else if (btnY > adjustment.value + viewHeight - 30) {
+                    adjustment.value = btnY - viewHeight + 30;
+                }
+            } else {
+                btn.style = btn.style.replace(/background: [^;]+;/, 'background: transparent;');
+            }
+        }
     }
 
     destroy() {

@@ -34,6 +34,7 @@ export default class SpotlightExtension extends Extension {
             this._clipboardManager,
             this._settings,
             () => this._clipboardPopup.close(),
+            () => this._triggerPaste(),
             _,
         );
 

@@ -99,7 +99,7 @@ export class EmojiPopup extends St.Widget {
         if (this._view.focusSearch)
             this._view.focusSearch();
         } catch (e) {
-            log('Spotlight clipboardPopup open error: ' + e);
+            log('Spotlight emojiPopup open error: ' + e);
             this._visible = false;
         }
     }

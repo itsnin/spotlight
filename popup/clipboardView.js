@@ -2,6 +2,7 @@
 import St from 'gi://St';
 import Clutter from 'gi://Clutter';
 import GObject from 'gi://GObject';
+import GLib from 'gi://GLib';
 import { PrefsFields } from '../services/clipboard/constants.js';
 
 export class ClipboardView extends St.BoxLayout {
@@ -9,7 +10,7 @@ export class ClipboardView extends St.BoxLayout {
         GObject.registerClass(this);
     }
 
-    constructor(manager, settings, closePopup, gettext) {
+    constructor(manager, settings, closePopup, triggerPaste, gettext) {
         super({
             vertical: true,
             style: 'spacing: 6px; padding: 12px;',
@@ -19,8 +20,10 @@ export class ClipboardView extends St.BoxLayout {
         this._manager = manager;
         this._settings = settings;
         this._closePopup = closePopup;
+        this._triggerPaste = triggerPaste;
         this._ = gettext;
         this._entries = [];
+        this._focusedIndex = -1;
 
         this._buildUI();
         this._refresh();
@@ -45,7 +48,13 @@ export class ClipboardView extends St.BoxLayout {
             hint_text: this._('Search clipboard history...'),
             x_expand: true,
         });
-        this._searchEntry.clutter_text.connect('text-changed', () => this._refresh());
+        this._searchEntry.clutter_text.connect('text-changed', () => {
+            this._focusedIndex = -1;
+            this._refresh();
+        });
+        this._searchEntry.clutter_text.connect('key-press-event', (actor, event) => {
+            return this._handleKeyPress(event);
+        });
         headerBox.add_child(this._searchEntry);
 
         this._privateBtn = new St.Button({
@@ -156,6 +165,8 @@ export class ClipboardView extends St.BoxLayout {
 
     _createItem(entry, isFavorite) {
         const item = new St.BoxLayout({
+            _entry: entry,
+            _isFavorite: isFavorite,
             style: `padding: 6px 8px; border-radius: 6px; background: ${isFavorite ? 'rgba(255, 215, 0, 0.1)' : 'transparent'};`,
             style_class: 'button',
             reactive: true,
@@ -225,11 +236,10 @@ export class ClipboardView extends St.BoxLayout {
 
         item.add_child(btnBox);
 
-        // Click to select
+        // Click to select and paste
         item.connect('button-press-event', (actor, event) => {
             if (event.get_button() === 1) {
-                this._manager.selectEntry(entry);
-                this._closePopup();
+                this._selectAndPaste(entry);
             }
             return Clutter.EVENT_PROPAGATE;
         });
@@ -248,6 +258,78 @@ export class ClipboardView extends St.BoxLayout {
 
     focusSearch() {
         this._searchEntry.grab_key_focus();
+    }
+
+    _selectAndPaste(entry) {
+        this._manager.selectEntry(entry);
+        this._closePopup();
+        // paste after small delay to ensure focus shifts away from popup
+        if (this._triggerPaste && this._manager.getSettings().get_boolean('paste-on-select')) {
+            GLib.timeout_add(GLib.PRIORITY_DEFAULT, 50, () => {
+                this._triggerPaste();
+                return GLib.SOURCE_REMOVE;
+            });
+        }
+    }
+
+    _handleKeyPress(event) {
+        const key = event.get_key_symbol();
+        const allItems = this._getAllFocusableItems();
+
+        if (key === Clutter.KEY_Down || key === Clutter.KEY_KP_Down) {
+            this._focusedIndex = Math.min(this._focusedIndex + 1, allItems.length - 1);
+            this._updateFocusVisual(allItems);
+            return Clutter.EVENT_STOP;
+        } else if (key === Clutter.KEY_Up || key === Clutter.KEY_KP_Up) {
+            this._focusedIndex = Math.max(this._focusedIndex - 1, 0);
+            this._updateFocusVisual(allItems);
+            return Clutter.EVENT_STOP;
+        } else if (key === Clutter.KEY_Return || key === Clutter.KEY_KP_Enter) {
+            if (this._focusedIndex >= 0 && this._focusedIndex < allItems.length) {
+                const entry = allItems[this._focusedIndex]._entry;
+                if (entry) this._selectAndPaste(entry);
+            }
+            return Clutter.EVENT_STOP;
+        } else if (key === Clutter.KEY_Delete || key === Clutter.KEY_KP_Delete) {
+            if (this._focusedIndex >= 0 && this._focusedIndex < allItems.length) {
+                const entry = allItems[this._focusedIndex]._entry;
+                if (entry) {
+                    this._manager.deleteEntry(entry);
+                    this._focusedIndex = Math.min(this._focusedIndex, this._getAllFocusableItems().length - 1);
+                    this._refresh();
+                }
+            }
+            return Clutter.EVENT_STOP;
+        }
+        return Clutter.EVENT_PROPAGATE;
+    }
+
+    _getAllFocusableItems() {
+        const items = [];
+        const collect = (box) => {
+            if (!box) return;
+            for (let i = 0; i < box.get_n_children(); i++) {
+                const child = box.get_child_at_index(i);
+                if (child && child._entry) items.push(child);
+            }
+        };
+        collect(this._favoritesList);
+        collect(this._historyList);
+        return items;
+    }
+
+    _updateFocusVisual(allItems) {
+        for (let i = 0; i < allItems.length; i++) {
+            const item = allItems[i];
+            if (i === this._focusedIndex) {
+                item.style = item.style.replace(/background: [^;]+;/, 'background: rgba(255, 255, 255, 0.15);');
+                item.grab_key_focus();
+            } else if (item._isFavorite) {
+                item.style = item.style.replace(/background: [^;]+;/, 'background: rgba(255, 215, 0, 0.1);');
+            } else {
+                item.style = item.style.replace(/background: [^;]+;/, 'background: transparent;');
+            }
+        }
     }
 
     destroy() {
