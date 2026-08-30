@@ -128,8 +128,7 @@ export default class SpotlightExtension extends Extension {
         triggerPaste();
     }
 
-
-
+    disable() {
         this._settings.disconnectObject(this);
 
         this._keybindingManager.disable();

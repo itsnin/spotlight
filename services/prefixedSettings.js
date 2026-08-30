@@ -45,4 +45,10 @@ export class PrefixedSettings {
     bind(key, object, property, flags) {
         return this._settings.bind(this._k(key), object, property, flags);
     }
+
+    // returns the underlying Gio.Settings GObject for APIs that need a real
+    // GObject instance (e.g. Main.wm.addKeybinding) rather than this JS wrapper
+    getRawSettings() {
+        return this._settings;
+    }
 }

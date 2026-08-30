@@ -117,7 +117,6 @@ export class ClipboardPopup extends St.Widget {
                 this.visible = false;
                 Main.layoutManager.removeChrome(this);
                 this._backdrop.hide();
-                Main.layoutManager.removeChrome(this._backdrop);
             },
         });
     }
@@ -126,6 +125,10 @@ export class ClipboardPopup extends St.Widget {
         if (this._closeIdleId) {
             GLib.source_remove(this._closeIdleId);
             this._closeIdleId = 0;
+        }
+        if (this._backdrop) {
+            this._backdrop.destroy();
+            this._backdrop = null;
         }
         global.stage.disconnectObject(this);
         super.destroy();

@@ -116,12 +116,15 @@ export class EmojiPopup extends St.Widget {
                 this.visible = false;
                 Main.layoutManager.removeChrome(this);
                 this._backdrop.hide();
-                Main.layoutManager.removeChrome(this._backdrop);
             },
         });
     }
 
     destroy() {
+        if (this._backdrop) {
+            this._backdrop.destroy();
+            this._backdrop = null;
+        }
         global.stage.disconnectObject(this);
         super.destroy();
     }
