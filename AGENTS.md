@@ -4,6 +4,30 @@ this file is the single source of truth for any person ai or agent working on th
 
 if you are an ai agent read the whole file do not skim
 
+## supplementary skills reference
+
+the `skills/` directory contains focused single topic skill files extracted from the official gjs.guide documentation
+
+each skill covers one specific area in depth:
+
+- `skills/extension-getting-started/` — basic setup required files directory structure
+- `skills/extension-esm-imports/` — es module import rules process isolation
+- `skills/extension-lifecycle/` — enable disable symmetry cleanup discipline
+- `skills/extension-signal-cleanup/` — connectobject signal patterns and cleanup
+- `skills/extension-glib-sources/` — timeout_add idle_add source removal
+- `skills/extension-gsettings/` — schema conventions binding metadata integration
+- `skills/extension-prefs/` — fillPreferencesWindow adw gtk4 process isolation
+- `skills/extension-styling/` — stylesheet.css st css limitations box model
+- `skills/extension-translations/` — gettext marking strings pot files
+- `skills/extension-debugging/` — looking glass journalctl nested shell
+- `skills/extension-review-guidelines/` — ego review rules rejection reasons
+- `skills/extension-best-practices/` — ai specific guidance code quality
+- `skills/extension-metadata/` — metadata.json fields conventions validation
+- `skills/extension-injection/` — injectionmanager method patching patterns
+- `skills/extension-accessibility/` — atk roles states relationships
+
+these skills are supplementary reference material this file agemt.md remains the single source of truth for project specific rules architecture and design decisions
+
 ## what this extension is
 
 spotlight is a compact launcher for gnome shell inspired by a keyboard-driven launcher design you press a shortcut a centered popup appears you type and results show up in real time
