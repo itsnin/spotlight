@@ -90,10 +90,7 @@ export class EmojiPopup extends St.Widget {
             mode: Clutter.AnimationMode.EASE_OUT_QUAD,
         });
 
-        // Refresh view state
-        if (this._view._showCategory)
-            this._view._showCategory(0);
-        // Focus the view's search
+        // Focus the view's search (view preserves its own category state)
         if (this._view.focusSearch)
             this._view.focusSearch();
 

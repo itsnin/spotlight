@@ -221,7 +221,7 @@ export class EmojiButton {
     // The "keep-open" setting turns the default action into a "stay" one,
     // so several emojis can be picked in a row.
     if (!this._settings.get_boolean("keep-open")) {
-      this.emojiCopy.get_super_btn().menu.close();
+      this.emojiCopy.closePopup();
     }
 
     if (this._settings.get_boolean("paste-on-select")) {

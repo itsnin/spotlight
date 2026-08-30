@@ -1,268 +1,288 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import St from 'gi://St';
-import GLib from 'gi://GLib';
 import Clutter from 'gi://Clutter';
 import GObject from 'gi://GObject';
-import { CATEGORIES, TONES } from '../services/emoji/data.js';
+import { EmojiButton } from '../services/emoji/emojiButton.js';
+import { EmojiSearchItem } from '../services/emoji/emojiSearchItem.js';
+import { SkinTonesBar } from '../services/emoji/emojiOptionsBar.js';
+
+// upstream category names must match the sqlite group names exactly
+const CATEGORY_SQL_NAMES = [
+    'Smileys & Emotion',
+    'People & Body',
+    'Animals & Nature',
+    'Food & Drink',
+    'Travel & Places',
+    'Activities',
+    'Objects',
+    'Symbols',
+    'Flags',
+];
 
 export class EmojiView extends St.BoxLayout {
     static {
         GObject.registerClass(this);
     }
 
-    constructor(emojiData, settings, closePopup, triggerPaste, gettext) {
+    constructor(sqlite, settings, closePopup, extensionPath, gettext) {
         super({
             vertical: true,
-            style: 'spacing: 8px; padding: 12px;',
+            style: 'spacing: 8px;',
             visible: true,
         });
 
-        this._data = emojiData;
-        this._settings = settings;
-        this._closePopup = closePopup;
-        this._triggerPaste = triggerPaste;
         this._ = gettext;
-        this._activeCategory = 0;
-        this._skinTone = emojiData.getSkinTone();
-        this._focusedIndex = -1;
+        this._closePopup = closePopup;
+        this._settings = settings;
+        this._sqlite = sqlite;
+        this._path = extensionPath;
+        this._activeCategory = -1;
+        this._categoryGrids = [];
+        this._tabButtons = [];
+        this._contextCategories = [];
 
-        this._buildUI();
+        const nbCols = this._settings.get_int('nbcols');
+
+        // context adapter that mimics the upstream extension interface
+        // this is what EmojiButton EmojiSearchItem EmojiCategory all expect
+        this._context = {
+            _settings: this._settings,
+            sqlite: this._sqlite,
+            closePopup: () => this._closePopup(),
+            clipboardOwned: false,
+            emojiCategories: this._contextCategories,
+            searchItem: null,
+            path: this._path,
+            _onSearchTextChanged: () => this._onContextSearchChanged(),
+            clearCategories: () => this._hideAllCategoryGrids(),
+        };
+
+        // --- search item (search entry + recents) ---
+        this._searchItem = new EmojiSearchItem(this._context, nbCols);
+        this._context.searchItem = this._searchItem;
+        this.add_child(this._searchItem.super_item);
+
+        // --- skin tone bar ---
+        this._skinTonesBar = new SkinTonesBar(this._context, false);
+        this._skinTonesBar.addBar(this);
+
+        // --- category tabs ---
+        this._tabsBox = new St.BoxLayout({
+            style: 'spacing: 4px; padding: 0 4px;',
+            x_expand: true,
+        });
+        this.add_child(this._tabsBox);
+
+        const tabIconNames = [
+            'emoji-body-symbolic',       // Smileys
+            'emoji-people-symbolic',     // People
+            'emoji-nature-symbolic',     // Animals
+            'emoji-food-symbolic',       // Food
+            'emoji-travel-symbolic',     // Travel
+            'emoji-activities-symbolic', // Activities
+            'emoji-objects-symbolic',    // Objects
+            'emoji-symbols-symbolic',    // Symbols
+            'emoji-flags-symbolic',      // Flags
+        ];
+
+        for (let id = 0; id < 9; id++) {
+            // tab button
+            const tabBtn = new St.Button({
+                style_class: 'emoji-category-tab',
+                child: new St.Icon({
+                    icon_name: tabIconNames[id],
+                    icon_size: 16,
+                }),
+                x_expand: true,
+                x_align: Clutter.ActorAlign.CENTER,
+                can_focus: true,
+            });
+            tabBtn._categoryId = id;
+            tabBtn.connect('clicked', () => this._showCategory(id));
+            this._tabsBox.add_child(tabBtn);
+            this._tabButtons.push(tabBtn);
+
+            // grid container for this category's emojis
+            const grid = new St.BoxLayout({
+                vertical: true,
+                style: 'spacing: 2px; padding: 4px;',
+                visible: false,
+            });
+            grid._categoryId = id;
+            grid._emojiButtons = [];
+            grid._built = false;
+            this._categoryGrids.push(grid);
+
+            // wrapper for upstream keyboard navigation
+            // EmojiSearchItem calls .find() on emojiCategories and expects
+            // objects with a .getButton() method returning a focusable actor
+            this._contextCategories.push({
+                id,
+                getButton: () => tabBtn,
+                _grid: grid,
+            });
+        }
+
+        // scroll view holds all category grids (only one visible at a time)
+        this._scrollView = new St.ScrollView({
+            style: 'max-height: 300px;',
+            x_expand: true,
+            y_expand: true,
+        });
+        for (const grid of this._categoryGrids) {
+            this._scrollView.add_child(grid);
+        }
+        this.add_child(this._scrollView);
+
+        // settings changes that require ui refresh
+        this._settings.connectObject(
+            'changed::skin-tone', () => this._rebuildActiveCategory(),
+            'changed::gender', () => this._rebuildActiveCategory(),
+            'changed::nbcols', () => this._rebuildAllCategories(),
+            'changed::emojisize', () => this._updateAllButtonStyles(),
+            this,
+        );
+
+        // show first category by default
         this._showCategory(0);
     }
 
-    _buildUI() {
-        // Search bar
-        this._searchEntry = new St.Entry({
-            style: 'padding: 6px 12px; border-radius: 8px; margin-bottom: 4px;',
-            can_focus: true,
-            hint_text: this._('Search emojis...'),
-        });
-        this._searchEntry.clutter_text.connect('text-changed', () => {
-            this._focusedIndex = -1;
-            this._onSearch();
-        });
-        this._searchEntry.clutter_text.connect('key-press-event', (actor, event) => {
-            return this._handleKeyPress(event);
-        });
-        this.add_child(this._searchEntry);
+    _showCategory(id) {
+        if (id < 0 || id >= this._categoryGrids.length) return;
 
-        // Category tabs
-        this._tabsBox = new St.BoxLayout({
-            style: 'spacing: 2px; margin-bottom: 4px;',
-            x_align: Clutter.ActorAlign.CENTER,
-        });
-        for (const cat of CATEGORIES) {
-            const tab = new St.Button({
-                style_class: 'button',
-                style: 'padding: 4px 10px; border-radius: 6px; font-size: 11px;',
-                label: cat.icon + ' ' + cat.name,
-                toggle_mode: true,
-            });
-            tab._categoryId = cat.id;
-            tab.connect('clicked', (btn) => {
-                this._setActiveCategory(btn._categoryId);
-            });
-            this._tabsBox.add_child(tab);
+        this._activeCategory = id;
+
+        // update tab visual state
+        for (let i = 0; i < this._tabButtons.length; i++) {
+            if (i === id) {
+                this._tabButtons[i].add_style_pseudo_class('checked');
+            } else {
+                this._tabButtons[i].remove_style_pseudo_class('checked');
+            }
         }
-        this.add_child(this._tabsBox);
 
-        // Skin tone selector
-        const toneBox = new St.BoxLayout({
-            style: 'spacing: 4px; margin-bottom: 4px;',
-            x_align: Clutter.ActorAlign.CENTER,
-        });
-        for (let i = 0; i < TONES.length; i++) {
-            const toneBtn = new St.Button({
-                style_class: 'button',
-                style: `padding: 2px 6px; border-radius: 4px; font-size: 14px; background: ${i === this._skinTone ? 'rgba(255,255,255,0.2)' : 'transparent'};`,
-                label: TONES[i] || '◯',
-                toggle_mode: true,
-                checked: i === this._skinTone,
-            });
-            toneBtn._toneIndex = i;
-            toneBtn.connect('clicked', (btn) => {
-                this._skinTone = btn._toneIndex;
-                this._showCategory(this._activeCategory);
-            });
-            toneBox.add_child(toneBtn);
+        // show only this category's grid
+        for (const grid of this._categoryGrids) {
+            grid.visible = (grid._categoryId === id);
         }
-        this.add_child(toneBox);
 
-        // Emoji grid
-        this._scrollView = new St.ScrollView({
-            style: 'max-height: 280px;',
-            overlay_scrollbars: true,
-        });
-        this._grid = new St.BoxLayout({
-            vertical: true,
-            style: 'spacing: 2px;',
-        });
-        this._scrollView.add_child(this._grid);
-        this.add_child(this._scrollView);
-
-        // Set first tab active
-        if (this._tabsBox.get_children()[0]) {
-            this._tabsBox.get_children()[0].checked = true;
+        // build emoji buttons on demand
+        const grid = this._categoryGrids[id];
+        if (!grid._built) {
+            this._buildCategoryGrid(id);
         }
     }
 
-    _setActiveCategory(categoryId) {
-        // Update tab states
-        for (const tab of this._tabsBox.get_children()) {
-            tab.checked = tab._categoryId === categoryId;
-        }
-        this._activeCategory = categoryId;
-        this._searchEntry.set_text('');
-        this._showCategory(categoryId);
-    }
+    _buildCategoryGrid(id) {
+        const grid = this._categoryGrids[id];
+        const nbCols = this._settings.get_int('nbcols');
+        const skinTone = this._settings.get_int('skin-tone');
+        const gender = this._settings.get_int('gender');
 
-    _showCategory(categoryId) {
-        this._grid.remove_all_children();
-        const emojis = this._data.getByCategory(categoryId);
-        this._renderEmojis(emojis);
-    }
+        // destroy existing buttons first
+        grid._emojiButtons.forEach(b => b.destroy());
+        grid._emojiButtons = [];
+        grid.remove_all_children();
 
-    _onSearch() {
-        const query = this._searchEntry.get_text().trim();
-        this._grid.remove_all_children();
+        const emojis = this._sqlite.select_by_group(
+            CATEGORY_SQL_NAMES[id],
+            skinTone,
+            gender,
+        );
 
-        if (query === '') {
-            this._showCategory(this._activeCategory);
-            return;
-        }
-
-        const results = this._data.search(query);
-        this._renderEmojis(results);
-    }
-
-    _renderEmojis(emojis) {
-        this._emojiButtons = [];
-        if (emojis.length === 0) {
-            const emptyLabel = new St.Label({
-                style: 'color: #888; padding: 20px; text-align: center;',
-                text: this._('No emojis found'),
-            });
-            this._grid.add_child(emptyLabel);
-            return;
-        }
-
-        const emojiSize = this._data.getEmojiSize();
-        const nbCols = this._data.getNbCols();
         let row = null;
-        let colCount = 0;
-
-        for (const emoji of emojis) {
-            if (colCount % nbCols === 0) {
+        for (let i = 0; i < emojis.length; i++) {
+            if (i % nbCols === 0) {
                 row = new St.BoxLayout({ style: 'spacing: 2px;' });
-                this._grid.add_child(row);
+                grid.add_child(row);
             }
 
-            let char = emoji.char;
-            // Apply skin tone if applicable
-            if (this._skinTone > 0 && emoji.keywords && emoji.keywords.includes('HAS_TONE')) {
-                char = char + TONES[this._skinTone];
-            }
+            const btn = new EmojiButton(
+                this._context,
+                emojis[i].unicode,
+                emojis[i].description,
+            );
+            btn.build();
+            btn.updateStyle();
+            grid._emojiButtons.push(btn);
+            row.add_child(btn.super_btn);
+        }
 
-            const btn = new St.Button({
-                style_class: 'button',
-                style: `padding: 2px; min-width: ${emojiSize + 8}px; min-height: ${emojiSize + 8}px; border-radius: 4px; font-size: ${emojiSize}px;`,
-                label: char,
-                can_focus: true,
-            });
-            btn._emojiChar = char;
-            btn.connect('clicked', (b) => this._onEmojiClicked(b._emojiChar));
-            this._emojiButtons.push(btn);
-            row.add_child(btn);
-            colCount++;
+        grid._built = true;
+    }
+
+    _hideAllCategoryGrids() {
+        for (const grid of this._categoryGrids) {
+            grid.visible = false;
+        }
+        this._activeCategory = -1;
+    }
+
+    _rebuildActiveCategory() {
+        if (this._activeCategory >= 0) {
+            const grid = this._categoryGrids[this._activeCategory];
+            grid._built = false;
+            this._buildCategoryGrid(this._activeCategory);
         }
     }
 
-    _onEmojiClicked(char) {
-        // Copy to clipboard (both CLIPBOARD and PRIMARY for Shift+Insert compatibility)
-        const clipboard = St.Clipboard.get_default();
-        clipboard.set_text(St.ClipboardType.CLIPBOARD, char);
-        clipboard.set_text(St.ClipboardType.PRIMARY, char);
+    _rebuildAllCategories() {
+        for (const grid of this._categoryGrids) {
+            grid._built = false;
+            grid._emojiButtons.forEach(b => b.destroy());
+            grid._emojiButtons = [];
+            grid.remove_all_children();
+        }
+        if (this._activeCategory >= 0) {
+            this._buildCategoryGrid(this._activeCategory);
+        }
+    }
 
-        // Mark as recently used
-        this._data.markUsed(char);
+    _updateAllButtonStyles() {
+        for (const grid of this._categoryGrids) {
+            for (const btn of grid._emojiButtons) {
+                btn.updateStyle();
+            }
+        }
+    }
 
-        // Close popup first so paste doesn't target our search entry
-        this._closePopup();
-
-        // Paste if enabled (after small delay to ensure focus shifts)
-        if (this._data.shouldPasteOnSelect()) {
-            GLib.timeout_add(GLib.PRIORITY_DEFAULT, 50, () => {
-                this._triggerPaste();
-                return GLib.SOURCE_REMOVE;
-            });
+    // called by upstream widgets via this.emojiCopy._onSearchTextChanged()
+    _onContextSearchChanged() {
+        const text = this._searchItem.searchEntry.get_text();
+        if (text && text.trim().length > 0) {
+            // user is searching — EmojiSearchItem shows results inline
+            // hide our category grids so they don't duplicate
+            this._hideAllCategoryGrids();
+        } else if (this._activeCategory < 0) {
+            // search cleared — restore the last active category
+            this._showCategory(0);
         }
     }
 
     focusSearch() {
-        this._searchEntry.grab_key_focus();
-    }
-
-    _handleKeyPress(event) {
-        const key = event.get_key_symbol();
-        const buttons = this._emojiButtons || [];
-        const nbCols = this._data.getNbCols();
-
-        if (buttons.length === 0)
-            return Clutter.EVENT_PROPAGATE;
-
-        if (key === Clutter.KEY_Right || key === Clutter.KEY_KP_Right) {
-            this._focusedIndex = this._focusedIndex < 0 ? 0 : Math.min(this._focusedIndex + 1, buttons.length - 1);
-            this._updateEmojiFocus(buttons);
-            return Clutter.EVENT_STOP;
-        } else if (key === Clutter.KEY_Left || key === Clutter.KEY_KP_Left) {
-            this._focusedIndex = this._focusedIndex <= 0 ? 0 : this._focusedIndex - 1;
-            this._updateEmojiFocus(buttons);
-            return Clutter.EVENT_STOP;
-        } else if (key === Clutter.KEY_Down || key === Clutter.KEY_KP_Down) {
-            if (this._focusedIndex < 0) {
-                this._focusedIndex = 0;
-            } else {
-                this._focusedIndex = Math.min(this._focusedIndex + nbCols, buttons.length - 1);
-            }
-            this._updateEmojiFocus(buttons);
-            return Clutter.EVENT_STOP;
-        } else if (key === Clutter.KEY_Up || key === Clutter.KEY_KP_Up) {
-            if (this._focusedIndex > 0) {
-                this._focusedIndex = Math.max(this._focusedIndex - nbCols, 0);
-                this._updateEmojiFocus(buttons);
-            }
-            return Clutter.EVENT_STOP;
-        } else if (key === Clutter.KEY_Return || key === Clutter.KEY_KP_Enter) {
-            if (this._focusedIndex >= 0 && this._focusedIndex < buttons.length) {
-                this._onEmojiClicked(buttons[this._focusedIndex]._emojiChar);
-            }
-            return Clutter.EVENT_STOP;
-        }
-        return Clutter.EVENT_PROPAGATE;
-    }
-
-    _updateEmojiFocus(buttons) {
-        for (let i = 0; i < buttons.length; i++) {
-            const btn = buttons[i];
-            if (i === this._focusedIndex) {
-                btn.style = btn.style.replace(/background: [^;]+;/, 'background: rgba(255, 255, 255, 0.2);');
-                btn.grab_key_focus();
-                // ensure visible in scroll view
-                const adjustment = this._scrollView.vscroll.adjustment;
-                const btnY = btn.get_allocation_box().y1;
-                const viewHeight = this._scrollView.height;
-                if (btnY < adjustment.value) {
-                    adjustment.value = btnY;
-                } else if (btnY > adjustment.value + viewHeight - 30) {
-                    adjustment.value = btnY - viewHeight + 30;
-                }
-            } else {
-                btn.style = btn.style.replace(/background: [^;]+;/, 'background: transparent;');
-            }
+        if (this._searchItem && this._searchItem.searchEntry) {
+            this._searchItem.searchEntry.grab_key_focus();
         }
     }
 
     destroy() {
+        this._settings.disconnectObject(this);
+
+        // destroy search item and its contents
+        if (this._searchItem) {
+            this._searchItem.destroy();
+            this._searchItem = null;
+        }
+
+        // destroy all emoji buttons we created
+        for (const grid of this._categoryGrids) {
+            grid._emojiButtons.forEach(b => b.destroy());
+            grid._emojiButtons = [];
+        }
+
+        // destroy the shared tooltip that lives on global.stage
+        EmojiButton.destroyTooltip();
+
         super.destroy();
     }
 }

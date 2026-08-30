@@ -10,24 +10,27 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import {SpotlightPopup} from './spotlightPopup.js';
 import {KeybindingManager} from './services/core/keybinding.js';
 import {ClipboardManager} from './services/clipboard/manager.js';
-import {EmojiData} from './services/emoji/data.js';
+import {SQLite} from './services/emoji/handlers/sql.js';
 import {ClipboardView} from './popup/clipboardView.js';
 import {EmojiView} from './popup/emojiView.js';
 import {ClipboardPopup} from './popup/clipboardPopup.js';
 import {EmojiPopup} from './popup/emojiPopup.js';
 import {destroyDevice, triggerPaste} from './services/core/virtualKeyboard.js';
-
-
+import {PrefixedSettings} from './services/prefixedSettings.js';
 
 // entry point enable and disable are kept next to each other for easy review
 export default class SpotlightExtension extends Extension {
-    enable() {
+    async enable() {
         this._settings = this.getSettings();
         this._ = _;
+
         // services
         this._clipboardManager = new ClipboardManager(this._settings, this.uuid);
         this._clipboardManager.start();
-        this._emojiData = new EmojiData(this.path, this._settings);
+
+        // sqlite for emoji data
+        this._sqlite = new SQLite();
+        await this._sqlite.initializeDB(this.path);
 
         // create views for the separate popups
         this._clipboardView = new ClipboardView(
@@ -38,16 +41,18 @@ export default class SpotlightExtension extends Extension {
             _,
         );
 
+        // wrap settings with emoji- prefix for upstream widgets
+        // they expect unprefixed names like nbcols keep-open paste-on-select
+        const emojiSettings = new PrefixedSettings(this._settings, 'emoji-');
         this._emojiView = new EmojiView(
-            this._emojiData,
-            this._settings,
+            this._sqlite,
+            emojiSettings,
             () => this._emojiPopup.close(),
-            () => this._triggerPaste(),
+            this.path,
             _,
         );
 
         // main Spotlight popup = search only
-        // mode buttons trigger separate popups
         this._popup = new SpotlightPopup(this._settings);
 
         // create separate dedicated popups
@@ -55,12 +60,10 @@ export default class SpotlightExtension extends Extension {
         this._emojiPopup = new EmojiPopup(this._emojiView, _);
 
         // permanently steal overview search widgets on enable
-        // overview search is gone for as long as spotlight is enabled
         this._popup.stealOverviewSearch();
 
         this._keybindingManager = new KeybindingManager();
         this._keybindingManager.enable();
-
 
         // register all shortcuts
         this._registerShortcuts();
@@ -75,11 +78,11 @@ export default class SpotlightExtension extends Extension {
             () => this._registerShortcuts(),
             this,
         );
-
     }
 
     _registerShortcuts() {
         this._keybindingManager.unlisten();
+
         // main toggle shortcut
         const toggleShortcuts = this._settings.get_strv('toggle-shortcut');
         if (toggleShortcuts.length > 0) {
@@ -94,6 +97,7 @@ export default class SpotlightExtension extends Extension {
                     this._popup.open();
             });
         }
+
         // clipboard shortcut
         const clipboardShortcuts = this._settings.get_strv('clipboard-shortcut');
         if (clipboardShortcuts.length > 0) {
@@ -110,6 +114,7 @@ export default class SpotlightExtension extends Extension {
                 });
             });
         }
+
         // emoji shortcut
         const emojiShortcuts = this._settings.get_strv('emoji-shortcut');
         if (emojiShortcuts.length > 0) {
@@ -134,7 +139,6 @@ export default class SpotlightExtension extends Extension {
 
     disable() {
         this._settings.disconnectObject(this);
-
         this._keybindingManager.disable();
         this._keybindingManager = null;
 
@@ -143,19 +147,22 @@ export default class SpotlightExtension extends Extension {
         this._clipboardManager.destroy();
         this._clipboardManager = null;
 
-        this._emojiData.flush();
-        this._emojiData = null;
+        // clean up sqlite
+        if (this._sqlite) {
+            this._sqlite.destroy();
+            this._sqlite = null;
+        }
 
         destroyDevice();
 
-        // disable standalone features
-        // views destroyed by popup destroy
         // return stolen widgets back to overview before destroying
         this._popup.returnOverviewSearch();
         this._popup.destroy();
         this._popup = null;
+
         this._clipboardPopup.destroy();
         this._clipboardPopup = null;
+
         this._emojiPopup.destroy();
         this._emojiPopup = null;
 
