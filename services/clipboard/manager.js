@@ -172,7 +172,7 @@ export class ClipboardManager {
         try {
             const focussedWindow = Shell.Global.get().display.focusWindow;
             // focussedWindow can genuinely be null when no window has focus
-            // optional chaining is allowed here per ego guidelines
+            // optional chaining allowed here per ego guidelines for potentially null objects
             const wmClass = focussedWindow?.get_wm_class();
             if (wmClass && this.isExcludedApp(wmClass))
                 return;
