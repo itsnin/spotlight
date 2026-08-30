@@ -127,8 +127,8 @@ export class ClipboardManager {
             this._settings.disconnect(this._excludedAppsChangedId);
             this._excludedAppsChangedId = 0;
         }
-        this._keyboard?.destroy();
-        this._dialogManager?.destroy();
+        this._keyboard.destroy();
+        this._dialogManager.destroy();
         this._keyboard = null;
         this._dialogManager = null;
         this._history = [];
@@ -171,6 +171,8 @@ export class ClipboardManager {
         // check excluded apps
         try {
             const focussedWindow = Shell.Global.get().display.focusWindow;
+            // focussedWindow can genuinely be null when no window has focus
+            // optional chaining is allowed here per ego guidelines
             const wmClass = focussedWindow?.get_wm_class();
             if (wmClass && this.isExcludedApp(wmClass))
                 return;

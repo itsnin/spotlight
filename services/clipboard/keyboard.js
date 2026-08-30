@@ -16,7 +16,9 @@ export class Keyboard {
 
     destroy () {
         Main.inputMethod.disconnectObject(this);
-        this.#device.run_dispose();
+        // drop reference let garbage collection reclaim it
+        // run_dispose not used per ego extension guidelines
+        this.#device = null;
     }
 
     #notify (key, state) {

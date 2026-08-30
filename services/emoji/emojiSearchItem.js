@@ -111,7 +111,7 @@ export class EmojiSearchItem {
   // Updates the "recently used" buttons content in reaction to a new search
   // query (the text changed or the category changed).
   _onSearchTextChanged() {
-    let searchedText = this.searchEntry?.get_text();
+    let searchedText = this.searchEntry.get_text();
     if (searchedText === null || searchedText === undefined || searchedText === "") {
       this._buildRecents();
       this._updateSensitivity();
@@ -258,8 +258,8 @@ export class EmojiSearchItem {
     // Destroy the wrappers first to cancel pending tooltip timers
     this._recents.forEach((b) => b.destroy());
     this._recents = [];
-    this.recentlyUsedItem?.destroy();
+    if (this.recentlyUsedItem) this.recentlyUsedItem.destroy();
     this.recentlyUsedItem = null;
-    this.super_item?.destroy();
+    if (this.super_item) this.super_item.destroy();
   }
 }

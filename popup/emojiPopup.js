@@ -75,8 +75,6 @@ export class EmojiPopup extends St.Widget {
 
     open() {
         if (this._visible) return;
-        try {
-            this._visible = true;
 
         // Add backdrop (show() handles addChrome internally)
         this._backdrop.show();
@@ -98,10 +96,8 @@ export class EmojiPopup extends St.Widget {
         // Focus the view's search
         if (this._view.focusSearch)
             this._view.focusSearch();
-        } catch (e) {
-            log('Spotlight emojiPopup open error: ' + e);
-            this._visible = false;
-        }
+
+        this._visible = true;
     }
 
     close() {

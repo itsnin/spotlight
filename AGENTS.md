@@ -248,21 +248,52 @@ see https://gjs.guide/extensions/review-guidelines/review-guidelines.html#only-u
 - prefer pure functions with no side effects in utility files
 - no typescript this is plain javascript no build step
 
-### anti ai-code smells
+### ego verified coding rules
 
-- do not wrap standard api calls in try/catch blocks
-- do not use try/catch to silence errors that should never happen return null instead
-- try/catch is legitimate only for genuine external failure points:
-  - file io loading saving to disk files can be deleted corrupt or permission denied
-  - json parsing of data that originated outside our code
-  - clipboard reading content owned by other applications
-  - settings string values that users could manually edit
-- when catching always explain why the operation can genuinely fail
-- for bundled resource failures use logError so the error appears in journal
-- do not use optional chaining `?.` or nullish coalescing `??` for methods that are guaranteed to exist
-- do not add defensive null checks that mask bugs instead of handling them
-- do not add "just in case" code for situations that cannot occur
-- do not add comments that describe what a line does only describe why
+these rules are verified against the official ego review guidelines
+source: https://gjs.guide/extensions/review-guidelines/review-guidelines.html
+source: https://gjs.guide/extensions/review-guidelines/best-practices.html
+
+#### no `imports.gi.*` use esm
+always use es module syntax `import Gio from 'gi://Gio'` never the legacy `imports.gi.Gio`
+gnome shell 45 switched to es modules and the legacy syntax is deprecated
+
+#### use `log()` not `console.log`
+in the gnome shell process `console` is not a standard global always use `log()` for logging
+
+#### no `run_dispose()` unless absolutely necessary
+extensions should not call `GObject.Object.run_dispose()` unless absolutely necessary
+if absolutely necessary any call must have a comment explaining the real world situation that makes it a requirement
+
+#### optional chaining `?.` nuanced rule
+do not use optional chaining or nullish coalescing for guaranteed methods or built in apis
+the ego guideline specifically prohibits redundant checks on objects that are guaranteed to exist
+example prohibited: `this._keyboard?.destroy()` where `_keyboard` is always created in the constructor
+
+optional chaining is allowed and encouraged for genuinely potentially null objects
+example allowed: `focussedWindow?.get_wm_class()` where `focussedWindow` comes from `tracker.focus_window` which can return null
+
+if an object is guaranteed to exist call it directly without guards
+if an object can genuinely be null optional chaining is cleaner than verbose ternary checks
+
+#### avoid unnecessary try catch wrappers
+do not wrap standard api calls in try/catch blocks
+standard methods like `destroy()` `connect()` `disconnect()` `addChrome()` `set_position()` do not throw
+try/catch is legitimate only for genuine external failure points:
+- file io loading saving to disk files can be deleted corrupt or permission denied
+- json parsing of data that originated outside our code
+- clipboard reading content owned by other applications
+- settings string values that users could manually edit
+when catching always explain why the operation can genuinely fail
+
+#### css uses only `/* */` comments
+the st stylesheet parser does not support `//` line comments only `/* */` block comments
+this is a technical requirement of the st css parser not a style preference
+
+#### do not mask bugs with defensive code
+do not add defensive null checks that mask bugs instead of handling them
+do not add "just in case" code for situations that cannot occur
+do not add comments that describe what a line does only describe why
 
 ### review discipline
 
