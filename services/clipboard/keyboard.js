@@ -16,7 +16,7 @@ export class Keyboard {
 
     destroy () {
         Main.inputMethod.disconnectObject(this);
-        if (!this.#device.is_destroyed()) this.#device.destroy();
+        this.#device.run_dispose();
     }
 
     #notify (key, state) {

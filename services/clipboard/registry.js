@@ -127,7 +127,7 @@ export class Registry {
                             });
                         }
                         else {
-                            log('Spotlight: failed to open registry file');
+                            log('Clipboard Indicator: failed to open registry file');
                         }
                     });
                 });
@@ -204,10 +204,6 @@ export class Registry {
         }
     }
 
-    flush() {
-        this.clearCacheFolder();
-    }
-
     clearCacheFolder() {
 
         const CANCELLABLE = null;
@@ -256,13 +252,14 @@ export class ClipboardEntry {
 
             let file = Gio.file_new_for_path(filename);
 
-            let contentType;
-            try {
-                const fileInfo = await file.query_info_async('*', FileQueryInfoFlags.NONE, GLib.PRIORITY_DEFAULT, null);
-                contentType = fileInfo.get_content_type();
-            } catch (e) {
-                log(e);
-            }
+            const contentType = await file.query_info_async('*', FileQueryInfoFlags.NONE, GLib.PRIORITY_DEFAULT, null, (obj, res) => {
+                try {
+                    const fileInfo = obj.query_info_finish(res);
+                    return fileInfo.get_content_type();
+                } catch (e) {
+                    log(e);
+                }
+            });
 
             if (contentType && !contentType.startsWith('image/') && !contentType.startsWith('text/')) {
                 bytes = new TextEncoder().encode(jsonEntry.contents);
@@ -276,7 +273,7 @@ export class ClipboardEntry {
                     }
                     else {
                         reject(
-                            new Error('Spotlight: could not read image file from cache')
+                            new Error('Clipboard Indicator: could not read image file from cache')
                         );
                     }
                 }));

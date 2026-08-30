@@ -5,7 +5,7 @@ import GLib from "gi://GLib";
 // We use sql.js as GDA is broken in OpenSuse
 // Bug report: https://bugzilla.opensuse.org/show_bug.cgi?id=1219970
 
-import { initSqlJs } from "../libs/sql.js";
+import { initSqlJs } from "../libs/sql/sql.js";
 
 Gio._promisify(
   Gio.File.prototype,
