@@ -351,7 +351,7 @@ export class ClipboardView extends St.BoxLayout {
         this._manager.selectEntry(entry);
         this._closePopup();
         // paste after small delay to ensure focus shifts away from popup
-        if (this._triggerPaste && this._manager.getSettings().get_boolean('paste-on-select')) {
+        if (this._triggerPaste && this._settings.get_boolean(PrefsFields.PASTE_ON_SELECT)) {
             GLib.timeout_add(GLib.PRIORITY_DEFAULT, 50, () => {
                 this._triggerPaste();
                 return GLib.SOURCE_REMOVE;
@@ -435,6 +435,7 @@ export class ClipboardView extends St.BoxLayout {
             overlay.add_child(img);
 
             const parent = this.get_parent();
+            if (!parent) return;
             const parentWidth = parent.width;
             const parentHeight = parent.height;
             overlay.set_size(parentWidth, parentHeight);

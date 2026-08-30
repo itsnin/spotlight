@@ -87,11 +87,12 @@ export default class SpotlightExtension extends Extension {
         const toggleShortcuts = this._settings.get_strv('toggle-shortcut');
         if (toggleShortcuts.length > 0) {
             this._keybindingManager.listenFor(toggleShortcuts[0], () => {
+                if (!this._popup) return;
                 if (this._popup.visible)
                     this._popup.close();
-                else if (this._clipboardPopup.visible)
+                else if (this._clipboardPopup && this._clipboardPopup.visible)
                     this._clipboardPopup.close();
-                else if (this._emojiPopup.visible)
+                else if (this._emojiPopup && this._emojiPopup.visible)
                     this._emojiPopup.close();
                 else
                     this._popup.open();
@@ -156,15 +157,21 @@ export default class SpotlightExtension extends Extension {
         destroyDevice();
 
         // return stolen widgets back to overview before destroying
-        this._popup.returnOverviewSearch();
-        this._popup.destroy();
-        this._popup = null;
+        if (this._popup) {
+            this._popup.returnOverviewSearch();
+            this._popup.destroy();
+            this._popup = null;
+        }
 
-        this._clipboardPopup.destroy();
-        this._clipboardPopup = null;
+        if (this._clipboardPopup) {
+            this._clipboardPopup.destroy();
+            this._clipboardPopup = null;
+        }
 
-        this._emojiPopup.destroy();
-        this._emojiPopup = null;
+        if (this._emojiPopup) {
+            this._emojiPopup.destroy();
+            this._emojiPopup = null;
+        }
 
         this._settings = null;
         this._ = null;

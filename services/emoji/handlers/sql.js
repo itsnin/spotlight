@@ -39,8 +39,10 @@ export class SQLite {
   }
 
   destroy() {
-    this.db.close();
-    this.db = null;
+    if (this.db) {
+      this.db.close();
+      this.db = null;
+    }
   }
 
   increment_selection(unicode) {

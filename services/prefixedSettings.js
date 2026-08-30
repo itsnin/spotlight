@@ -46,6 +46,19 @@ export class PrefixedSettings {
         return this._settings.bind(this._k(key), object, property, flags);
     }
 
+    connectObject(name, ...rest) {
+        // last argument is the owner object for connectObject
+        if (name.startsWith('changed::')) {
+            const key = name.slice('changed::'.length);
+            return this._settings.connectObject(`changed::${this._k(key)}`, ...rest);
+        }
+        return this._settings.connectObject(name, ...rest);
+    }
+
+    disconnectObject(owner) {
+        return this._settings.disconnectObject(owner);
+    }
+
     // returns the underlying Gio.Settings GObject for APIs that need a real
     // GObject instance (e.g. Main.wm.addKeybinding) rather than this JS wrapper
     getRawSettings() {
