@@ -103,7 +103,9 @@ export default class SpotlightExtension extends Extension {
                 if (this._emojiPopup.visible)
                     this._emojiPopup.close();
                 GLib.timeout_add(GLib.PRIORITY_DEFAULT, 50, () => {
-                    this._clipboardPopup.open();
+                    // guard against extension being disabled during the 50ms window
+                    if (this._clipboardPopup)
+                        this._clipboardPopup.open();
                     return GLib.SOURCE_REMOVE;
                 });
             });
@@ -117,7 +119,9 @@ export default class SpotlightExtension extends Extension {
                 if (this._clipboardPopup.visible)
                     this._clipboardPopup.close();
                 GLib.timeout_add(GLib.PRIORITY_DEFAULT, 50, () => {
-                    this._emojiPopup.open();
+                    // guard against extension being disabled during the 50ms window
+                    if (this._emojiPopup)
+                        this._emojiPopup.open();
                     return GLib.SOURCE_REMOVE;
                 });
             });
