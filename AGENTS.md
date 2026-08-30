@@ -229,8 +229,12 @@ see https://gjs.guide/extensions/review-guidelines/review-guidelines.html#only-u
 
 ### comments
 
-- all comments are lowercase no exceptions unless a capital letter is required to preserve meaning for example `curl -fsSL` must keep the capital `S` and `L` because they are case-sensitive flags
-- no punctuation in comments no periods no commas no exclamation marks no question marks unless punctuation changes meaning
+comments should read like a thoughtful engineer speaking to a colleague across the table not a linter reciting grammar rules the goal is clarity and warmth not mechanical perfection
+
+guiding principles:
+- favor lowercase and minimal punctuation as a default baseline it keeps comments visually quiet and scannable
+- capitalization and punctuation are not forbidden they are permitted when they genuinely serve clarity proper nouns acronyms code symbols and the occasional question mark or exclamation that captures the right tone are all acceptable
+- a stray capital letter or period is better than stilted unreadable prose do not contort sentences to satisfy an absolute rule
 - explain why not what the code already shows what it does
 - no block comment boxes no jsdoc no `/* */` banners use plain `//` comments only
 - no references to other projects or extensions in comments by name
