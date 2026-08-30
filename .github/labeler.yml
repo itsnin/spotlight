@@ -26,16 +26,7 @@ emoji:
           - popup/emojiView.js
           - popup/emojiPopup.js
           - data/emojis.json
-caffeine:
-  - changed-files:
-      - any-glob-to-any-file:
-          - services/caffeine/**
-          - prefs/caffeine/**
-workspaces:
-  - changed-files:
-      - any-glob-to-any-file:
-          - services/workspaces/**
-          - prefs/workspaces/**
+          - data/emojis.db
 metadata and schema:
   - changed-files:
       - any-glob-to-any-file:

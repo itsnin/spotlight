@@ -75,25 +75,6 @@ Configurable options:
 
 Web search is provided by GNOME's registered search providers.
 
-## Optional Built-in Features
-
-Spotlight includes several optional features that can be individually enabled or disabled in preferences. When disabled they have zero impact on the system.
-
-| Feature | Description | Default |
-|---|---|---|
-| **Caffeine** | Prevent screen blanking and auto-suspend | Off |
-| **Workspaces Bar** | Replace top-panel workspace indicator with an i3-like workspaces bar | Off |
-| **Disable Dash** | Hide the GNOME dash dock in the overview | Off |
-
-### Caffeine
-When enabled, adds a top-panel indicator and Quick Settings toggle to prevent the screen from blanking and the system from auto-suspending. Supports full-screen apps, MPRIS media players, application triggers, timers, and configurable preferences.
-
-### Workspaces Bar
-When enabled, replaces the default GNOME workspace indicator with a customizable i3-like workspaces bar in the top panel. Features include add/remove/rename workspaces, drag-and-drop reordering, smart workspace names, keyboard shortcuts, scroll-wheel navigation, and full appearance customization. Three dedicated preferences pages (Appearance, Behavior, Shortcuts) provide complete configuration.
-
-### Disable Dash
-When enabled, hides the GNOME dash dock in the Activities overview. Adjusts window preview overlap to maintain proper layout when the dash is hidden.
-
 ## Build Note
 Compiled GSettings schemas (`gschemas.compiled`) are **not shipped** in the repository. GNOME Shell automatically compiles all schema XML files from the `schemas/` directory at extension install time. This follows GNOME extension best practices.
 
@@ -101,7 +82,7 @@ Compiled GSettings schemas (`gschemas.compiled`) are **not shipped** in the repo
 
 Spotlight uses three independent popup windows. The main search popup permanently takes over GNOME Overview's search infrastructure. On enable, it steals the Overview's search entry and search controller widgets and hides them. When the popup opens, these already-stolen widgets are reparented into the popup. When the popup closes, they are removed from the popup but kept stolen and hidden. They are only returned to the Overview on disable.
 
-Clicking the clipboard or emoji mode button in the main popup closes the main popup and opens a dedicated standalone popup for that feature. Keyboard shortcuts open their dedicated popup directly.
+Keyboard shortcuts open dedicated standalone popups directly: Ctrl+Space for search, Alt+1 for clipboard history, Alt+2 for emoji picker.
 
 This approach means Spotlight automatically benefits from every search provider registered with GNOME Shell, with zero custom provider code.
 
@@ -121,14 +102,10 @@ This approach means Spotlight automatically benefits from every search provider 
 | `services/core/` | Core Spotlight services — keybinding, virtual keyboard |
 | `services/clipboard/` | Clipboard history feature — manager, registry, keyboard, dialogs, constants |
 | `services/emoji/` | Emoji picker feature — data manager, UI components |
-| `services/caffeine/` | Caffeine feature — indicator, inhibitor manager, MPRIS |
-| `services/workspaces/` | Workspaces bar feature — UI, services, utils, styles |
-| `prefs.js` | Preferences window entry point — includes workspaces bar prefs pages |
+| `prefs.js` | Preferences window entry point |
 | `prefs/shortcutPage.js` | Keyboard shortcut configuration |
-| `prefs/appearancePage.js` | Visual theme, clipboard, emoji, standalone feature toggles |
+| `prefs/appearancePage.js` | Visual theme, clipboard and emoji behavior |
 | `prefs/aboutPage.js` | About section |
-| `prefs/caffeine/` | Caffeine preferences pages |
-| `prefs/workspaces/` | Workspaces bar preferences pages |
 | `schemas/*.gschema.xml` | Single merged GSettings schema definitions (not pre-compiled) |
 ## Design Principles
 

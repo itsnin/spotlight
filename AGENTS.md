@@ -129,23 +129,12 @@ spotlight/
             handlers/sql.js   sqlite handler (from upstream, unused)
             libs/sql.js       sql.js library (from upstream, unused)
             stylesheet.css    emoji-specific styles
-        caffeine/
-            indicator.js      quick settings indicator and toggle
-            inhibitorManager.js screen blanking inhibitor manager
-            mprisMediaPlayer2.js MPRIS media player detection
-        workspaces/
-            services/         workspace services keybindings settings styles
-            ui/               workspace bar UI components
-            utils/            utility helpers
-            stylesheet.css    workspaces bar styles
     schemas/                  gsettings schema single merged schema
         org.gnome.shell.extensions.spotlight.gschema.xml
     prefs/                    preference pages
         shortcutPage.js
         appearancePage.js
         aboutPage.js
-        caffeine/             caffeine preferences pages
-        workspaces/           workspaces bar preferences pages
     data/
         emojis.json           bundled emoji data unicode plus keywords
         emojis.db             sqlite database (from upstream, unused)
@@ -319,8 +308,6 @@ core spotlight keys
   - `'light'` always uses light appearance
 - `clipboard-shortcut` type `as` default `['<Alt>1']` keyboard shortcut to open clipboard popup
 - `emoji-shortcut` type `as` default `['<Alt>2']` keyboard shortcut to open emoji popup
-- `workspaces-bar-enabled` type `b` default `false` enable workspaces bar feature
-- `disable-dash` type `b` default `false` hide dash in overview
 
 clipboard keys prefixed with `clipboard-` accessed via `PrefixedSettings(settings, 'clipboard-')`
 - `clipboard-history-size` type `i` default `20` range `5-100` maximum number of clipboard entries
@@ -342,9 +329,6 @@ emoji keys prefixed with `emoji-` accessed via `PrefixedSettings(settings, 'emoj
 - `emoji-paste-on-select` type `b` default `true` paste after selecting emoji
 - `emoji-keep-open` type `b` default `false` keep emoji picker open after selection
 - `emoji-recently-used` type `as` default `[]` recently used emojis
-
-caffeine keys prefixed with `caffeine-`
-workspaces keys prefixed with `space-bar-state-` `space-bar-behavior-` `space-bar-appearance-` `space-bar-shortcuts-`
 
 ## appearance theme
 
