@@ -23,8 +23,9 @@ product decision worth writing down, not something to change quietly to dodge a 
 finding.
 
 no deprecated modules, ever: no `ByteArray`, no `Lang`, no `Mainloop`, no `imports.*`. use
-`console.*` instead of the old `log()` function - this is an actual documented port-guide
-requirement, not a style preference.
+`log()` for logging in the shell process `console.*` is not reliably available as a global
+in the gnome shell process this is not a style preference it is a platform compatibility
+requirement.
 
 ## wayland and X11
 
@@ -201,7 +202,7 @@ and are meant to be trusted rather than re-derived from scratch on every project
 - https://gjs.guide/extensions/overview/updates-and-breakage.html - why extensions break
   and what avoids it
 - https://gjs.guide/extensions/upgrading/gnome-shell-45.html - the 45 port guide
-  (`console.*` vs `log()`, module changes)
+  (es modules module changes)
 
 when a specific project needs to verify a claim against the live guidelines page (a rule
 that may have changed, or an edge case not covered here), fetch the actual page rather
