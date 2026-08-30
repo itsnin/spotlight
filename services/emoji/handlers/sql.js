@@ -34,7 +34,7 @@ export class SQLite {
       const [SQL, db] = await Promise.all([initSqlJs(), ReadDB(extensionPath)]);
       this.db = new SQL.Database(new Uint8Array(db));
     } catch (error) {
-      log("Error initializing database:", error);
+      console.warn("Error initializing database:", error);
     }
   }
 

@@ -177,7 +177,7 @@ export class ClipboardManager {
             if (wmClass && this.isExcludedApp(wmClass))
                 return;
         } catch (e) {
-            log('Spotlight clipboard: excluded app check failed: ' + e);
+            console.warn('Spotlight clipboard: excluded app check failed: ' + e);
         }
         try {
             const text = await new Promise(resolve => {
@@ -203,7 +203,7 @@ export class ClipboardManager {
                 return;
             this._addEntry(entry);
         } catch (e) {
-            log('Spotlight clipboard: failed to read clipboard: ' + e);
+            console.warn('Spotlight clipboard: failed to read clipboard: ' + e);
         }
     }
 

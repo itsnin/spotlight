@@ -286,8 +286,15 @@ source: https://gjs.guide/extensions/review-guidelines/best-practices.html
 always use es module syntax `import Gio from 'gi://Gio'` never the legacy `imports.gi.Gio`
 gnome shell 45 switched to es modules and the legacy syntax is deprecated
 
-#### use `log()` not `console.log`
-in the gnome shell process `console` is not a standard global always use `log()` for logging
+#### use `console.*` api with appropriate log levels
+the official gjs guide recommends the console api with functions determined by log level
+- `console.debug()` development only information logged at level debug
+- `console.warn()` unexpected errors that may indicate a bug logged at level warning
+- `console.error()` programmer errors and assertion failures logged at level critical
+`log()` still works but is only an alias for `console.log()` without a specific severity level
+using proper levels allows filtering via journalctl and triggers stack traces with
+`SHELL_DEBUG=backtrace-warnings` for warn and error levels
+source: official gjs.guide logging documentation verified via docs-gnome-extension repo
 
 #### no `run_dispose()` unless absolutely necessary
 extensions should not call `GObject.Object.run_dispose()` unless absolutely necessary

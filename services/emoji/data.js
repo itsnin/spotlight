@@ -59,7 +59,7 @@ export class EmojiData {
                 });
             }
         } catch (e) {
-            log(`[emoji] Failed to load emojis.json: ${e.message}`);
+            console.warn(`[emoji] Failed to load emojis.json: ${e.message}`);
             this._emojis = this._getFallbackEmojis();
         }
     }

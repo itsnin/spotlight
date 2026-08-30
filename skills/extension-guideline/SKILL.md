@@ -23,9 +23,14 @@ product decision worth writing down, not something to change quietly to dodge a 
 finding.
 
 no deprecated modules, ever: no `ByteArray`, no `Lang`, no `Mainloop`, no `imports.*`. use
-`log()` for logging in the shell process `console.*` is not reliably available as a global
-in the gnome shell process this is not a style preference it is a platform compatibility
-requirement.
+the console api for logging with appropriate log levels:
+- `console.debug()` for development only information level debug
+- `console.warn()` for unexpected errors that may indicate a bug level warning
+- `console.error()` for programmer errors and assertion failures level critical
+`log()` is just an alias for `console.log()` and lacks a specific severity level.
+using proper levels allows journalctl filtering and stack traces with
+`SHELL_DEBUG=backtrace-warnings` for warn and error levels.
+this is the official recommendation from the gjs.guide logging documentation.
 
 ## wayland and X11
 
@@ -203,6 +208,8 @@ and are meant to be trusted rather than re-derived from scratch on every project
   and what avoids it
 - https://gjs.guide/extensions/upgrading/gnome-shell-45.html - the 45 port guide
   (es modules module changes)
+- https://gjs.guide/extensions/development/debugging.html#logging - logging
+  best practices console api with log levels
 
 when a specific project needs to verify a claim against the live guidelines page (a rule
 that may have changed, or an edge case not covered here), fetch the actual page rather

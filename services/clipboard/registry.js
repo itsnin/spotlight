@@ -123,11 +123,11 @@ export class Registry {
 
                                 resolve(clipboardEntries);
                             }).catch(e => {
-                                log(e);
+                                console.warn(e);
                             });
                         }
                         else {
-                            log('Clipboard Indicator: failed to open registry file');
+                            console.warn('Clipboard Indicator: failed to open registry file');
                         }
                     });
                 });
@@ -200,7 +200,7 @@ export class Registry {
             await file.delete_async(GLib.PRIORITY_DEFAULT, null);
         }
         catch (e) {
-            log(e);
+            console.warn(e);
         }
     }
 
@@ -222,7 +222,7 @@ export class Registry {
 
         }
         catch (e) {
-            log(e);
+            console.warn(e);
         }
     }
 }
@@ -261,7 +261,7 @@ export class ClipboardEntry {
                     const fileInfo = obj.query_info_finish(res);
                     return fileInfo.get_content_type();
                 } catch (e) {
-                    log(e);
+                    console.warn(e);
                 }
             });
 
