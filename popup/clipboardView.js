@@ -60,9 +60,20 @@ export class ClipboardView extends St.BoxLayout {
         this._privateBtn = new St.Button({
             style_class: 'button',
             style: 'padding: 6px 12px; border-radius: 8px;',
-            label: this._('Private'),
             toggle_mode: true,
+            child: new St.BoxLayout({
+                vertical: false,
+                style: 'spacing: 6px;',
+            }),
         });
+        this._privateBtn.child.add_child(new St.Icon({
+            icon_name: 'security-medium-symbolic',
+            icon_size: 14,
+        }));
+        this._privateBtn.child.add_child(new St.Label({
+            text: this._('Private'),
+            y_align: Clutter.ActorAlign.CENTER,
+        }));
         this._privateBtn.connect('clicked', () => {
             this._manager.setPrivateMode(this._privateBtn.checked);
         });
@@ -266,9 +277,13 @@ export class ClipboardView extends St.BoxLayout {
         // Paste button
         if (this._settings.get_boolean(PrefsFields.PASTE_BUTTON)) {
             const pasteBtn = new St.Button({
-                style_class: 'button',
-                style: 'padding: 2px 6px; border-radius: 4px; font-size: 12px;',
-                label: '📋',
+                style_class: 'spotlight-action-btn',
+                can_focus: true,
+                accessible_name: this._('Paste'),
+                child: new St.Icon({
+                    icon_name: 'edit-paste-symbolic',
+                    icon_size: 14,
+                }),
             });
             pasteBtn.connect('clicked', () => {
                 this._pasteEntry(entry);
@@ -279,9 +294,13 @@ export class ClipboardView extends St.BoxLayout {
         // Pin button
         if (this._settings.get_boolean(PrefsFields.SHOW_PIN_BUTTON)) {
             const pinBtn = new St.Button({
-                style_class: 'button',
-                style: 'padding: 2px 6px; border-radius: 4px; font-size: 12px;',
-                label: isFavorite ? '★' : '☆',
+                style_class: 'spotlight-action-btn' + (isFavorite ? ' spotlight-action-btn-active' : ''),
+                can_focus: true,
+                accessible_name: isFavorite ? this._('Unpin') : this._('Pin'),
+                child: new St.Icon({
+                    icon_name: 'view-pin-symbolic',
+                    icon_size: 14,
+                }),
             });
             pinBtn.connect('clicked', () => {
                 this._manager.toggleFavorite(entry);
@@ -293,9 +312,13 @@ export class ClipboardView extends St.BoxLayout {
         // Delete button
         if (this._settings.get_boolean(PrefsFields.SHOW_DELETE_BUTTON)) {
             const delBtn = new St.Button({
-                style_class: 'button',
-                style: 'padding: 2px 6px; border-radius: 4px; font-size: 12px;',
-                label: '✕',
+                style_class: 'spotlight-action-btn spotlight-action-btn-destructive',
+                can_focus: true,
+                accessible_name: this._('Delete'),
+                child: new St.Icon({
+                    icon_name: 'edit-delete-symbolic',
+                    icon_size: 14,
+                }),
             });
             delBtn.connect('clicked', () => {
                 if (entry.isFavorite() && this._settings.get_boolean(PrefsFields.CONFIRM_ON_PINNED_DELETE)) {

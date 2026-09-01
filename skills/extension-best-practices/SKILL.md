@@ -185,6 +185,41 @@ the `button-press-event` signal has already finished propagating by the time `cl
 
 if you need to prevent event propagation connect to `button-press-event` directly and return `Clutter.EVENT_STOP`
 
+## use symbolic icons not unicode characters for buttons
+
+buttons in the shell ui should use `St.Icon` with proper `icon_name` symbolic icons from the gnome icon theme
+
+never use unicode characters like 📋 ✎ ★ ✕ as button labels they render inconsistently across fonts and look unprofessional
+
+gnome provides hundreds of consistent symbolic icons in the `/usr/share/icons/` theme
+
+wrong:
+```javascript
+const btn = new St.Button({ label: '📋' });  // ❌ unicode character
+```
+
+right:
+```javascript
+const btn = new St.Button({
+    child: new St.Icon({
+        icon_name: 'edit-paste-symbolic',  // ✅ proper symbolic icon
+        icon_size: 14,
+    }),
+});
+```
+
+common icon names:
+- paste: `edit-paste-symbolic`
+- edit: `document-edit-symbolic`
+- delete: `edit-delete-symbolic`
+- pin: `view-pin-symbolic`
+- image: `image-x-generic-symbolic`
+- search: `edit-find-symbolic`
+- clear/trash: `user-trash-symbolic`
+- private/security: `security-medium-symbolic`
+- refresh: `view-refresh-symbolic`
+- settings: `preferences-system-symbolic`
+
 ## override destroy() directly not connect to signal
 
 override `destroy()` on your subclass do not connect a listener to the `destroy` signal
