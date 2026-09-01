@@ -81,6 +81,45 @@ jobs:
           else
             echo "No optional chaining found"
           fi
+      - name: Check no JS-only properties in GObject constructors
+        run: |
+          # GObject constructors only accept registered GObject properties
+          # Passing JS-only props like _entry, _data, _item through St.BoxLayout({...}) etc.
+          # causes runtime crash: "No property _x on TypeName"
+          # This check looks for _prefixed identifiers inside GObject constructor params
+          VIOLATIONS=$(python3 << 'PYEOF'
+import re, os, sys
+violations = []
+for root, dirs, files in os.walk('.'):
+    if '.git' in root or 'services/emoji/libs' in root:
+        continue
+    for fn in files:
+        if not fn.endswith('.js'):
+            continue
+        fp = os.path.join(root, fn)
+        with open(fp, 'r', errors='replace') as f:
+            content = f.read()
+        # Find constructor calls and check for _prefixed props
+        for m in re.finditer(r'new (St|Clutter|Gio|Adw|Gtk|GObject|Meta|Shell)\.([A-Za-z]+)\(\{([^}]*)\}', content):
+            params = m.group(3)
+            for prop in re.findall(r'^\s*(_[a-zA-Z_][a-zA-Z0-9_]*)\s*:', params, re.MULTILINE):
+                # Get approximate line number
+                line_no = content[:m.start()].count('\n') + 1
+                violations.append(f"  {fp}:{line_no} — {m.group(1)}.{m.group(2)}({{ {prop}: ... }})")
+if violations:
+    print("ERROR: found JS-only properties in GObject constructors:")
+    for v in violations:
+        print(v)
+    print("Fix: assign as item._prop = value AFTER construction, not inside constructor params")
+    sys.exit(1)
+else:
+    print("No GObject constructor property violations found")
+PYEOF
+)
+          echo "$VIOLATIONS"
+          if echo "$VIOLATIONS" | grep -q "ERROR"; then
+            exit 1
+          fi
 
       - name: Check no deprecated modules
         run: |

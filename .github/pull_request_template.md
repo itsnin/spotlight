@@ -21,6 +21,8 @@ Briefly describe what this PR changes and why.
 - [ ] No module-scope instances, signals, or main-loop sources
 - [ ] Shell files don't import `Gtk`/`Gdk`/`Adw`
 - [ ] Prefs files don't import `St`/`Clutter`/`Meta`/`Shell`
+- [ ] No JS-only properties (like `_entry`, `_data`) in GObject constructors — assign with `item._prop = value` after construction
+- [ ] Feature-specific views/managers receive wrapped `PrefixedSettings`, not raw `Gio.Settings`
 - [ ] Tested on GNOME Shell 50 Wayland
 - [ ] All JS files parse as ES modules
 

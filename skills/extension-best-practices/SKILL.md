@@ -54,6 +54,36 @@ do not use boolean flags like `this._destroyed` to guard against race conditions
 
 after calling `destroy()` the instance should be nulled out and never used again
 
+## no js-only properties in gobject constructors
+
+gobject constructors only accept registered gobject properties
+
+never pass arbitrary javascript properties like `_entry` `_data` `_item` through the constructor params object
+
+these are not registered as gobject properties and will throw "no property _x on TypeName" at runtime
+
+wrong:
+```javascript
+const item = new St.BoxLayout({
+    _entry: entry,       // ❌ JS-only property, not a GObject property
+    style: 'padding: 6px;',
+    style_class: 'button',
+});
+```
+
+right:
+```javascript
+const item = new St.BoxLayout({
+    style: 'padding: 6px;',
+    style_class: 'button',
+});
+item._entry = entry;  // ✅ assign as regular JS property after construction
+```
+
+this rule applies to all gobject derived classes: `St.*` `Clutter.*` `Gio.*` `Adw.*` `Gtk.*`
+
+legitimate constructor properties are things like `style` `style_class` `visible` `reactive` `can_focus` `vertical` `text` `label` `icon_name` `layout_manager` `width` `height` `x_expand` `y_expand` `x_align` `y_align` `title` `subtitle` `model` `selected` `adjustment` `value`
+
 ## override destroy() directly not connect to signal
 
 override `destroy()` on your subclass do not connect a listener to the `destroy` signal

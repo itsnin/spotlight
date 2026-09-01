@@ -192,14 +192,16 @@ export class ClipboardView extends St.BoxLayout {
 
     _createItem(entry, isFavorite) {
         const item = new St.BoxLayout({
-            _entry: entry,
-            _isFavorite: isFavorite,
             style: `padding: 6px 8px; border-radius: 6px; background: ${isFavorite ? 'rgba(255, 215, 0, 0.1)' : 'transparent'};`,
             style_class: 'button',
             reactive: true,
             can_focus: true,
             track_hover: true,
         });
+        // attach arbitrary JS data as post-construction properties
+        // (GObject constructors only accept registered GObject properties)
+        item._entry = entry;
+        item._isFavorite = isFavorite;
 
         // Preview content: image thumbnail or text
         if (entry.isImage()) {

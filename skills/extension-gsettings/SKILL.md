@@ -91,6 +91,35 @@ when multiple features share one schema use key name prefixes like `clipboard-` 
 
 wrap `Gio.Settings` with a utility class that transparently prepends the prefix
 
+critical rule: every consumer of feature-specific settings must receive the wrapped instance
+
+never pass raw `Gio.Settings` to a view or manager that expects prefixed keys
+
+this is a common crash source: the view calls `get_boolean('regex-search')` on raw settings
+
+but the schema only has `'clipboard-regex-search'` → "GSettings key not found" crash
+
+wrong:
+```javascript
+// manager wraps its own copy, but view gets raw
+this._manager = new ClipboardManager(new PrefixedSettings(this._settings, 'clipboard-'));
+this._view = new ClipboardView(this._manager, this._settings); // ❌ raw! crashes
+```
+
+right:
+```javascript
+// both manager and view receive the same wrapped settings
+const clipboardSettings = new PrefixedSettings(this._settings, 'clipboard-');
+this._manager = new ClipboardManager(clipboardSettings);
+this._view = new ClipboardView(this._manager, clipboardSettings); // ✅ wrapped
+```
+
+or have the view consistently ask the manager for its already-wrapped settings:
+```javascript
+// inside view methods, use manager.getSettings() which returns wrapped
+const useRegex = this._manager.getSettings().get_boolean(PrefsFields.REGEX_SEARCH);
+```
+
 ## source
 
 extracted from gjs.guide preferences and review guidelines verified via docs-gnome-extension repo
