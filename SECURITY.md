@@ -1,8 +1,14 @@
 # Security Policy
 
-## Reporting a vulnerability
+## Supported Versions
 
-If you discover a security vulnerability in Spotlight, please report it responsibly.
+Only the latest release on the `develop` branch is actively supported.
 
-- **Public issues:** Open an issue on the [Issues tab](https://github.com/itsnin/spotlight/issues) with the label `security`.
-- **Private disclosure:** Email **ninx.sh@gmail.com** with a description of the vulnerability, steps to reproduce, and potential impact.
+| Branch | Supported |
+|--------|-----------|
+| develop | ✅ |
+| main | ✅ (stable releases) |
+
+## Reporting a Vulnerability
+
+If you find a security vulnerability, please report it privately by emailing **ninx.sh@gmail.com** rather than opening a public issue. Include a description of the vulnerability, steps to reproduce, and potential impact.

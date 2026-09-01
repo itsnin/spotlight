@@ -4,7 +4,7 @@ A compact, keyboard-driven launcher for GNOME Shell 45 through 50.
 
 [Repository](https://github.com/itsnin/spotlight) • [GNOME Extensions](https://extensions.gnome.org/extension/10666/spotlight/)
 
-**Version:** 2026.08.30
+**Version:** 2026.08.25
 
 ## Keyboard Shortcut
 
@@ -38,8 +38,6 @@ Open the popup with `Ctrl + Space` and begin typing. Navigation is entirely keyb
 | Action | Input |
 |---|---|
 | Open Spotlight | `Ctrl + Space` |
-| Open Clipboard History | `Alt + 1` |
-| Open Emoji Picker | `Alt + 2` |
 | Launch an application | Type its name or abbreviation, then `Enter` |
 | Evaluate an expression | Type the math, then `Enter` |
 | Lock the screen | Type `lock`, then `Enter` |
@@ -70,8 +68,6 @@ Configurable options:
 
 - The toggle keyboard shortcut (default `Ctrl+Space`)
 - Visual theme: Default (follows GNOME system style), Dark, or Light
-- Clipboard history behavior, search options, display toggles
-- Emoji defaults, grid size, and interaction behavior
 
 Web search is provided by GNOME's registered search providers.
 
@@ -80,7 +76,7 @@ Compiled GSettings schemas (`gschemas.compiled`) are **not shipped** in the repo
 
 ## Architecture
 
-Spotlight uses three independent popup windows. The main search popup permanently takes over GNOME Overview's search infrastructure. On enable, it steals the Overview's search entry and search controller widgets and hides them. When the popup opens, these already-stolen widgets are reparented into the popup. When the popup closes, they are removed from the popup but kept stolen and hidden. They are only returned to the Overview on disable.
+Spotlight uses a single popup window. The main search popup permanently takes over GNOME Overview's search infrastructure. On enable, it steals the Overview's search entry and search controller widgets and hides them. When the popup opens, these already-stolen widgets are reparented into the popup. When the popup closes, they are removed from the popup but kept stolen and hidden. They are only returned to the Overview on disable.
 
 Open with Ctrl+Space (configurable in preferences). Spotlight permanently hijacks the Overview search entry so results appear in a compact centered popup instead of the full Overview.
 
@@ -100,6 +96,7 @@ This approach means Spotlight automatically benefits from every search provider 
 | `schemas/*.gschema.xml` | GSettings schema definitions |
 
 Structure follows the lib based convention used by the most sophisticated widely adopted gnome shell extensions such as just perfection
+
 ## Design Principles
 
 - **Dark, not black.** Background `#1c1c1e` with text `#f5f5f7`. Pure black is harsh on OLED and inaccurate on IPS panels.

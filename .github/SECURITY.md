@@ -22,7 +22,7 @@ This extension:
 
 ## Security Best Practices
 
-- Clipboard data stays on your machine
+- All search happens locally on your machine
 - No external databases or network connections
-- Clipboard history is stored locally in your extension data directory
+- No user data is stored persistently by this extension
 - No external network connections are made

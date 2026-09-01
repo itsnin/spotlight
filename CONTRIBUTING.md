@@ -147,7 +147,7 @@ The popup widget overrides `destroy()` to call `close()` first — which removes
 
 ## Adding a New UI Component
 
-1. Create a new file at the root level, for example `myWidget.js`.
+1. Create a new file under `lib/ui/`, for example `lib/ui/myWidget.js`.
 2. Export a function that constructs and returns the widget.
 3. Import it in `spotlightPopup.js` where needed.
 4. Use `connectObject()` for all signal connections.
