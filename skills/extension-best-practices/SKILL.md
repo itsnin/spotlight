@@ -137,6 +137,54 @@ for (let i = 0; i < 9; i++) {
 }
 ```
 
+## dedicated paste buttons must always paste
+
+the paste button must always trigger a paste regardless of the paste on select user setting
+
+the paste on select setting controls whether clicking the main item body auto pastes
+
+the dedicated paste button is an explicit user request to paste and must not be gated
+
+wrong:
+```javascript
+// paste button uses same method as item click which checks the setting
+pasteBtn.connect('clicked', () => this._selectAndPaste(entry));
+// _selectAndPaste only pastes if paste-on-select is true
+```
+
+right:
+```javascript
+// paste button calls a dedicated method that always pastes
+pasteBtn.connect('clicked', () => this._pasteEntry(entry));
+// _pasteEntry: copies + closes popup + always triggers paste
+```
+
+## use notify_keyval not notify_key for virtual keyboard events
+
+`notify_key` takes hardware keycodes which vary between keyboard layouts
+
+`notify_keyval` takes symbolic key names like `Clutter.KEY_Shift_L` which work across all keyboards
+
+using raw hardware keycodes like 42 and 110 will silently fail on non us keyboard layouts
+
+wrong:
+```javascript
+VirtualKeyboard().notify_key(eventTime, 42, Clutter.KeyState.PRESSED);  // hardware keycode!
+```
+
+right:
+```javascript
+VirtualKeyboard().notify_keyval(eventTime, Clutter.KEY_Shift_L, Clutter.KeyState.PRESSED);  // portable symbol
+```
+
+## stop_signal_emission must be called during the signal emission
+
+calling `actor.stop_signal_emission('button-press-event')` from inside a `clicked` handler has no effect
+
+the `button-press-event` signal has already finished propagating by the time `clicked` fires
+
+if you need to prevent event propagation connect to `button-press-event` directly and return `Clutter.EVENT_STOP`
+
 ## override destroy() directly not connect to signal
 
 override `destroy()` on your subclass do not connect a listener to the `destroy` signal

@@ -244,8 +244,7 @@ export class ClipboardView extends St.BoxLayout {
                 style: 'padding: 2px 6px; border-radius: 4px; font-size: 12px;',
                 label: '🖼',
             });
-            previewBtn.connect('clicked', (btn) => {
-                btn.stop_signal_emission('button-press-event');
+            previewBtn.connect('clicked', () => {
                 this._showImagePreview(entry);
             });
             btnBox.add_child(previewBtn);
@@ -258,8 +257,7 @@ export class ClipboardView extends St.BoxLayout {
                 style: 'padding: 2px 6px; border-radius: 4px; font-size: 12px;',
                 label: '✎',
             });
-            editBtn.connect('clicked', (btn) => {
-                btn.stop_signal_emission('button-press-event');
+            editBtn.connect('clicked', () => {
                 this._showEditDialog(entry);
             });
             btnBox.add_child(editBtn);
@@ -272,9 +270,8 @@ export class ClipboardView extends St.BoxLayout {
                 style: 'padding: 2px 6px; border-radius: 4px; font-size: 12px;',
                 label: '📋',
             });
-            pasteBtn.connect('clicked', (btn) => {
-                btn.stop_signal_emission('button-press-event');
-                this._selectAndPaste(entry);
+            pasteBtn.connect('clicked', () => {
+                this._pasteEntry(entry);
             });
             btnBox.add_child(pasteBtn);
         }
@@ -286,8 +283,7 @@ export class ClipboardView extends St.BoxLayout {
                 style: 'padding: 2px 6px; border-radius: 4px; font-size: 12px;',
                 label: isFavorite ? '★' : '☆',
             });
-            pinBtn.connect('clicked', (btn) => {
-                btn.stop_signal_emission('button-press-event');
+            pinBtn.connect('clicked', () => {
                 this._manager.toggleFavorite(entry);
                 this._refresh();
             });
@@ -301,8 +297,7 @@ export class ClipboardView extends St.BoxLayout {
                 style: 'padding: 2px 6px; border-radius: 4px; font-size: 12px;',
                 label: '✕',
             });
-            delBtn.connect('clicked', (btn) => {
-                btn.stop_signal_emission('button-press-event');
+            delBtn.connect('clicked', () => {
                 if (entry.isFavorite() && this._settings.get_boolean(PrefsFields.CONFIRM_ON_PINNED_DELETE)) {
                     this._manager.getDialogManager().open(
                         this._('Delete pinned entry?'),
@@ -354,6 +349,18 @@ export class ClipboardView extends St.BoxLayout {
         this._closePopup();
         // paste after small delay to ensure focus shifts away from popup
         if (this._triggerPaste && this._settings.get_boolean(PrefsFields.PASTE_ON_SELECT)) {
+            GLib.timeout_add(GLib.PRIORITY_DEFAULT, 50, () => {
+                this._triggerPaste();
+                return GLib.SOURCE_REMOVE;
+            });
+        }
+    }
+
+    // Always copies + pastes (used by dedicated paste button)
+    _pasteEntry(entry) {
+        this._manager.selectEntry(entry);
+        this._closePopup();
+        if (this._triggerPaste) {
             GLib.timeout_add(GLib.PRIORITY_DEFAULT, 50, () => {
                 this._triggerPaste();
                 return GLib.SOURCE_REMOVE;
