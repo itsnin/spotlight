@@ -27,6 +27,10 @@ export class PrefixedSettings {
     get_value(name) { return this._settings.get_value(this._key(name)); }
     set_value(name, val) { this._settings.set_value(this._key(name), val); }
 
+    bind(name, object, property, flags) {
+        return this._settings.bind(this._key(name), object, property, flags);
+    }
+
     connect(name, cb) {
         return this._settings.connect('changed::' + this._key(name), cb);
     }

@@ -230,6 +230,45 @@ when programmatically parsing gschema xml handle both attribute orders:
 
 regex must match either pattern to avoid missing keys
 
+## PrefixedSettings must implement Gio.Settings.bind
+
+when prefs pages use settings.bind() to bind widgets directly to gsettings keys the PrefixedSettings wrapper must implement the bind method
+
+bind translates the key name with prefix and delegates to underlying settings:
+```javascript
+bind(name, object, property, flags) {
+    return this._settings.bind(this._key(name), object, property, flags);
+}
+```
+
+without bind prefs windows crash with settings.bind is not a function
+
+## when adapting constructors assign settings before any method call
+
+when extracting a class that receives settings via a constructor parameter and stores it as this._settings ensure the assignment happens BEFORE any method call that might need it
+
+the _init method may call helper methods like _loadSettings during construction
+
+wrong:
+```javascript
+_init(params) {
+    super._init(...);
+    this._createWidgets();
+    this._loadSettings();  // CRASH: this._settings not assigned yet
+    this._settings = params.settings;  // too late
+}
+```
+
+right:
+```javascript
+_init(params) {
+    super._init(...);
+    this._settings = params.settings;  // assign FIRST
+    this._createWidgets();
+    this._loadSettings();  // safe: this._settings exists
+}
+```
+
 ## use symbolic icons not unicode characters for buttons
 
 buttons in the shell ui should use `St.Icon` with proper `icon_name` symbolic icons from the gnome icon theme

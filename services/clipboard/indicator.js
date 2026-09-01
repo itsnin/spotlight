@@ -106,6 +106,7 @@ const ClipboardIndicator = GObject.registerClass({
         });
 
         this.extension = extension;
+        this._settings = extension.settings;
         this._destroyed = false;
         this.registry = new Registry(extension);
         this.keyboard = new Keyboard();
@@ -1362,7 +1363,7 @@ const ClipboardIndicator = GObject.registerClass({
     }
 
     _fetchSettings () {
-        const { settings } = this.extension;
+        const settings = this._settings;
         MAX_REGISTRY_LENGTH         = settings.get_int(PrefsFields.HISTORY_SIZE);
         MAX_ENTRY_LENGTH            = settings.get_int(PrefsFields.PREVIEW_SIZE);
         CACHE_ONLY_FAVORITE         = settings.get_boolean(PrefsFields.CACHE_ONLY_FAVORITE);
