@@ -185,6 +185,31 @@ the `button-press-event` signal has already finished propagating by the time `cl
 
 if you need to prevent event propagation connect to `button-press-event` directly and return `Clutter.EVENT_STOP`
 
+## verify upstream-called methods exist on host class
+
+when extracting upstream classes that receive a context object (this.emojiCopy, this.extension), audit every method and property the upstream widgets call on that context
+
+search all upstream files for pattern contextObject.methodName( and contextObject.propertyName
+
+common missing methods when integrating emoji-copy:
+- _onSearchTextChanged() — called by emojiCategory and emojiSearchItem
+- clearCategories() — called by emojiCategory
+
+if any method is missing the extension will crash at runtime with undefined is not a function
+
+## verify gettext import when extracting code
+
+when extracting code from an upstream extension.js that uses _() for translations ensure the gettext import is included in the extracted file
+
+the original extension.js imports gettext but classes extracted from it may leave the import behind
+
+grep -c "_(" thefile.js — if count > 0 verify gettext is imported
+
+## Registry constructor uses parameter destructuring
+
+clipboard Registry constructor expects { settings, uuid } via object destructuring
+
+extra properties in the params object are harmless but settings and uuid must be present
 ## use symbolic icons not unicode characters for buttons
 
 buttons in the shell ui should use `St.Icon` with proper `icon_name` symbolic icons from the gnome icon theme

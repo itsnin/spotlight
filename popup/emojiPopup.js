@@ -253,6 +253,31 @@ export class EmojiPopup {
     this.searchItem.setNbCols(nbCols);
   }
 
+
+  clearCategories() {
+    for (let i = 0; i < 9; i++) {
+      this.emojiCategories[i].getButton().set_checked(false);
+    }
+
+    let items = this.super_btn.menu._getMenuItems();
+
+    if (this.position === "top") {
+      for (let i = this._permanentItems; i < items.length; i++) {
+        items[i].setSubmenuShown(false);
+        items[i].visible = false;
+      }
+    } else {
+      for (let i = 0; i < (items.length - this._permanentItems); i++) {
+        items[i].setSubmenuShown(false);
+        items[i].visible = false;
+      }
+    }
+  }
+
+  _onSearchTextChanged() {
+    this.searchItem._onSearchTextChanged();
+  }
+
   _bindShortcut() { /* handled by spotlight keybinding manager */ }
 
 
