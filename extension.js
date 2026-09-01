@@ -33,9 +33,11 @@ export default class SpotlightExtension extends Extension {
         await this._sqlite.initializeDB(this.path);
 
         // create views for the separate popups
+        // wrap settings with clipboard- prefix for the view
+        const clipboardSettings = new PrefixedSettings(this._settings, 'clipboard-');
         this._clipboardView = new ClipboardView(
             this._clipboardManager,
-            this._settings,
+            clipboardSettings,
             () => this._clipboardPopup.close(),
             () => this._triggerPaste(),
             _,

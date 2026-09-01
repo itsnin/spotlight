@@ -4,11 +4,10 @@ import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/ex
 import Adw from 'gi://Adw';
 import {buildShortcutPage} from './prefs/shortcutPage.js';
 import {buildAppearancePage} from './prefs/appearancePage.js';
+import {buildClipboardPage} from './prefs/clipboardPage.js';
+import {buildEmojiPage} from './prefs/emojiPage.js';
 import {buildAboutPage} from './prefs/aboutPage.js';
 
-
-// each category gets its own page tab in the sidebar
-// keyboard shortcuts appearance theme and about
 export default class SpotlightPreferences extends ExtensionPreferences {
     fillPreferencesWindow(window) {
         const settings = this.getSettings();
@@ -28,6 +27,24 @@ export default class SpotlightPreferences extends ExtensionPreferences {
         for (const group of appearanceGroups)
             appearancePage.add(group);
         window.add(appearancePage);
+
+        const clipboardPage = new Adw.PreferencesPage({
+            title: 'Clipboard',
+            icon_name: 'edit-paste-symbolic',
+        });
+        const clipboardGroups = buildClipboardPage(settings);
+        for (const group of clipboardGroups)
+            clipboardPage.add(group);
+        window.add(clipboardPage);
+
+        const emojiPage = new Adw.PreferencesPage({
+            title: 'Emoji',
+            icon_name: 'face-smile-symbolic',
+        });
+        const emojiGroups = buildEmojiPage(settings);
+        for (const group of emojiGroups)
+            emojiPage.add(group);
+        window.add(emojiPage);
 
         const aboutPage = new Adw.PreferencesPage({
             title: 'About',
