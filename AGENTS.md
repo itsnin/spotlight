@@ -269,7 +269,7 @@ standard methods like `destroy()` `connect()` `disconnect()` `addChrome()` `set_
 try/catch is legitimate only for genuine external failure points:
 - file io loading saving to disk files can be deleted corrupt or permission denied
 - json parsing of data that originated outside our code
-- clipboard reading content owned by other applications
+- external content reading data from sources outside our control
 - settings string values that users could manually edit
 when catching always explain why the operation can genuinely fail
 

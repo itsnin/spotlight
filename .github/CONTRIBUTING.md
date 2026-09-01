@@ -8,7 +8,6 @@ This project follows strict GNOME Shell extension coding standards. Before submi
 - **skills/extension-best-practices/SKILL.md** — common pitfalls and what to avoid
 - **skills/extension-lifecycle/SKILL.md** — enable/disable symmetry and cleanup discipline
 - **skills/extension-signal-cleanup/SKILL.md** — signal connection patterns
-- **skills/extension-glib-sources/SKILL.md** — timeout_add, idle_add, and source removal
 - **skills/extension-gsettings/SKILL.md** — GSettings schema conventions
 - **skills/extension-prefs/SKILL.md** — preferences window and process isolation rules
 - **skills/extension-esm-imports/SKILL.md** — ESM import rules and process isolation

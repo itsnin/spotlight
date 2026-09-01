@@ -1,111 +1,40 @@
 # extension-best-practices
 
-## directory structure convention
+## structure
+use lib/ for library code organized by concern lib/ui lib/core lib/utils
+src/ implies a build step use lib for extensions without compilation
 
-use lib as the root folder for all library code organized by concern
+## GObject constructor
+never pass underscore prefixed properties through GObject constructors assign after construction
 
-this is the convention used by the most sophisticated and widely adopted gnome shell extensions such as just perfection verified via web search of popular extension repositories
+## enable disable
+enable and disable must be adjacent in extension.js every object created in enable must be destroyed in disable in reverse dependency order
 
-```
-extension.js          entry point at root required by gnome
-prefs.js              prefs entry at root required by gnome
-stylesheet.css        at root required by gnome
-lib/
-    ui/               user interface components popups widgets
-    core/             core infrastructure services keybinding etc
-    utils/            shared utilities if needed
-prefs/                preference pages
-schemas/              gsettings schema xml at root required by gnome
-scripts/              build install helper scripts
-```
+## signals
+use connectObject with this as owner for all signals on objects supporting it
+exceptions global.display and global.stage use plain connect with explicit id tracking and disconnect
 
-src implies a build or compilation step use lib for extensions without a build step
+## key events
+use notify_keyval with Clutter.KEY_ symbols not notify_key with hardware keycodes
 
-never invent deeply nested structures for small codebases two levels deep lib/category is sufficient
+## icons
+use symbolic icons St.Icon with icon_name never unicode characters
 
-## GObject constructor rule
+## optional chaining
+prohibited for guaranteed objects only allowed for genuinely potentially null objects
 
-never pass custom underscore prefixed properties through GObject constructors they get silently dropped and cause null reference crashes
-
-set custom properties after construction via assignment
-
-wrong:
-```javascript
-new MyClass({ _customProp: value });
-```
-
-right:
-```javascript
-const obj = new MyClass();
-obj._customProp = value;
-```
-
-## enable and disable must be adjacent
-
-enable and disable methods must be kept next to each other in extension.js for easy review
-
-every object created in enable must be destroyed in disable in reverse order of dependency
-
-## signal cleanup with connectObject
-
-always use connectObject with this as the final argument for signals on objects that outlive the handler
-
-this lets disconnectObject(this) clean up all handlers in one call during disable
-
-never use plain connect for signals on objects that support connectObject
-
-exceptions: global.display and global.stage do not support connectObject use plain connect with explicit ID tracking and disconnect
-
-## use notify_keyval not notify_key
-
-when simulating key events use notify_keyval with Clutter.KEY_* symbols not notify_key with raw hardware keycodes
-
-hardware keycodes vary by keyboard layout and silently fail on non us keyboards
-
-## use symbolic icons not unicode characters
-
-buttons in the shell ui should use St.Icon with proper icon_name symbolic icons from the gnome icon theme
-
-## optional chaining prohibited for guaranteed objects
-
-optional chaining is only allowed for genuinely nullable objects never for objects that are guaranteed to exist by construction
-
-using it for guaranteed objects masks bugs and makes failures silent
-
-## try catch only for file io and parsing
-
-never wrap standard gnome api calls in try catch
-
-try catch is allowed only for file io json parsing regex operations and other genuinely fallible external operations
+## try catch
+only for file io json parsing regex never wrap standard gnome api calls
 
 ## process isolation
+shell process must never import Gtk Gdk Adw
+prefs process must never import St Clutter Meta Shell
 
-shell process files must never import Gtk Gdk or Adw
+## css
+only block comments /* */ never line comments //
 
-preferences process files must never import St Clutter Meta or Shell
+## method verification
+verify every called method exists on the target class before calling
 
-## css comments
-
-css must use only block comments /* */ never line comments //
-
-## verify called methods exist
-
-when one class calls methods on another object grep for every method call and verify the target class implements it
-
-missing methods cause undefined is not a function crashes at runtime
-
-## when adapting constructors assign settings before any method call
-
-if a class receives settings via constructor and stores it as this._settings the assignment must happen before any method call that might need it
-
-helper methods like _loadSettings called during _init will crash if this._settings is not yet assigned
-
-## process isolation
-
-shell process files must never import Gtk Gdk or Adw
-
-preferences process files must never import St Clutter Meta or Shell
-
-## css comments
-
-css must use only block comments /* */ never line comments //
+## settings assignment
+when adapting constructors assign this._settings before any method call that needs it
