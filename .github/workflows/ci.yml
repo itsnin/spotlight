@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
   pull_request:
-    branches: [main]
+    branches: [main, develop]
 
 jobs:
   validate:
@@ -20,7 +20,7 @@ jobs:
       - name: Check all JS files parse as ES modules
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq nodejs
-          for f in *.js prefs/*.js; do
+          for f in $(find . -name "*.js" -not -path "./.git/*"); do
             node --check "$f" || { echo "SYNTAX ERROR in $f"; exit 1; }
           done
           echo "All JS files parse successfully"
@@ -64,23 +64,66 @@ jobs:
 
       - name: Check no try/catch in shell code
         run: |
-          if grep -rn 'try\s*{' *.js; then
+          if grep -rn 'try\s*{' $(find . -name "*.js" -not -path "./.git/*" -not -path "./prefs/*"); then
             echo "WARNING: found try/catch in shell code (review needed)"
           else
             echo "No try/catch in shell code"
           fi
 
-      - name: Check no optional chaining
+      - name: Check optional chaining usage
         run: |
-          if grep -rnE '\?\.' *.js prefs/*.js; then
-            echo "ERROR: found optional chaining"
+          # optional chaining is prohibited only for GUARANTEED methods/objects per EGO guidelines
+          # it is allowed for genuinely potentially-null objects (e.g. tracker.focus_window result)
+          # this check flags occurrences for human review, not as a hard failure
+          if grep -rnE '\?\.' $(find . -name "*.js" -not -path "./.git/*"); then
+            echo "WARNING: found optional chaining (verify each is for a genuinely potentially-null object)"
+            echo "See AGENTS.md 'optional chaining ?. nuanced rule' for guidance"
+          else
+            echo "No optional chaining found"
+          fi
+      - name: Check no JS-only properties in GObject constructors
+        run: |
+          # GObject constructors only accept registered GObject properties
+          # Passing JS-only props like _entry, _data, _item through St.BoxLayout({...}) etc.
+          # causes runtime crash: "No property _x on TypeName"
+          # This check looks for _prefixed identifiers inside GObject constructor params
+          VIOLATIONS=$(python3 << 'PYEOF'
+import re, os, sys
+violations = []
+for root, dirs, files in os.walk('.'):
+    if '.git' in root or False:
+        continue
+    for fn in files:
+        if not fn.endswith('.js'):
+            continue
+        fp = os.path.join(root, fn)
+        with open(fp, 'r', errors='replace') as f:
+            content = f.read()
+        # Find constructor calls and check for _prefixed props
+        for m in re.finditer(r'new (St|Clutter|Gio|Adw|Gtk|GObject|Meta|Shell)\.([A-Za-z]+)\(\{([^}]*)\}', content):
+            params = m.group(3)
+            for prop in re.findall(r'^\s*(_[a-zA-Z_][a-zA-Z0-9_]*)\s*:', params, re.MULTILINE):
+                # Get approximate line number
+                line_no = content[:m.start()].count('\n') + 1
+                violations.append(f"  {fp}:{line_no} — {m.group(1)}.{m.group(2)}({{ {prop}: ... }})")
+if violations:
+    print("ERROR: found JS-only properties in GObject constructors:")
+    for v in violations:
+        print(v)
+    print("Fix: assign as item._prop = value AFTER construction, not inside constructor params")
+    sys.exit(1)
+else:
+    print("No GObject constructor property violations found")
+PYEOF
+)
+          echo "$VIOLATIONS"
+          if echo "$VIOLATIONS" | grep -q "ERROR"; then
             exit 1
           fi
-          echo "No optional chaining found"
 
       - name: Check no deprecated modules
         run: |
-          if grep -rn "imports.misc.lang\|imports.misc.mainloop\|imports.misc.byteArray" *.js prefs/*.js; then
+          if grep -rn "imports.misc.lang\|imports.misc.mainloop\|imports.misc.byteArray" $(find . -name "*.js" -not -path "./.git/*"); then
             echo "ERROR: found deprecated module imports"
             exit 1
           fi
@@ -94,7 +137,7 @@ jobs:
             exit 1
           fi
           echo "Checking shell files don't import GTK-only libs..."
-          if grep -rn "from 'gi://Gtk'\|from 'gi://Gdk'\|from 'gi://Adw'" *.js | grep -v "^prefs"; then
+          if grep -rn "from 'gi://Gtk'\|from 'gi://Gdk'\|from 'gi://Adw'" $(find . -name "*.js" -not -path "./.git/*" -not -path "./prefs/*" -not -name "prefs.js"); then
             echo "ERROR: shell files import GTK-only libraries"
             exit 1
           fi
@@ -111,6 +154,6 @@ jobs:
       - name: Summary
         run: |
           echo "=== CI Summary ==="
-          echo "JS files: $(ls *.js prefs/*.js | wc -l)"
+          echo "JS files: $(find . -name "*.js" -not -path "./.git/*" -not -path "./skills/*" | wc -l)"
           echo "Total files: $(find . -type f -not -path './.git/*' | wc -l)"
           echo "All checks passed"

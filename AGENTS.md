@@ -4,6 +4,30 @@ this file is the single source of truth for any person ai or agent working on th
 
 if you are an ai agent read the whole file do not skim
 
+## supplementary skills reference
+
+the `skills/` directory contains focused single topic skill files extracted from the official gjs.guide documentation
+
+each skill covers one specific area in depth:
+
+- `skills/extension-getting-started/` — basic setup required files directory structure
+- `skills/extension-esm-imports/` — es module import rules process isolation
+- `skills/extension-lifecycle/` — enable disable symmetry cleanup discipline
+- `skills/extension-signal-cleanup/` — connectobject signal patterns and cleanup
+- `skills/extension-glib-sources/` — timeout_add idle_add source removal
+- `skills/extension-gsettings/` — schema conventions binding metadata integration
+- `skills/extension-prefs/` — fillPreferencesWindow adw gtk4 process isolation
+- `skills/extension-styling/` — stylesheet.css st css limitations box model
+- `skills/extension-translations/` — gettext marking strings pot files
+- `skills/extension-debugging/` — looking glass journalctl nested shell
+- `skills/extension-review-guidelines/` — ego review rules rejection reasons
+- `skills/extension-best-practices/` — ai specific guidance code quality
+- `skills/extension-metadata/` — metadata.json fields conventions validation
+- `skills/extension-injection/` — injectionmanager method patching patterns
+- `skills/extension-accessibility/` — atk roles states relationships
+
+these skills are supplementary reference material this file agemt.md remains the single source of truth for project specific rules architecture and design decisions
+
 ## what this extension is
 
 spotlight is a compact launcher for gnome shell inspired by a keyboard-driven launcher design you press a shortcut a centered popup appears you type and results show up in real time
@@ -52,43 +76,61 @@ the codebase calls `set_vertical(true)` after `_init()` for st box layouts not `
 
 `vertical` and `set_vertical()` are confirmed to exist across the full 45 through 50 range so this is the correct choice do not switch back to `orientation` in the constructor without first confirming it against the actual minimum supported version not just the newest one
 
+similarly `St.BoxLayout` has no `spacing` gobject property and no `set_spacing()` method spacing must be set via css using the `style` property for example `box.style = 'spacing: 10px;'` real user reports hit both `Error: No property spacing on StBoxLayout` and `TypeError: set_spacing is not a function` always use css for spacing
+
+also `padding_top` `padding_bottom` `margin_top` `margin_bottom` and other box model properties are css properties not gobject properties they must be set via the `style` property not in the constructor real user report hit `Error: No property padding_top on StBoxLayout`
+
+general rule if a property sounds like css it probably is css use `actor.style = 'property: value;'` not constructor properties only use constructor properties that are explicitly documented in the official st or clutter api docs
+
+keybinding validation in preferences uses two layers first require at least one modifier to prevent bare keys like g or space that would cause accidental triggering during typing second validate via `Gtk.accelerator_valid(keyval, modifiers)` which rejects modifier only keys and other invalid combinations note `Gtk.accelerator_valid` does not reject bare alphanumeric keys it only rejects modifier only keys so the manual modifier check is still required
+
 ### single package for all versions
 
 ego supports multi-versioning where you upload separate zips for different gnome versions spotlight does not do this one zip works on all supported versions if a future gnome version breaks something fix it in the same codebase do not maintain a fork
 
 ## architecture
 
+### single focused popup
+
+spotlight has one popup the main search popup it permanently steals the overview search entry and controller
+
 ### spotlight is first-class overview search is second-class
 
-on enable spotlight permanently steals the overview's search entry and search controller and hides them overview search is gone for as long as spotlight is enabled the overview itself stays functional window picker app grid workspaces only its search ui is permanently hijacked
+on enable spotlight permanently steals the overview search entry and search controller and hides them overview search is gone for as long as spotlight is enabled the overview itself stays functional window picker app grid workspaces only its search ui is permanently hijacked
 
-when the popup opens spotlight reparents the already-stolen widgets into its popup when the popup closes spotlight removes them from the popup but keeps them stolen and hidden they are only returned to the overview on disable
+when the popup opens spotlight reparents the already stolen widgets into its popup when the popup closes spotlight removes them from the popup but keeps them stolen and hidden they are only returned to the overview on disable
 
 this is achieved through two methods on SpotlightPopup
 
-- `stealOverviewSearch()` called once from extension.enable()
-- `returnOverviewSearch()` called once from extension.disable()
+- stealOverviewSearch called once from extension enable
+- returnOverviewSearch called once from extension disable
 
 the popup open and close methods only reparent widgets between our content box and a hidden state they never return widgets to the overview
 
 ### file layout
 
 ```
-spotlight@nin/
-    extension.js              entry point constructs popup registers keybinding
+spotlight/
+    extension.js              entry point constructs popup and keybinding manager
     prefs.js                  preferences entry point
-    spotlightPopup.js         main popup widget steals overview search ui
-    popupBackdrop.js          transparent fullscreen click outside detection
-    popupPositioner.js        positions centers and shows the popup
-    keybinding.js             keybinding manager
+    spotlightPopup.js         main search popup open close destroy lifecycle
     stylesheet.css            spotlight styling
     metadata.json             extension metadata
+    popup/                    popup infrastructure
+        popupBackdrop.js      transparent click outside detection
+        popupPositioner.js    sizing centering and monitor detection
+    services/
+        core/
+            keybinding.js     keybinding manager via grab_accelerator
     schemas/                  gsettings schema
         org.gnome.shell.extensions.spotlight.gschema.xml
     prefs/                    preference pages
-        shortcutPage.js
-        appearancePage.js
-        aboutPage.js
+        shortcutPage.js       shortcut customization
+        appearancePage.js     theme preference
+        aboutPage.js          extension info
+    scripts/
+        install.sh            curl installer downloads latest release from github
+        build.sh              symlink to install.sh backward compatibility
 ```
 
 ### process isolation
@@ -115,11 +157,13 @@ search priority and behavior are entirely controlled by gnome shell not by spotl
 
 ### signal management
 
-all signal connections on gobjects use `connectObject` and `disconnectObject` not `connect` and `disconnect` this is a gnome shell 42 plus api that auto-disconnects all signals connected with a given owner object see https://gjs.guide/extensions/upgrading/gnome-shell-42.html
+for signals on long lived objects like `global.stage` `global.display` `Shell.AppSystem` that outlive our extension use `connectObject` and `disconnectObject` this is a gnome shell 42 plus api that auto-disconnects all signals connected with a given owner object see https://gjs.guide/extensions/upgrading/gnome-shell-42.html
 
 in `disable()` or `destroy()` we call `disconnectObject(this)` which removes every signal connected with `this` as the owner this prevents signal leaks if you forget to disconnect one manually
 
-do not use plain `connect` with manual disconnect for any new signal always use `connectObject`
+for signals connected to short lived widgets like buttons list items that our code destroys plain `connect` is safe because gobject automatically disconnects all signal handlers when the emitting object is finalized verified via https://discourse.gnome.org/t/run-dispose-in-gjs/16722 and official gobject signal documentation
+
+do not use plain `connect` for signals from long lived objects always use `connectObject` for those
 
 ### popup positioning
 
@@ -159,8 +203,12 @@ see https://gjs.guide/extensions/review-guidelines/review-guidelines.html#only-u
 
 ### comments
 
-- all comments are lowercase no exceptions unless a capital letter is required to preserve meaning for example `curl -fsSL` must keep the capital `S` and `L` because they are case-sensitive flags
-- no punctuation in comments no periods no commas no exclamation marks no question marks unless punctuation changes meaning
+comments should read like a thoughtful engineer speaking to a colleague across the table not a linter reciting grammar rules the goal is clarity and warmth not mechanical perfection
+
+guiding principles:
+- favor lowercase and minimal punctuation as a default baseline it keeps comments visually quiet and scannable
+- capitalization and punctuation are not forbidden they are permitted when they genuinely serve clarity proper nouns acronyms code symbols and the occasional question mark or exclamation that captures the right tone are all acceptable
+- a stray capital letter or period is better than stilted unreadable prose do not contort sentences to satisfy an absolute rule
 - explain why not what the code already shows what it does
 - no block comment boxes no jsdoc no `/* */` banners use plain `//` comments only
 - no references to other projects or extensions in comments by name
@@ -178,14 +226,59 @@ see https://gjs.guide/extensions/review-guidelines/review-guidelines.html#only-u
 - prefer pure functions with no side effects in utility files
 - no typescript this is plain javascript no build step
 
-### anti ai-code smells
+### ego verified coding rules
 
-- do not wrap standard api calls in try/catch blocks
-- do not use try/catch to silence errors that should never happen return null instead
-- do not use optional chaining `?.` or nullish coalescing `??` for methods that are guaranteed to exist
-- do not add defensive null checks that mask bugs instead of handling them
-- do not add "just in case" code for situations that cannot occur
-- do not add comments that describe what a line does only describe why
+these rules are verified against the official ego review guidelines
+source: https://gjs.guide/extensions/review-guidelines/review-guidelines.html
+source: https://gjs.guide/extensions/review-guidelines/best-practices.html
+
+#### no `imports.gi.*` use esm
+always use es module syntax `import Gio from 'gi://Gio'` never the legacy `imports.gi.Gio`
+gnome shell 45 switched to es modules and the legacy syntax is deprecated
+
+#### use `console.*` api with appropriate log levels
+the official gjs guide recommends the console api with functions determined by log level
+- `console.debug()` development only information logged at level debug
+- `console.warn()` unexpected errors that may indicate a bug logged at level warning
+- `console.error()` programmer errors and assertion failures logged at level critical
+`log()` still works but is only an alias for `console.log()` without a specific severity level
+using proper levels allows filtering via journalctl and triggers stack traces with
+`SHELL_DEBUG=backtrace-warnings` for warn and error levels
+source: official gjs.guide logging documentation verified via docs-gnome-extension repo
+
+#### no `run_dispose()` unless absolutely necessary
+extensions should not call `GObject.Object.run_dispose()` unless absolutely necessary
+if absolutely necessary any call must have a comment explaining the real world situation that makes it a requirement
+
+#### optional chaining `?.` nuanced rule
+do not use optional chaining or nullish coalescing for guaranteed methods or built in apis
+the ego guideline specifically prohibits redundant checks on objects that are guaranteed to exist
+example prohibited: `this._keyboard?.destroy()` where `_keyboard` is always created in the constructor
+
+optional chaining is allowed and encouraged for genuinely potentially null objects
+example allowed: `focussedWindow?.get_wm_class()` where `focussedWindow` comes from `tracker.focus_window` which can return null
+
+if an object is guaranteed to exist call it directly without guards
+if an object can genuinely be null optional chaining is cleaner than verbose ternary checks
+
+#### avoid unnecessary try catch wrappers
+do not wrap standard api calls in try/catch blocks
+standard methods like `destroy()` `connect()` `disconnect()` `addChrome()` `set_position()` do not throw
+try/catch is legitimate only for genuine external failure points:
+- file io loading saving to disk files can be deleted corrupt or permission denied
+- json parsing of data that originated outside our code
+- clipboard reading content owned by other applications
+- settings string values that users could manually edit
+when catching always explain why the operation can genuinely fail
+
+#### css uses only `/* */` comments
+the st stylesheet parser does not support `//` line comments only `/* */` block comments
+this is a technical requirement of the st css parser not a style preference
+
+#### do not mask bugs with defensive code
+do not add defensive null checks that mask bugs instead of handling them
+do not add "just in case" code for situations that cannot occur
+do not add comments that describe what a line does only describe why
 
 ### review discipline
 
@@ -218,9 +311,11 @@ see https://gjs.guide/extensions/development/preferences.html#gsettings
 
 ### schema keys
 
+schema id is `org.gnome.shell.extensions.spotlight` path is `/org/gnome/shell/extensions/spotlight/`
+
 - `toggle-shortcut` type `as` default `['<Control>space']` keyboard shortcut to open and close the popup
 - `theme-preference` type `s` default `'default'` controls visual theme
-  - `'default'` follows gnome system color scheme via `org.gnome.desktop.interface color-scheme`
+  - `'default'` follows gnome system color scheme
   - `'dark'` always uses dark appearance
   - `'light'` always uses light appearance
 

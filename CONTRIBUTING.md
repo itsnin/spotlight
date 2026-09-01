@@ -18,12 +18,10 @@ git clone https://github.com/itsnin/spotlight.git
 cd spotlight
 ```
 
-2. Install the extension into your local extensions directory for testing:
+2. Build and install the extension for testing:
 
 ```bash
-mkdir -p ~/.local/share/gnome-shell/extensions/spotlight@nin
-cp -r * ~/.local/share/gnome-shell/extensions/spotlight@nin/
-glib-compile-schemas ~/.local/share/gnome-shell/extensions/spotlight@nin/schemas/
+scripts/build.sh
 ```
 
 3. Restart GNOME Shell and enable the extension:
@@ -38,7 +36,7 @@ On Wayland, restarting GNOME Shell requires logging out and logging back in.
 
 Spotlight permanently takes over GNOME Overview's search infrastructure. On enable, it steals the Overview's search entry and search controller widgets and hides them. When the popup opens, these already-stolen widgets are reparented into the popup. When the popup closes, they are removed from the popup but kept stolen and hidden. They are only returned to the Overview on disable.
 
-The codebase consists of 6 JavaScript files at the root level for the shell process and 3 inside `prefs/` for the preferences process. `extension.js` must reside at the root of the archive for the GNOME Extensions website to locate it. The preferences files are isolated under `prefs/` because they execute in a separate GTK4 process and must not import shell-only libraries (`St`, `Clutter`, `Meta`, `Shell`), just as shell-side files must not import GTK-only libraries (`Gtk`, `Gdk`, `Adw`).
+The codebase follows a structured layout. `extension.js` and `prefs.js` reside at the repository root where GNOME expects them, while supporting modules are organized into logical subdirectories. Popup components live under `popup/`, services under `services/`, and preference pages under `prefs/`. The preferences files are isolated because they execute in a separate GTK4 process and must not import shell-only libraries (`St`, `Clutter`, `Meta`, `Shell`), just as shell-side files must not import GTK-only libraries (`Gtk`, `Gdk`, `Adw`). Large modules are split into smaller single-responsibility files for maintainability.
 
 ### Entry Points
 
@@ -47,13 +45,15 @@ The codebase consists of 6 JavaScript files at the root level for the shell proc
 
 ### UI Components
 
-- **`spotlightPopup.js`** — The popup widget. Handles stealing and returning Overview search widgets, open/close lifecycle, keyboard capture, and click-outside dismissal.
-- **`popupBackdrop.js`** — Transparent full-screen widget added to the chrome layer behind the popup. Detects clicks outside the popup bounds.
-- **`popupPositioner.js`** — Sizes, centers, and shows the popup via a deferred idle callback to ensure layout has completed.
+- **`spotlightPopup.js`** — The popup widget lifecycle. Delegates widget stealing and theme logic to helper modules.
+- **`popup/overviewSearch.js`** — Steals and returns Overview search widgets, intercepts typing in Overview.
+- **`popup/themeManager.js`** — Detects system color scheme and applies dark/light theme classes.
+- **`popup/popupBackdrop.js`** — Transparent full-screen widget added to the chrome layer behind the popup. Detects clicks outside the popup bounds.
+- **`popup/popupPositioner.js`** — Sizes, centers, and shows the popup via a deferred idle callback to ensure layout has completed.
 
 ### Services
 
-- **`keybinding.js`** — Keybinding manager using `Meta.Display.grab_accelerator`.
+- **`services/keybinding.js`** — Keybinding manager using `Meta.Display.grab_accelerator`.
 
 ### Preference Pages
 
