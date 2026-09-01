@@ -107,6 +107,36 @@ this._positioner.centerOnPrimary(this);  // ✅ method was added to PopupPositio
 
 node --check cannot catch this since it is a runtime type error. static code review must catch it.
 
+## maximize reuse of upstream code
+
+when adapting features from other extensions keep as much of the original code as possible
+
+only make the minimal changes needed to integrate with spotlight architecture
+
+do not rewrite entire classes from scratch if the upstream version works with minor adaptation
+
+preserving upstream logic makes it easier to merge upstream fixes and reduces the chance of introducing new bugs
+
+wrong:
+```javascript
+// rewriting emoji category management from scratch with arrays and manual loops
+// when upstream already has a well tested EmojiCategory class
+this._categoryGrids = [];
+this._tabButtons = [];
+// ... 100 lines of manual category management
+```
+
+right:
+```javascript
+// import the upstream EmojiCategory class directly
+// adapt only the parts that depend on PopupMenu architecture
+import { EmojiCategory } from '../services/emoji/emojiCategory.js';
+this._emojiCategories = [];
+for (let i = 0; i < 9; i++) {
+    this._emojiCategories[i] = new EmojiCategory(this._context, ...);
+}
+```
+
 ## override destroy() directly not connect to signal
 
 override `destroy()` on your subclass do not connect a listener to the `destroy` signal

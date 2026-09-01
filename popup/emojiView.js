@@ -4,10 +4,11 @@ import Clutter from 'gi://Clutter';
 import GObject from 'gi://GObject';
 import { EmojiButton } from '../services/emoji/emojiButton.js';
 import { EmojiSearchItem } from '../services/emoji/emojiSearchItem.js';
+import { EmojiCategory } from '../services/emoji/emojiCategory.js';
 import { SkinTonesBar } from '../services/emoji/emojiOptionsBar.js';
 
-// upstream category names must match the sqlite group names exactly
-const CATEGORY_SQL_NAMES = [
+// category labels and icons — same order as upstream emoji-copy v38
+const CAT_LABELS = [
     'Smileys & Emotion',
     'People & Body',
     'Animals & Nature',
@@ -17,6 +18,18 @@ const CATEGORY_SQL_NAMES = [
     'Objects',
     'Symbols',
     'Flags',
+];
+
+const CAT_ICONS = [
+    'emoji-body-symbolic',
+    'emoji-people-symbolic',
+    'emoji-nature-symbolic',
+    'emoji-food-symbolic',
+    'emoji-travel-symbolic',
+    'emoji-activities-symbolic',
+    'emoji-objects-symbolic',
+    'emoji-symbols-symbolic',
+    'emoji-flags-symbolic',
 ];
 
 export class EmojiView extends St.BoxLayout {
@@ -37,24 +50,22 @@ export class EmojiView extends St.BoxLayout {
         this._sqlite = sqlite;
         this._path = extensionPath;
         this._activeCategory = -1;
-        this._categoryGrids = [];
-        this._tabButtons = [];
-        this._contextCategories = [];
+        this._emojiCategories = [];
 
         const nbCols = this._settings.get_int('nbcols');
 
-        // context adapter that mimics the upstream extension interface
-        // this is what EmojiButton EmojiSearchItem EmojiCategory all expect
+        // context adapter mimics upstream extension interface
+        // this is what EmojiButton, EmojiSearchItem, EmojiCategory all expect
         this._context = {
             _settings: this._settings,
             sqlite: this._sqlite,
             closePopup: () => this._closePopup(),
             clipboardOwned: false,
-            emojiCategories: this._contextCategories,
+            emojiCategories: this._emojiCategories,
             searchItem: null,
             path: this._path,
             _onSearchTextChanged: () => this._onContextSearchChanged(),
-            clearCategories: () => this._hideAllCategoryGrids(),
+            clearCategories: () => this._hideAllCategories(),
         };
 
         // --- search item (search entry + recents) ---
@@ -73,66 +84,27 @@ export class EmojiView extends St.BoxLayout {
         });
         this.add_child(this._tabsBox);
 
-        const tabIconNames = [
-            'emoji-body-symbolic',       // Smileys
-            'emoji-people-symbolic',     // People
-            'emoji-nature-symbolic',     // Animals
-            'emoji-food-symbolic',       // Food
-            'emoji-travel-symbolic',     // Travel
-            'emoji-activities-symbolic', // Activities
-            'emoji-objects-symbolic',    // Objects
-            'emoji-symbols-symbolic',    // Symbols
-            'emoji-flags-symbolic',      // Flags
-        ];
-
-        for (let id = 0; id < 9; id++) {
-            // tab button
-            const tabBtn = new St.Button({
-                style_class: 'emoji-category-tab',
-                child: new St.Icon({
-                    icon_name: tabIconNames[id],
-                    icon_size: 16,
-                }),
-                x_expand: true,
-                x_align: Clutter.ActorAlign.CENTER,
-                can_focus: true,
-            });
-            tabBtn._categoryId = id;
-            tabBtn.connect('clicked', () => this._showCategory(id));
-            this._tabsBox.add_child(tabBtn);
-            this._tabButtons.push(tabBtn);
-
-            // grid container for this category's emojis
-            const grid = new St.BoxLayout({
-                vertical: true,
-                style: 'spacing: 2px; padding: 4px;',
-                visible: false,
-            });
-            grid._categoryId = id;
-            grid._emojiButtons = [];
-            grid._built = false;
-            this._categoryGrids.push(grid);
-
-            // wrapper for upstream keyboard navigation
-            // EmojiSearchItem calls .find() on emojiCategories and expects
-            // objects with a .getButton() method returning a focusable actor
-            this._contextCategories.push({
-                id,
-                getButton: () => tabBtn,
-                _grid: grid,
-            });
-        }
-
-        // scroll view holds all category grids (only one visible at a time)
+        // --- scroll view holds category containers ---
         this._scrollView = new St.ScrollView({
             style: 'max-height: 300px;',
             x_expand: true,
             y_expand: true,
         });
-        for (const grid of this._categoryGrids) {
-            this._scrollView.add_child(grid);
-        }
         this.add_child(this._scrollView);
+
+        // --- create all 9 EmojiCategory instances (upstream pattern) ---
+        for (let i = 0; i < 9; i++) {
+            const category = new EmojiCategory(
+                this._context,
+                CAT_LABELS[i],
+                CAT_ICONS[i],
+                i,
+            );
+            category.setNbCols(nbCols);
+            this._emojiCategories.push(category);
+            this._tabsBox.add_child(category.getButton());
+            this._scrollView.add_child(category.super_item);
+        }
 
         // settings changes that require ui refresh
         this._settings.connectObject(
@@ -148,100 +120,67 @@ export class EmojiView extends St.BoxLayout {
     }
 
     _showCategory(id) {
-        if (id < 0 || id >= this._categoryGrids.length) return;
-
+        if (id < 0 || id >= this._emojiCategories.length) return;
         this._activeCategory = id;
 
-        // update tab visual state
-        for (let i = 0; i < this._tabButtons.length; i++) {
+        // update tab visual state and show only this category
+        for (let i = 0; i < this._emojiCategories.length; i++) {
+            const cat = this._emojiCategories[i];
             if (i === id) {
-                this._tabButtons[i].add_style_pseudo_class('checked');
+                cat.categoryButton.set_checked(true);
+                if (!cat._built) {
+                    cat.build();
+                    cat.updateStyle();
+                }
+                cat.skinTonesBar.update();
+                cat.super_item.visible = true;
             } else {
-                this._tabButtons[i].remove_style_pseudo_class('checked');
+                cat.categoryButton.set_checked(false);
+                cat.super_item.visible = false;
             }
-        }
-
-        // show only this category's grid
-        for (const grid of this._categoryGrids) {
-            grid.visible = (grid._categoryId === id);
-        }
-
-        // build emoji buttons on demand
-        const grid = this._categoryGrids[id];
-        if (!grid._built) {
-            this._buildCategoryGrid(id);
         }
     }
 
-    _buildCategoryGrid(id) {
-        const grid = this._categoryGrids[id];
-        const nbCols = this._settings.get_int('nbcols');
-        const skinTone = this._settings.get_int('skin-tone');
-        const gender = this._settings.get_int('gender');
-
-        // destroy existing buttons first
-        grid._emojiButtons.forEach(b => b.destroy());
-        grid._emojiButtons = [];
-        grid.remove_all_children();
-
-        const emojis = this._sqlite.select_by_group(
-            CATEGORY_SQL_NAMES[id],
-            skinTone,
-            gender,
-        );
-
-        let row = null;
-        for (let i = 0; i < emojis.length; i++) {
-            if (i % nbCols === 0) {
-                row = new St.BoxLayout({ style: 'spacing: 2px;' });
-                grid.add_child(row);
-            }
-
-            const btn = new EmojiButton(
-                this._context,
-                emojis[i].unicode,
-                emojis[i].description,
-            );
-            btn.build();
-            btn.updateStyle();
-            grid._emojiButtons.push(btn);
-            row.add_child(btn.super_btn);
-        }
-
-        grid._built = true;
-    }
-
-    _hideAllCategoryGrids() {
-        for (const grid of this._categoryGrids) {
-            grid.visible = false;
+    _hideAllCategories() {
+        for (const cat of this._emojiCategories) {
+            cat.categoryButton.set_checked(false);
+            cat.super_item.visible = false;
         }
         this._activeCategory = -1;
     }
 
     _rebuildActiveCategory() {
         if (this._activeCategory >= 0) {
-            const grid = this._categoryGrids[this._activeCategory];
-            grid._built = false;
-            this._buildCategoryGrid(this._activeCategory);
+            const cat = this._emojiCategories[this._activeCategory];
+            cat.clear();
+            cat._built = false;
+            cat._loaded = false;
+            cat.load();
+            cat.build();
+            cat.updateStyle();
         }
     }
 
     _rebuildAllCategories() {
-        for (const grid of this._categoryGrids) {
-            grid._built = false;
-            grid._emojiButtons.forEach(b => b.destroy());
-            grid._emojiButtons = [];
-            grid.remove_all_children();
+        const nbCols = this._settings.get_int('nbcols');
+        for (const cat of this._emojiCategories) {
+            cat.setNbCols(nbCols);
+            cat.clear();
+            cat._built = false;
+            cat._loaded = false;
+            cat.load();
         }
         if (this._activeCategory >= 0) {
-            this._buildCategoryGrid(this._activeCategory);
+            const cat = this._emojiCategories[this._activeCategory];
+            cat.build();
+            cat.updateStyle();
         }
     }
 
     _updateAllButtonStyles() {
-        for (const grid of this._categoryGrids) {
-            for (const btn of grid._emojiButtons) {
-                btn.updateStyle();
+        for (const cat of this._emojiCategories) {
+            if (cat._built) {
+                cat.updateStyle();
             }
         }
     }
@@ -251,8 +190,7 @@ export class EmojiView extends St.BoxLayout {
         const text = this._searchItem.searchEntry.get_text();
         if (text && text.trim().length > 0) {
             // user is searching — EmojiSearchItem shows results inline
-            // hide our category grids so they don't duplicate
-            this._hideAllCategoryGrids();
+            this._hideAllCategories();
         } else if (this._activeCategory < 0) {
             // search cleared — restore the last active category
             this._showCategory(0);
@@ -274,11 +212,11 @@ export class EmojiView extends St.BoxLayout {
             this._searchItem = null;
         }
 
-        // destroy all emoji buttons we created
-        for (const grid of this._categoryGrids) {
-            grid._emojiButtons.forEach(b => b.destroy());
-            grid._emojiButtons = [];
+        // destroy all categories (each destroys its own emoji buttons)
+        for (const cat of this._emojiCategories) {
+            cat.destroy();
         }
+        this._emojiCategories = [];
 
         // destroy the shared tooltip that lives on global.stage
         EmojiButton.destroyTooltip();
