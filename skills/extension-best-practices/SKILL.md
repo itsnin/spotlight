@@ -210,6 +210,26 @@ grep -c "_(" thefile.js — if count > 0 verify gettext is imported
 clipboard Registry constructor expects { settings, uuid } via object destructuring
 
 extra properties in the params object are harmless but settings and uuid must be present
+## prefs UI must expose all merged schema keys
+
+when merging upstream settings into spotlights schema create corresponding prefs pages
+
+use PrefixedSettings in prefs pages too so the UI code can use unprefixed key names
+
+for each setting type use the appropriate Adw widget:
+- type=b boolean -> Adw.SwitchRow bound to active property
+- type=i integer -> Adw.SpinRow with appropriate Gtk.Adjustment range bound to value
+- type=s string choice -> Adw.ComboRow with Gtk.StringList
+- type=s free text -> Adw.EntryRow bound to text
+- type=as string array -> Adw.EntryRow with comma separated conversion
+
+## schema attribute order varies when parsing
+
+when programmatically parsing gschema xml handle both attribute orders:
+`<key name="x" type="y">` and `<key type="y" name="x">`
+
+regex must match either pattern to avoid missing keys
+
 ## use symbolic icons not unicode characters for buttons
 
 buttons in the shell ui should use `St.Icon` with proper `icon_name` symbolic icons from the gnome icon theme

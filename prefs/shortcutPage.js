@@ -17,6 +17,20 @@ export function buildShortcutPage(settings) {
         'Open or close Spotlight search',
         '<Control>space',
     ));
+    group.add(_buildShortcutRow(
+        settings,
+        'clipboard-shortcut',
+        'Clipboard history',
+        'Open clipboard history popup',
+        '<Control>1',
+    ));
+    group.add(_buildShortcutRow(
+        settings,
+        'emoji-shortcut',
+        'Emoji picker',
+        'Open emoji picker popup',
+        '<Control>2',
+    ));
 
     return group;
 }

@@ -5,6 +5,8 @@ import Adw from 'gi://Adw';
 import {buildShortcutPage} from './prefs/shortcutPage.js';
 import {buildAppearancePage} from './prefs/appearancePage.js';
 import {buildAboutPage} from './prefs/aboutPage.js';
+import {buildClipboardPage} from './prefs/clipboardPage.js';
+import {buildEmojiPage} from './prefs/emojiPage.js';
 
 export default class SpotlightPreferences extends ExtensionPreferences {
     fillPreferencesWindow(window) {
@@ -25,6 +27,12 @@ export default class SpotlightPreferences extends ExtensionPreferences {
         for (const group of appearanceGroups)
             appearancePage.add(group);
         window.add(appearancePage);
+
+        const clipboardPage = buildClipboardPage(settings);
+        window.add(clipboardPage);
+
+        const emojiPage = buildEmojiPage(settings);
+        window.add(emojiPage);
 
         const aboutPage = new Adw.PreferencesPage({
             title: 'About',
