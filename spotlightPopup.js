@@ -75,7 +75,7 @@ class SpotlightPopup extends St.Widget {
 
         // stolen overview widgets taken once in stealOverviewSearch
         // kept until returnOverviewSearch called from disable()
-        // search-only popup - clipboard/emoji are in separate popups
+        // search-only popup
         this._entry = null;
         this._entryParent = null;
         this._search = null;

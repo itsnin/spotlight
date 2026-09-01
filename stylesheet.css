@@ -1,547 +1,76 @@
-/* spotlight - stylesheet */
-/* reuses gnome overview's search widgets styles them to fit our popup */
-/* colors dark background #1c1c1e text #f5f5f7 selection rgba(255,255,255,0.12) */
-/* colors light background #ffffff text #1d1d1f selection rgba(0,122,255,0.12) */
+/* spotlight - core stylesheet */
+/* SPDX-License-Identifier: GPL-3.0-or-later */
 
-/* global reset - kill inherited focus outlines or borders from parent theme */
-.spotlight-container,
-.spotlight-container * {
-  border: none;
-  outline: none;
-  box-shadow: none;
-  -st-icon-style: symbolic;
-}
-
-/* container - single unified window dark default */
+/* Main popup container */
 .spotlight-container {
-  background-color: rgba(28, 28, 30, 0.92);
-  border-radius: 32px;
-  padding: 16px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-  color: #f5f5f7;
-  max-height: 480px;
-  backdrop-filter: blur(40px);
+    background-color: rgba(30, 30, 30, 0.92);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
 }
 
-/* light theme overrides applied when container has theme-light class */
 .spotlight-container.theme-light {
-  background-color: rgba(255, 255, 255, 0.88);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
-  color: #1d1d1f;
+    background-color: rgba(245, 245, 245, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
-/* header box holds entry plus mode buttons horizontally */
-/* top bar holds search bar plus buttons side by side macos layout */
-.spotlight-top-bar {
-  padding: 0;
+/* Stolen overview search entry styling */
+.spotlight-entry-stolen {
+    padding: 12px 16px;
+    font-size: 16px;
+    font-weight: 500;
 }
 
-/* search bar pill shaped container matches macos spotlight */
-.spotlight-search-bar {
-  background-color: rgba(255, 255, 255, 0.08);
-  border-radius: 9999px;
-  padding: 10px 16px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* override stolen overview search entry default styling */
-.spotlight-entry-stolen,
-.spotlight-entry-stolen *,
-.spotlight-entry-stolen StWidget,
-.spotlight-entry-stolen ClutterActor {
-  background-color: transparent !important;
-  background: transparent !important;
-  border: none !important;
-  border-width: 0 !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  color: inherit !important;
-  caret-color: #f5f5f7 !important;
-  font-size: 15px !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  min-width: 0 !important;
-}
-
-.spotlight-container.theme-light .spotlight-entry-stolen,
-.spotlight-container.theme-light .spotlight-entry-stolen * {
-  caret-color: #1d1d1f !important;
-}
-
-/* ensure search bar pill properly contains the stolen entry */
-.spotlight-search-bar {
-  overflow: hidden;
-}
-
-.spotlight-search-bar StEntry {
-  min-width: 0;
-  background-color: transparent;
-  border: none;
-}
-
-.spotlight-container.theme-light .spotlight-search-bar {
-  background-color: rgba(0, 0, 0, 0.04);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-}
-
-.spotlight-search-icon {
-  color: rgba(245, 245, 247, 0.5);
-}
-
-.spotlight-container.theme-light .spotlight-search-icon {
-  color: rgba(29, 29, 31, 0.45);
-}
-
-/* buttons box sits to the right of search bar */
-.spotlight-buttons-box {
-  padding: 0 2px;
-}
-
-/* search entry blends into search bar pill dark default */
-.spotlight-container StEntry,
-.spotlight-container StEntry:focus {
-  background-color: transparent;
-  color: #f5f5f7;
-  border: none;
-  border-radius: 0;
-  padding: 0;
-  font-size: 17px;
-  font-weight: 400;
-  caret-color: #ffffff;
-  selection-background-color: #0a84ff;
-}
-
-.spotlight-container.theme-light StEntry,
-.spotlight-container.theme-light StEntry:focus {
-  color: #1d1d1f;
-  caret-color: #000000;
-  selection-background-color: rgba(0, 122, 255, 0.2);
-}
-
-.spotlight-container StEntry StLabel.hint-text {
-  color: rgba(245, 245, 247, 0.35);
-}
-
-.spotlight-container.theme-light StEntry StLabel.hint-text {
-  color: rgba(29, 29, 31, 0.35);
-}
-
-/* content stack area holds search clipboard or emoji view */
+/* Content stack — search results area */
 .spotlight-content-stack {
-  margin-top: 12px;
+    min-height: 200px;
+    max-height: 400px;
 }
 
-/* search results area - transparent so it blends with container */
-.spotlight-container .search-section-content {
-  background-color: transparent !important;
-  border-radius: 12px;
-  padding: 2px;
-  max-width: 100%;
+/* Search provider results (stolen from overview) */
+.list-search-provider-content {
+    padding: 8px 0;
 }
 
-/* ensure result rows fit within container and text ellipsizes */
-.spotlight-container .list-search-result,
-.spotlight-container .overview-tile {
-  max-width: 100%;
-  overflow: hidden;
+.list-search-result {
+    padding: 8px 16px;
+    border-radius: 8px;
+    margin: 0 8px;
 }
 
-.spotlight-container .list-search-result StLabel,
-.spotlight-container .overview-tile StLabel {
-  max-width: 420px;
+.list-search-result:hover,
+.list-search-result:selected {
+    background-color: rgba(255, 255, 255, 0.1);
 }
 
-.spotlight-container .search-provider-icon,
-.spotlight-container .list-search-provider-content {
-  max-width: 100%;
-}
-
-/* individual result rows dark default */
-.spotlight-container .list-search-result,
-.spotlight-container .overview-tile,
-.spotlight-container .search-provider-icon,
-.spotlight-container .list-search-provider-content {
-  background-color: transparent;
-  color: #f5f5f7;
-  border-radius: 12px;
-}
-
-.spotlight-container.theme-light .list-search-result,
-.spotlight-container.theme-light .overview-tile,
-.spotlight-container.theme-light .search-provider-icon,
-.spotlight-container.theme-light .list-search-provider-content {
-  color: #1d1d1f;
-}
-
-/* selected / hover state dark default */
-.spotlight-container .list-search-result:selected,
-.spotlight-container .overview-tile:selected,
-.spotlight-container .list-search-result:hover,
-.spotlight-container .overview-tile:hover,
-.spotlight-container .search-provider-icon:hover,
-.spotlight-container .list-search-provider-content:hover,
-.spotlight-container .list-search-result:focus,
-.spotlight-container .overview-tile:focus,
-.spotlight-container .search-provider-icon:focus,
-.spotlight-container .list-search-provider-content:focus {
-  background-color: rgba(255, 255, 255, 0.12) !important;
-  color: #ffffff;
-}
-
-.spotlight-container.theme-light .list-search-result:selected,
-.spotlight-container.theme-light .overview-tile:selected,
 .spotlight-container.theme-light .list-search-result:hover,
-.spotlight-container.theme-light .overview-tile:hover,
-.spotlight-container.theme-light .search-provider-icon:hover,
-.spotlight-container.theme-light .list-search-provider-content:hover,
-.spotlight-container.theme-light .list-search-result:focus,
-.spotlight-container.theme-light .overview-tile:focus,
-.spotlight-container.theme-light .search-provider-icon:focus,
-.spotlight-container.theme-light .list-search-provider-content:focus {
-  background-color: rgba(0, 122, 255, 0.12) !important;
-  color: #000000;
+.spotlight-container.theme-light .list-search-result:selected {
+    background-color: rgba(0, 0, 0, 0.08);
 }
 
-/* result text colors dark default */
-.spotlight-container .list-search-result,
-.spotlight-container .list-search-result StLabel {
-  color: #f5f5f7;
+.search-provider-icon {
+    icon-size: 32px;
 }
 
-.spotlight-container.theme-light .list-search-result,
-.spotlight-container.theme-light .list-search-result StLabel {
-  color: #1d1d1f;
+.search-section-content {
+    padding: 4px 0;
 }
 
-.spotlight-container .list-search-result:selected StLabel,
-.spotlight-container .list-search-result:hover StLabel,
-.spotlight-container .list-search-result:focus StLabel {
-  color: #ffffff;
+.overview-tile {
+    border-radius: 8px;
 }
 
-.spotlight-container.theme-light .list-search-result:selected StLabel,
-.spotlight-container.theme-light .list-search-result:hover StLabel,
-.spotlight-container.theme-light .list-search-result:focus StLabel {
-  color: #000000;
+/* Slider styling */
+.slider {
+    height: 4px;
 }
 
-/* provider section headers dark default */
-.spotlight-container .search-provider-icon {
-  color: #98989d;
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  padding: 6px 12px 2px 12px;
+/* Hint text in search entry */
+.hint-text {
+    color: rgba(255, 255, 255, 0.5);
 }
 
-.spotlight-container.theme-light .search-provider-icon {
-  color: #6e6e73;
-}
-
-/* clipboard view */
-.spotlight-clipboard-view {
-  max-height: 340px;
-}
-
-.spotlight-clipboard-item {
-  padding: 10px 14px;
-  border-radius: 10px;
-  spacing: 8px;
-}
-
-.spotlight-clipboard-item:hover,
-.spotlight-clipboard-item:focus {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.spotlight-container.theme-light .spotlight-clipboard-item:hover,
-.spotlight-container.theme-light .spotlight-clipboard-item:focus {
-  background-color: rgba(0, 122, 255, 0.08);
-}
-
-.spotlight-clipboard-preview {
-  color: #f5f5f7;
-  font-size: 14px;
-}
-
-.spotlight-container.theme-light .spotlight-clipboard-preview {
-  color: #1d1d1f;
-}
-
-.spotlight-clipboard-empty {
-  color: rgba(245, 245, 247, 0.4);
-  padding: 24px;
-  text-align: center;
-  font-size: 14px;
-}
-
-.spotlight-container.theme-light .spotlight-clipboard-empty {
-  color: rgba(29, 29, 31, 0.4);
-}
-
-/* emoji view */
-.spotlight-emoji-view {
-  max-height: 340px;
-}
-
-.spotlight-emoji-categories {
-  spacing: 4px;
-  padding: 4px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  margin-bottom: 8px;
-}
-
-.spotlight-container.theme-light .spotlight-emoji-categories {
-  border-bottom-color: rgba(0, 0, 0, 0.08);
-}
-
-.spotlight-emoji-category-btn {
-  border-radius: 14px;
-  padding: 6px 10px;
-  background-color: transparent;
-  color: rgba(245, 245, 247, 0.6);
-  font-size: 12px;
-}
-
-.spotlight-container.theme-light .spotlight-emoji-category-btn {
-  color: rgba(29, 29, 31, 0.5);
-}
-
-.spotlight-emoji-category-btn:hover,
-.spotlight-emoji-category-btn:focus {
-  background-color: rgba(255, 255, 255, 0.08);
-  color: #f5f5f7;
-}
-
-.spotlight-container.theme-light .spotlight-emoji-category-btn:hover,
-.spotlight-container.theme-light .spotlight-emoji-category-btn:focus {
-  background-color: rgba(0, 0, 0, 0.06);
-  color: #1d1d1f;
-}
-
-.spotlight-emoji-category-btn:checked {
-  background-color: rgba(255, 255, 255, 0.15);
-  color: #ffffff;
-}
-
-.spotlight-container.theme-light .spotlight-emoji-category-btn:checked {
-  background-color: rgba(0, 122, 255, 0.12);
-  color: #000000;
-}
-
-.spotlight-emoji-grid {
-  spacing: 2px;
-}
-
-.spotlight-emoji-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  background-color: transparent;
-  font-size: 24px;
-  text-align: center;
-}
-
-.spotlight-emoji-btn:hover,
-.spotlight-emoji-btn:focus {
-  background-color: rgba(255, 255, 255, 0.12);
-}
-
-.spotlight-container.theme-light .spotlight-emoji-btn:hover,
-.spotlight-container.theme-light .spotlight-emoji-btn:focus {
-  background-color: rgba(0, 122, 255, 0.1);
-}
-
-.spotlight-emoji-empty {
-  color: rgba(245, 245, 247, 0.4);
-  padding: 24px;
-  text-align: center;
-  font-size: 14px;
-}
-
-.spotlight-container.theme-light .spotlight-emoji-empty {
-  color: rgba(29, 29, 31, 0.4);
-}
-
-/* clipboard toolbar */
-.spotlight-clipboard-toolbar {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-}
-.spotlight-container.theme-light .spotlight-clipboard-toolbar {
-  border-bottom-color: rgba(0, 0, 0, 0.06);
-}
-.spotlight-clipboard-favcount {
-  color: rgba(245, 245, 247, 0.4);
-  font-size: 12px;
-}
-.spotlight-container.theme-light .spotlight-clipboard-favcount {
-  color: rgba(29, 29, 31, 0.4);
-}
-/* clipboard section labels */
-.spotlight-clipboard-section-label {
-  color: rgba(245, 245, 247, 0.4);
-}
-.spotlight-container.theme-light .spotlight-clipboard-section-label {
-  color: rgba(29, 29, 31, 0.4);
-}
-
-/* clipboard separator */
-.spotlight-clipboard-separator {
-  background: rgba(255, 255, 255, 0.08);
-}
-.spotlight-container.theme-light .spotlight-clipboard-separator {
-  background: rgba(0, 0, 0, 0.08);
-}
-
-/* clipboard favorite item highlight */
-.spotlight-clipboard-item-fav {
-  background-color: rgba(255, 204, 0, 0.05);
-  border: 1px solid rgba(255, 204, 0, 0.12);
-}
-.spotlight-container.theme-light .spotlight-clipboard-item-fav {
-  background-color: rgba(255, 149, 0, 0.04);
-  border-color: rgba(255, 149, 0, 0.15);
-}
-
-/* clipboard tag label */
-.spotlight-clipboard-tag {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-  padding: 2px 8px;
-  font-size: 11px;
-  color: rgba(245, 245, 247, 0.7);
-}
-.spotlight-container.theme-light .spotlight-clipboard-tag {
-  background: rgba(0, 0, 0, 0.06);
-  color: rgba(29, 29, 31, 0.6);
-}
-
-/* toolbar buttons */
-.spotlight-toolbar-btn {
-  width: auto;
-  padding: 6px 12px;
-  border-radius: 8px;
-}
-
-/* private mode active */
-.spotlight-private-active {
-  background-color: rgba(255, 59, 48, 0.18) !important;
-  border-color: rgba(255, 59, 48, 0.35) !important;
-  color: #ff3b30 !important;
-}
-.spotlight-container.theme-light .spotlight-private-active {
-  background-color: rgba(255, 59, 48, 0.12) !important;
-  border-color: rgba(255, 59, 48, 0.3) !important;
-  color: #ff3b30 !important;
-}
-
-/* favorites section scroll */
-.spotlight-clipboard-fav-section {
-  max-height: 120px;
-}
-
-/* action buttons used in clipboard items */
-.spotlight-action-btn {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  background-color: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: rgba(245, 245, 247, 0.7);
-  padding: 0;
-  margin: 0;
-  transition-duration: 120ms;
-}
-.spotlight-container.theme-light .spotlight-action-btn {
-  background-color: rgba(0, 0, 0, 0.04);
-  border-color: rgba(0, 0, 0, 0.08);
-  color: rgba(29, 29, 31, 0.6);
-}
-.spotlight-action-btn:hover,
-.spotlight-action-btn:focus {
-  background-color: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
-}
-.spotlight-container.theme-light .spotlight-action-btn:hover,
-.spotlight-container.theme-light .spotlight-action-btn:focus {
-  background-color: rgba(0, 122, 255, 0.1);
-  color: #000000;
-}
-.spotlight-action-btn.spotlight-fav-active {
-  background-color: rgba(255, 204, 0, 0.18);
-  border-color: rgba(255, 204, 0, 0.35);
-  color: #ffcc00;
-}
-.spotlight-container.theme-light .spotlight-action-btn.spotlight-fav-active {
-  background-color: rgba(255, 149, 0, 0.12);
-  border-color: rgba(255, 149, 0, 0.3);
-  color: #ff9500;
-}
-
-/* scrollbars */
-.spotlight-container StScrollView StScrollBar {
-  min-width: 6px;
-  min-height: 6px;
-}
-
-.spotlight-container StScrollView StScrollBar.trough {
-  background-color: transparent;
-  border: none;
-}
-
-.spotlight-container StScrollView StScrollBar.slider {
-  background-color: rgba(255, 255, 255, 0.2);
-  border-radius: 3px;
-}
-
-.spotlight-container.theme-light StScrollView StScrollBar.slider {
-  background-color: rgba(0, 0, 0, 0.2);
-}
-
-/* emoji tooltip shared global label */
-.emoji-tooltip {
-  background-color: #222222;
-  color: #ffffff;
-  border-radius: 6px;
-  padding: 4px 10px;
-  font-size: 13px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
-}
-
-/* emoji skin tone selector buttons */
-.spotlight-emoji-tones {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  margin-bottom: 4px;
-}
-
-.spotlight-container.theme-light .spotlight-emoji-tones {
-  border-bottom-color: rgba(0, 0, 0, 0.06);
-}
-
-.spotlight-emoji-tone-btn {
-  width: 22px;
-  height: 22px;
-  border-radius: 11px;
-  border: 2px solid transparent;
-  padding: 0;
-}
-
-.spotlight-emoji-tone-btn:hover,
-.spotlight-emoji-tone-btn:focus {
-  border-color: rgba(255, 255, 255, 0.3);
-}
-
-.spotlight-container.theme-light .spotlight-emoji-tone-btn:hover,
-.spotlight-container.theme-light .spotlight-emoji-tone-btn:focus {
-  border-color: rgba(0, 0, 0, 0.2);
-}
-
-.spotlight-emoji-tone-btn:checked {
-  border-color: #ffffff;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
-}
-
-.spotlight-container.theme-light .spotlight-emoji-tone-btn:checked {
-  border-color: #007aff;
+.spotlight-container.theme-light .hint-text {
+    color: rgba(0, 0, 0, 0.5);
 }

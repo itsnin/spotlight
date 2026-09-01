@@ -7,7 +7,7 @@ import Gdk from 'gi://Gdk';
 export function buildShortcutPage(settings) {
     const group = new Adw.PreferencesGroup({
         title: 'Keyboard Shortcuts',
-        description: 'Set shortcuts to open Spotlight in different modes',
+        description: 'Set the shortcut to open Spotlight',
     });
 
     group.add(_buildShortcutRow(
@@ -16,22 +16,6 @@ export function buildShortcutPage(settings) {
         'Toggle Spotlight',
         'Open or close Spotlight search',
         '<Control>space',
-    ));
-
-    group.add(_buildShortcutRow(
-        settings,
-        'clipboard-shortcut',
-        'Clipboard history',
-        'Open Spotlight showing clipboard history',
-        '<Alt>1',
-    ));
-
-    group.add(_buildShortcutRow(
-        settings,
-        'emoji-shortcut',
-        'Emoji selector',
-        'Open Spotlight showing emoji picker',
-        '<Alt>2',
     ));
 
     return group;
@@ -83,12 +67,14 @@ function _buildShortcutRow(settings, key, title, subtitle, defaultAccel) {
             accelerator += '<Alt>';
         if (state & Gdk.ModifierType.META_MASK)
             accelerator += '<Meta>';
+
         // require at least one modifier prevents bare keys like g or space
         // which would cause accidental triggering during normal typing
         if (accelerator.length === 0) {
             shortcutLabel.label = 'Modifier required';
             return true;
         }
+
         // validate at gtk level rejects invalid key combinations
         const mods = state & (Gdk.ModifierType.SUPER_MASK |
                               Gdk.ModifierType.CONTROL_MASK |
@@ -99,8 +85,8 @@ function _buildShortcutRow(settings, key, title, subtitle, defaultAccel) {
             shortcutLabel.label = 'Invalid shortcut';
             return true;
         }
-        accelerator += Gdk.keyval_name(keyval).toLowerCase();
 
+        accelerator += Gdk.keyval_name(keyval).toLowerCase();
         settings.set_strv(key, [accelerator]);
         shortcutLabel.label = formatShortcut([accelerator]);
         capturing = false;

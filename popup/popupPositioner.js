@@ -30,7 +30,7 @@ export class PopupPositioner {
     }
 
     // immediately centers the given popup on the primary monitor
-    // used by standalone clipboard and emoji popups that manage their own show timing
+    // used by popups that manage their own show timing
     centerOnPrimary(popup) {
         const monitor = Main.layoutManager.primaryMonitor;
         const popupWidth = Math.min(520, Math.floor(monitor.width * 0.85));
