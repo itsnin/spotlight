@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import Adw from 'gi://Adw';
 import Gtk from 'gi://Gtk';
-import Gio from 'gi://Gio';
 
+// theme options default follows gnome system dark and light force specific
 const THEMES = [
     { value: 'default', label: 'Default', subtitle: 'Follow GNOME system style' },
     { value: 'dark', label: 'Dark', subtitle: 'Always use dark appearance' },
@@ -11,30 +11,33 @@ const THEMES = [
 ];
 
 export function buildAppearancePage(settings) {
-    const groups = [];
-
-    const appearanceGroup = new Adw.PreferencesGroup({
+    const group = new Adw.PreferencesGroup({
         title: 'Appearance',
-        description: 'Visual theme for the Spotlight popup',
+        description: 'Choose the visual style',
     });
 
     const themeRow = new Adw.ComboRow({
         title: 'Theme',
         subtitle: 'Dark, light, or follow system',
     });
+
     const list = new Gtk.StringList();
     for (const t of THEMES)
         list.append(t.label);
     themeRow.set_model(list);
-    themeRow.set_selected(themeValueToIndex(settings.get_string('theme-preference')));
+
+    const current = settings.get_string('theme-preference');
+    themeRow.set_selected(themeValueToIndex(current));
+
     themeRow.connect('notify::selected', () => {
-        settings.set_string('theme-preference', themeIndexToValue(themeRow.get_selected()));
+        settings.set_string(
+            'theme-preference',
+            themeIndexToValue(themeRow.get_selected()),
+        );
     });
-    appearanceGroup.add(themeRow);
 
-    groups.push(appearanceGroup);
-
-    return groups;
+    group.add(themeRow);
+    return group;
 }
 
 function themeValueToIndex(value) {

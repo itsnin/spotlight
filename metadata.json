@@ -12,6 +12,5 @@
   ],
   "url": "https://github.com/itsnin/spotlight",
   "settings-schema": "org.gnome.shell.extensions.spotlight",
-  "gettext-domain": "spotlight",
-  "version-name": "2026.08.30"
+  "version-name": "2026.08.25"
 }

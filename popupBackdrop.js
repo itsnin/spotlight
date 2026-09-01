@@ -32,11 +32,6 @@ export class PopupBackdrop {
         this._actor.show();
     }
 
-    hide() {
-        this._actor.hide();
-        Main.layoutManager.removeChrome(this._actor);
-    }
-
     destroy() {
         this._actor.disconnectObject(this._actor);
         Main.layoutManager.removeChrome(this._actor);

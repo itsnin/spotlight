@@ -6,7 +6,7 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 // sizing and centering happens once per open based on the empty-state
 // height just the search entry before any results render
 export class PopupPositioner {
-    constructor(popup = null) {
+    constructor(popup) {
         this._popup = popup;
         this._idleId = 0;
     }
@@ -16,27 +16,27 @@ export class PopupPositioner {
     // once the popup is actually visible on screen
     showCentered(onShown) {
         const monitor = this.getTargetMonitor();
+        // popup then grows downward as results appear without recentering since
+        // recentering on every size change makes the popup visibly drift upward
+
+        // width is fixed at 520px design philosophy one perfect size no settings
+        // capped at 85 percent of monitor width so it never overflows
         const popupWidth = Math.min(520, Math.floor(monitor.width * 0.85));
         this._popup.set_width(popupWidth);
         this._popup.queue_relayout();
+        // all sizes are in logical pixels and gnome handles hidpi
+        // scaling automatically we never scale ourselves
 
+        // showing the popup needs a layout pass to have already happened or
+        // get_preferred_height returns a stale value before css is applied that
+        // is why this is deferred through an idle source rather than done inline
         this._idleId = GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
             this._idleId = 0;
-            this._center(this._popup, popupWidth, monitor);
+            this._center(popupWidth, monitor);
             this._popup.show();
             onShown();
             return GLib.SOURCE_REMOVE;
         });
-    }
-
-    // immediately centers the given popup on the primary monitor
-    // used by popups that manage their own show timing
-    centerOnPrimary(popup) {
-        const monitor = Main.layoutManager.primaryMonitor;
-        const popupWidth = Math.min(520, Math.floor(monitor.width * 0.85));
-        popup.set_width(popupWidth);
-        popup.queue_relayout();
-        this._center(popup, popupWidth, monitor);
     }
 
     // always opens on the monitor where the cursor currently is
@@ -53,13 +53,12 @@ export class PopupPositioner {
         return Main.layoutManager.primaryMonitor;
     }
 
-    _center(popup, popupWidth, monitor) {
-        const [, naturalHeight] = popup.get_preferred_height(popupWidth);
-        const maxHeight = Math.floor(monitor.height * 0.85);
-        const clampedHeight = Math.min(naturalHeight, maxHeight);
-        const x = Math.floor(monitor.x + (monitor.width - popupWidth) / 2);
-        const y = Math.floor(monitor.y + (monitor.height - clampedHeight) / 2);
-        popup.set_position(x, y);
+    _center(popupWidth, monitor) {
+        const [, naturalHeight] = this._popup.get_preferred_height(popupWidth);
+        this._popup.set_position(
+            Math.floor(monitor.x + (monitor.width - popupWidth) / 2),
+            Math.floor(monitor.y + (monitor.height - naturalHeight) / 2),
+        );
     }
 
     stop() {

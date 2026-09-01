@@ -1,61 +1,36 @@
 // spotlight - shortcut preferences page
 // SPDX-License-Identifier: GPL-3.0-or-later
+
 import Gtk from 'gi://Gtk';
 import Adw from 'gi://Adw';
 import Gdk from 'gi://Gdk';
 
 export function buildShortcutPage(settings) {
     const group = new Adw.PreferencesGroup({
-        title: 'Keyboard Shortcuts',
+        title: 'Keyboard Shortcut',
         description: 'Set the shortcut to open Spotlight',
     });
 
-    group.add(_buildShortcutRow(
-        settings,
-        'toggle-shortcut',
-        'Toggle Spotlight',
-        'Open or close Spotlight search',
-        '<Control>space',
-    ));
-    group.add(_buildShortcutRow(
-        settings,
-        'clipboard-shortcut',
-        'Clipboard history',
-        'Open clipboard history popup',
-        '<Control>1',
-    ));
-    group.add(_buildShortcutRow(
-        settings,
-        'emoji-shortcut',
-        'Emoji picker',
-        'Open emoji picker popup',
-        '<Control>2',
-    ));
-
-    return group;
-}
-
-function _buildShortcutRow(settings, key, title, subtitle, defaultAccel) {
-    const row = new Adw.ActionRow({
-        title: title,
-        subtitle: subtitle,
+    const shortcutRow = new Adw.ActionRow({
+        title: 'Toggle shortcut',
+        subtitle: 'Click here, then press a key combination',
     });
 
     const shortcutLabel = new Gtk.Label({
-        label: formatShortcut(settings.get_strv(key)),
+        label: formatShortcut(settings.get_strv('toggle-shortcut')),
         halign: Gtk.Align.END,
         valign: Gtk.Align.CENTER,
     });
-    row.add_suffix(shortcutLabel);
-    row.set_activatable(true);
+    shortcutRow.add_suffix(shortcutLabel);
+    shortcutRow.set_activatable(true);
 
     const eventController = new Gtk.EventControllerKey();
     let capturing = false;
 
-    row.connect('activated', () => {
+    shortcutRow.connect('activated', () => {
         capturing = true;
         shortcutLabel.label = 'Press a key combination...';
-        row.grab_focus();
+        shortcutRow.grab_focus();
     });
 
     eventController.connect('key-pressed', (controller, keyval, keycode, state) => {
@@ -81,27 +56,9 @@ function _buildShortcutRow(settings, key, title, subtitle, defaultAccel) {
             accelerator += '<Alt>';
         if (state & Gdk.ModifierType.META_MASK)
             accelerator += '<Meta>';
-
-        // require at least one modifier prevents bare keys like g or space
-        // which would cause accidental triggering during normal typing
-        if (accelerator.length === 0) {
-            shortcutLabel.label = 'Modifier required';
-            return true;
-        }
-
-        // validate at gtk level rejects invalid key combinations
-        const mods = state & (Gdk.ModifierType.SUPER_MASK |
-                              Gdk.ModifierType.CONTROL_MASK |
-                              Gdk.ModifierType.SHIFT_MASK |
-                              Gdk.ModifierType.MOD1_MASK |
-                              Gdk.ModifierType.META_MASK);
-        if (!Gtk.accelerator_valid(keyval, mods)) {
-            shortcutLabel.label = 'Invalid shortcut';
-            return true;
-        }
-
         accelerator += Gdk.keyval_name(keyval).toLowerCase();
-        settings.set_strv(key, [accelerator]);
+
+        settings.set_strv('toggle-shortcut', [accelerator]);
         shortcutLabel.label = formatShortcut([accelerator]);
         capturing = false;
         return true;
@@ -110,32 +67,34 @@ function _buildShortcutRow(settings, key, title, subtitle, defaultAccel) {
     eventController.connect('key-released', () => {
         if (capturing) {
             capturing = false;
-            shortcutLabel.label = formatShortcut(settings.get_strv(key));
+            shortcutLabel.label = formatShortcut(settings.get_strv('toggle-shortcut'));
         }
     });
 
-    row.add_controller(eventController);
+    shortcutRow.add_controller(eventController);
+    group.add(shortcutRow);
 
-    // reset button
+    const resetRow = new Adw.ActionRow({
+        title: 'Reset to default',
+        subtitle: 'Set shortcut to Ctrl+Space',
+    });
     const resetButton = new Gtk.Button({
-        icon_name: 'edit-clear-symbolic',
+        label: 'Reset',
         valign: Gtk.Align.CENTER,
-        margin_start: 8,
-        tooltip_text: 'Reset to default',
-        css_classes: ['flat'],
     });
     resetButton.connect('clicked', () => {
-        settings.set_strv(key, [defaultAccel]);
-        shortcutLabel.label = formatShortcut(settings.get_strv(key));
+        settings.set_strv('toggle-shortcut', ['<Control>space']);
+        shortcutLabel.label = formatShortcut(settings.get_strv('toggle-shortcut'));
     });
-    row.add_suffix(resetButton);
+    resetRow.add_suffix(resetButton);
+    group.add(resetRow);
 
-    return row;
+    return group;
 }
 
 function formatShortcut(shortcutArray) {
     if (!shortcutArray || shortcutArray.length === 0)
-        return 'Not set';
+        return 'Not set (will default to Ctrl+Space)';
     const shortcut = shortcutArray[0];
     return shortcut
         .replace(/<Super>/g, 'Super+')

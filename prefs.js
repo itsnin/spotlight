@@ -5,8 +5,9 @@ import Adw from 'gi://Adw';
 import {buildShortcutPage} from './prefs/shortcutPage.js';
 import {buildAppearancePage} from './prefs/appearancePage.js';
 import {buildAboutPage} from './prefs/aboutPage.js';
-import {buildEmojiPage} from './prefs/emojiPage.js';
 
+// each category gets its own page tab in the sidebar
+// keyboard shortcuts appearance theme and about
 export default class SpotlightPreferences extends ExtensionPreferences {
     fillPreferencesWindow(window) {
         const settings = this.getSettings();
@@ -22,13 +23,8 @@ export default class SpotlightPreferences extends ExtensionPreferences {
             title: 'Appearance',
             icon_name: 'applications-graphics-symbolic',
         });
-        const appearanceGroups = buildAppearancePage(settings);
-        for (const group of appearanceGroups)
-            appearancePage.add(group);
+        appearancePage.add(buildAppearancePage(settings));
         window.add(appearancePage);
-
-        const emojiPage = buildEmojiPage(settings);
-        window.add(emojiPage);
 
         const aboutPage = new Adw.PreferencesPage({
             title: 'About',

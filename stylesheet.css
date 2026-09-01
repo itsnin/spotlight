@@ -1,271 +1,131 @@
-/* spotlight - core stylesheet */
-/* SPDX-License-Identifier: GPL-3.0-or-later */
-
-/* Main popup container */
+/* spotlight - stylesheet */
+/* reuses gnome overview's search widgets styles them to fit our popup */
+/* colors dark background #1c1c1e text #f5f5f7 selection rgba(255,255,255,0.12) */
+/* colors light background #ffffff text #1d1d1f selection rgba(0,122,255,0.12) */
+/* global reset - kill inherited focus outlines or borders from parent theme */
+.spotlight-container,
+.spotlight-container * {
+  border: none;
+  outline: none;
+  box-shadow: none;
+  -st-icon-style: symbolic;
+}
+/* container - single unified window dark default */
 .spotlight-container {
-    background-color: rgba(30, 30, 30, 0.92);
-    border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  background-color: #1c1c1e;
+  border-radius: 36px;
+  padding: 10px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  color: #f5f5f7;
+  max-height: 380px;
 }
-
+/* light theme overrides applied when container has theme-light class */
 .spotlight-container.theme-light {
-    background-color: rgba(245, 245, 245, 0.95);
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  background-color: #ffffff;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+  color: #1d1d1f;
 }
-
-/* Stolen overview search entry styling */
-.spotlight-entry-stolen {
-    padding: 12px 16px;
-    font-size: 16px;
-    font-weight: 500;
+/* search entry - make it blend into unified window dark default */
+.spotlight-container > StEntry,
+.spotlight-container > StEntry:focus {
+  background-color: transparent;
+  color: #f5f5f7;
+  border: none;
+  border-radius: 14px;
+  padding: 12px 16px;
+  font-size: 18px;
+  font-weight: 400;
+  caret-color: #ffffff;
+  selection-background-color: #0a84ff;
 }
-
-/* Content stack — search results area */
-.spotlight-content-stack {
-    min-height: 200px;
-    max-height: 400px;
+.spotlight-container.theme-light > StEntry,
+.spotlight-container.theme-light > StEntry:focus {
+  color: #1d1d1f;
+  caret-color: #000000;
+  selection-background-color: rgba(0, 122, 255, 0.2);
 }
-
-/* Search provider results (stolen from overview) */
-.list-search-provider-content {
-    padding: 8px 0;
+.spotlight-container > StEntry StLabel.hint-text {
+  color: rgba(245, 245, 247, 0.35);
 }
-
-.list-search-result {
-    padding: 8px 16px;
-    border-radius: 8px;
-    margin: 0 8px;
+.spotlight-container.theme-light > StEntry StLabel.hint-text {
+  color: rgba(29, 29, 31, 0.35);
 }
-
-.list-search-result:hover,
-.list-search-result:selected {
-    background-color: rgba(255, 255, 255, 0.1);
+/* search results area - transparent so it blends with container */
+.spotlight-container .search-section-content {
+  background-color: transparent !important;
+  border-radius: 12px;
+  padding: 2px;
 }
-
+/* individual result rows dark default */
+.spotlight-container .list-search-result,
+.spotlight-container .overview-tile,
+.spotlight-container .search-provider-icon,
+.spotlight-container .list-search-provider-content {
+  background-color: transparent;
+  color: #f5f5f7;
+  border-radius: 12px;
+}
+.spotlight-container.theme-light .list-search-result,
+.spotlight-container.theme-light .overview-tile,
+.spotlight-container.theme-light .search-provider-icon,
+.spotlight-container.theme-light .list-search-provider-content {
+  color: #1d1d1f;
+}
+/* selected / hover state dark default */
+.spotlight-container .list-search-result:selected,
+.spotlight-container .overview-tile:selected,
+.spotlight-container .list-search-result:hover,
+.spotlight-container .overview-tile:hover,
+.spotlight-container .search-provider-icon:hover,
+.spotlight-container .list-search-provider-content:hover,
+.spotlight-container .list-search-result:focus,
+.spotlight-container .overview-tile:focus,
+.spotlight-container .search-provider-icon:focus,
+.spotlight-container .list-search-provider-content:focus {
+  background-color: rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff;
+}
+.spotlight-container.theme-light .list-search-result:selected,
+.spotlight-container.theme-light .overview-tile:selected,
 .spotlight-container.theme-light .list-search-result:hover,
-.spotlight-container.theme-light .list-search-result:selected {
-    background-color: rgba(0, 0, 0, 0.08);
+.spotlight-container.theme-light .overview-tile:hover,
+.spotlight-container.theme-light .search-provider-icon:hover,
+.spotlight-container.theme-light .list-search-provider-content:hover,
+.spotlight-container.theme-light .list-search-result:focus,
+.spotlight-container.theme-light .overview-tile:focus,
+.spotlight-container.theme-light .search-provider-icon:focus,
+.spotlight-container.theme-light .list-search-provider-content:focus {
+  background-color: rgba(0, 122, 255, 0.12) !important;
+  color: #000000;
 }
-
-.search-provider-icon {
-    icon-size: 32px;
+/* result text colors dark default */
+.spotlight-container .list-search-result,
+.spotlight-container .list-search-result StLabel {
+  color: #f5f5f7;
 }
-
-.search-section-content {
-    padding: 4px 0;
+.spotlight-container.theme-light .list-search-result,
+.spotlight-container.theme-light .list-search-result StLabel {
+  color: #1d1d1f;
 }
-
-.overview-tile {
-    border-radius: 8px;
-}
-
-/* Slider styling */
-.slider {
-    height: 4px;
-}
-
-/* Hint text in search entry */
-.hint-text {
-    color: rgba(255, 255, 255, 0.5);
-}
-
-.spotlight-container.theme-light .hint-text {
-    color: rgba(0, 0, 0, 0.5);
-}
-
-/* ============================================================
- * UPSTREAM: clipboard-indicator styles (adapted)
- * ============================================================ */
-
-.clipboard-indicator-hbox.private-mode {
-    color: rgba(255,255,255,0.3);
-}
-
-.ci-notification-label {
-    font-weight: bold;
-    color: #ffffff;
-    background-color: rgba(10,10,10,0.7);
-    border-radius: 6px;
-    font-size:2em;
-    padding:.5em;
-    width:400px;
-}
-
-.ci-history-menu-section .popup-menu-item {
-    margin-right: .8em;
-}
-
-.popup-menu-item .ci-action-btn StIcon {
-    icon-size:1.2em;
-    margin-left:.25em;
-}
-
-.popup-menu-item StEntry StIcon {
-    icon-size:1em;
-    margin:0 .25em;
-}
-
-.clipboard-indicator-empty-state {
-    width:350px;
-    color:#aaa;
-}
-
-.clipboard-indicator-empty-state StIcon {
-    icon-size:5em;
-    margin-top:3em;
-}
-
-.clipboard-indicator-empty-state StLabel {
-    margin:1em 0 3em 0;
-}
-
-.ci-history-menu-section {
-    max-height:450px;
-}
-
-.ci-main-menu-section StButton.ci-pin-btn {
-    color: rgba(255,255,255,0.3);
-}
-
-.clipboard-hidden {
-    display:none!important;
-}
-
-.clipboard-menu-icon {
-    width:1em;
-    height:1em;
-    margin-right:.5em;
-}
-
-.clipboard-menu-img-preview {
-    border:solid 1px white;
-    overflow:hidden;
-    width:1.5em;
-    height:1.5em;
-    margin:0;
-    padding:0;
-}
-
-.clipboard-indicator-img-preview {
-    border:solid 1px white;
-    width:1em;
-    height:1em;
-    margin-right:.25em;
-}
-
-.clipboard-indicator-hbox {
-    transition: background-color 150ms ease-in-out;
-}
-
-.clipboard-indicator-hbox .clipboard-indicator-icon {
-    transition: color 150ms ease-in-out;
-}
-
-.ci-tag-label {
-    font-size: 0.8em;
-    color: rgba(255, 255, 255, 0.6);
-    background-color: rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
-    padding: 1px 6px;
-    margin: 0 6px;
-}
-
-.ci-edit-textbox {
-    background-color: rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
-    padding: 8px;
-    min-width: 384px;
-}
-
-/* ============================================================
- * UPSTREAM: emoji-copy styles (adapted)
- * ============================================================ */
-
-/* The toggle buttons for the categories */
-
-.emoji-tooltip {
-  background-color: #222;
-  color: #fff;
-  border-radius: 6px;
-  padding: 4px 10px;
-  font-size: 13px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
-  z-index: 9999;
-}
-
-.EmojisCategory {
-  background-color: #3c3c3c;
-  color: #eeeeec;
-  border-radius: 32px;
-  padding: 12px;
-  border: 1px solid #282828;
-}
-
-.EmojisCategory:hover,
-.EmojisCategory:focus {
-  background-color: rgba(120, 120, 120, 1);
+.spotlight-container .list-search-result:selected StLabel,
+.spotlight-container .list-search-result:hover StLabel,
+.spotlight-container .list-search-result:focus StLabel {
   color: #ffffff;
 }
-
-.EmojisCategory:active,
-.EmojisCategory:checked {
-  background-color: #1c1c1c;
-  color: #ffffff;
+.spotlight-container.theme-light .list-search-result:selected StLabel,
+.spotlight-container.theme-light .list-search-result:hover StLabel,
+.spotlight-container.theme-light .list-search-result:focus StLabel {
+  color: #000000;
 }
-
-/* The actual emojis */
-
-.EmojisItemStyle {
-  font-family:
-    JoyPixels Color,
-    Twitter Color Emoji,
-    Noto Emoji;
-  height: 1.5em;
-  width: 1.5em;
+/* provider section headers dark default */
+.spotlight-container .search-provider-icon {
+  color: #98989d;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 6px 12px 2px 12px;
 }
-
-.EmojisItemStyle:hover,
-.EmojisItemStyle:focus {
-  background-color: rgba(120, 120, 120, 1);
-  border-radius: 6px;
-}
-
-.EmojisList {
-  padding: 0px;
-  margin: 0px;
-}
-
-/* The UI for options */
-
-.EmojisGender,
-.EmojisTone {
-  border-width: 1px;
-  border-radius: 10px;
-  height: 20px;
-  width: 20px;
-  font-size: 12px;
-  border-style: solid;
-  border-color: black;
-}
-
-.EmojisGender:hover,
-.EmojisGender:focus,
-.EmojisGender:active,
-.EmojisGender:checked,
-.EmojisTone:hover,
-.EmojisTone:focus,
-.EmojisTone:active,
-.EmojisTone:checked {
-  border-width: 3px;
-  height: 16px;
-  width: 16px;
-}
-
-.EmojisGender:active,
-.EmojisGender:checked,
-.EmojisTone:active,
-.EmojisTone:checked {
-  border-radius: 6px;
+.spotlight-container.theme-light .search-provider-icon {
+  color: #6e6e73;
 }

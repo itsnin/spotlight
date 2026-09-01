@@ -1,78 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
-    <schema id="org.gnome.shell.extensions.spotlight" path="/org/gnome/shell/extensions/spotlight/">
-        <!-- Core Spotlight -->
-        <key name="toggle-shortcut" type="as">
-            <default><![CDATA[['<Ctrl>space']]]></default>
-            <summary>Shortcut to toggle Spotlight search</summary>
-        </key>
-        <key name="emoji-shortcut" type="as">
-            <default><![CDATA[['<Ctrl>2']]]></default>
-            <summary>Shortcut to open emoji picker</summary>
-        </key>
-        <key name="theme-preference" type="s">
-            <default>'default'</default>
-            <summary>Color theme preference</summary>
-            <description>Values: default (follows system), dark, light.</description>
-        </key>
-
-        <!-- Clipboard settings (from clipboard-indicator@tudmotu.com) -->
-
-        <!-- Emoji settings (from emoji-copy@felipeftn) -->
-        <key type="s" name="emoji-position">
-      <default>'top'</default>
-      <summary>orientation of the interface</summary>
-      <description>Possible values can be 'top' or 'bottom'.</description></key>
-        <key type="i" name="emoji-nbcols">
-      <default>11</default>
-      <summary>Number of emojis per line</summary>
-      <description>Sets the number of column of emojis to display.</description></key>
-        <key type="i" name="emoji-emojisize">
-      <default>30</default>
-      <summary>Default size of emojis</summary>
-      <description>Default size of emojis (px) ; doesn't concern recently used items</description></key>
-        <key type="as" name="emoji-recently-used">
-      <default>
-        ['😂','❤️','😍','😭','😊','😒','😘','😩','🤔','☺️',
-        '👌','😔','😏','😁','😉','👍','😱','😳','😎','👀','💩']
-      </default>
-      <summary>default memorized emojis</summary>
-      <description></description></key>
-        <key name="emoji-window-location" type="s">
-      <choices>
-        <choice value="top-bar"/>
-        <choice value="cursor"/>
-      </choices>
-      <default>'top-bar'</default>
-      <summary>Window location mode</summary>
-      <description>Where to display the emoji window: 'Top bar', 'Cursor'.</description></key>
-        <key type="b" name="emoji-paste-on-select">
-      <default>true</default>
-      <summary>if paste on select is enabled</summary>
-      <description>if true, Selecting an emoji will attempt to paste it on the focused textfield</description></key>
-        <key type="b" name="emoji-keep-open">
-      <default>false</default>
-      <summary>if the menu stays open after selecting an emoji</summary>
-      <description>if true, the emoji menu will stay open after selecting an emoji, allowing to pick several emojis in a row.</description></key>
-        <key type="b" name="emoji-active-keybind">
-      <default>true</default>
-      <summary>if keybinding is enabled</summary>
-      <description>if true, Super+Period will toggle the menu.</description></key>
-        <key type="b" name="emoji-always-show">
-      <default>true</default>
-      <summary>if icon should always be shown</summary>
-      <description>if false, Super+Period will be the only way to display the popup menu.</description></key>
-        <key type="i" name="emoji-skin-tone">
-      <default>0</default>
-      <summary>Favorite skin tone</summary>
-      <description>0 is none, 1 is light, ..., 5 is dark.</description></key>
-        <key type="i" name="emoji-gender">
-      <default>0</default>
-      <summary>Favorite gender</summary>
-      <description>0 is none, 1 is women, 2 is men.</description></key>
-        <key name="emoji-emoji-keybind" type="as">
-      <default><![CDATA[['<Super>period']]]></default>
-      <summary>Keyboard shortcut.</summary>
-      <description>Keyboard shortcut which opens the extension's menu.</description></key>
-    </schema>
+  <schema id="org.gnome.shell.extensions.spotlight" path="/org/gnome/shell/extensions/spotlight/">
+    <!-- default is ctrl space super space has timing issues on some gnome 50 setups -->
+    <key name="toggle-shortcut" type="as">
+      <default>['&lt;Control&gt;space']</default>
+      <summary>Toggle shortcut</summary>
+      <description>Keyboard shortcut to open Spotlight. Default is Ctrl+Space.</description>
+    </key>
+    <!-- appearance theme default follows gnome system dark forces dark light forces light -->
+    <key name="theme-preference" type="s">
+      <default>'default'</default>
+      <summary>Theme preference</summary>
+      <description>Color theme for Spotlight. Values: default (follows system), dark, light.</description>
+    </key>
+  </schema>
 </schemalist>
