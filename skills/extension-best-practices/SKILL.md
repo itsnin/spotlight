@@ -269,6 +269,52 @@ _init(params) {
 }
 ```
 
+## child schemas prevent flat schema merging
+
+if an upstream extension uses settings.get_child(schemaName) with separate child schema IDs you cannot practically flatten all keys into a single prefixed schema
+
+child schemas are separate schema definitions referenced by ID from the parent schema
+
+keep the upstream schema xml files verbatim in schemas directory and compile them alongside spotlight schema
+
+this is not bundling a separate extension it is just using multiple schema definitions within one extension
+
+## GResource files must be placed at extension path
+
+extensions that bundle css icons or other resources via GResource expect the gresource files at a specific path
+
+the theme manager typically does Gio.resource_load(this.ext.path + /theme.gresource)
+
+copy the gresource files to the extension root directory
+
+## upstream extension classes may need getLogger override
+
+when instantiating an upstream Extension subclass check if it calls this.getLogger() in enable()
+
+the Extension base class provides this method but when adapting you may need to override it with a simple console wrapper:
+```javascript
+instance.getLogger = () => ({
+    debug: (...a) => console.debug('[name]', ...a),
+    info: (...a) => console.info('[name]', ...a),
+    warning: (...a) => console.warn('[name]', ...a),
+    error: (...a) => console.error('[name]', ...a),
+});
+```
+
+## metadata must include nested metadata object with name
+
+some upstream code accesses this.ext.metadata.name for notification titles and panel button labels
+
+the metadata adapter must include a nested metadata property:
+```javascript
+const metadata = {
+    uuid: 'upstream-uuid',
+    path: this.path,
+    dir: this.dir,
+    metadata: { name: 'Upstream Name', uuid: 'upstream-uuid', version: 1 },
+};
+```
+
 ## use symbolic icons not unicode characters for buttons
 
 buttons in the shell ui should use `St.Icon` with proper `icon_name` symbolic icons from the gnome icon theme

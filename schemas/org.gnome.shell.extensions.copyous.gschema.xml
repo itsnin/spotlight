@@ -1,0 +1,507 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="https://gitlab.gnome.org/GNOME/glib/-/raw/HEAD/gio/gschema.dtd"?>
+<schemalist>
+	<enum id="org.gnome.shell.extensions.copyous.DatabaseBackend">
+		<value nick="default" value="0"/>
+		<value nick="memory" value="1"/>
+		<value nick="sqlite" value="2"/>
+		<value nick="json" value="3"/>
+	</enum>
+
+	<enum id="org.gnome.shell.extensions.copyous.ClipboardHistory">
+		<value nick="clear" value="0"/>
+		<value nick="keep-pinned-and-tagged" value="1"/>
+		<value nick="keep-all" value="2"/>
+	</enum>
+
+	<enum id="org.gnome.shell.extensions.copyous.Orientation">
+		<value nick="horizontal" value="0"/>
+		<value nick="vertical" value="1"/>
+	</enum>
+
+	<enum id="org.gnome.shell.extensions.copyous.Position">
+		<value nick="top" value="0"/>
+		<!-- <value nick="left" value="0" /> -->
+		<value nick="center" value="1" />
+		<value nick="bottom" value="2"/>
+		<!-- <value nick="right" value="2" /> -->
+		<value nick="fill" value="3" />
+	</enum>
+
+	<enum id="org.gnome.shell.extensions.copyous.HeaderControlsVisibility">
+		<value nick="visible" value="0"/>
+		<value nick="visible-on-hover" value="1"/>
+		<value nick="hidden" value="2"/>
+	</enum>
+
+	<enum id="org.gnome.shell.extensions.copyous.Theme">
+		<value nick="default" value="0"/>
+		<value nick="yaru" value="1"/>
+		<value nick="custom" value="2"/>
+	</enum>
+
+	<enum id="org.gnome.shell.extensions.copyous.ColorScheme">
+		<value nick="system" value="0"/>
+		<value nick="dark" value="1"/>
+		<value nick="light" value="2"/>
+		<value nick="high-contrast" value="3"/>
+	</enum>
+
+	<enum id="org.gnome.shell.extensions.copyous.CustomColorScheme">
+		<value nick="dark" value="0"/>
+		<value nick="light" value="1"/>
+	</enum>
+
+	<enum id="org.gnome.shell.extensions.copyous.OpenClipboardDialogBehavior">
+		<value nick="toggle" value="0"/>
+		<value nick="open-or-select-next" value="1"/>
+	</enum>
+
+	<enum id="org.gnome.shell.extensions.copyous.MiddleClickAction">
+		<value nick="none" value="0"/>
+		<value nick="pin" value="1"/>
+		<value nick="delete" value="2"/>
+	</enum>
+
+	<enum id="org.gnome.shell.extensions.copyous.TextCountMode">
+		<value nick="characters" value="0"/>
+		<value nick="words" value="1"/>
+		<value nick="lines" value="2"/>
+	</enum>
+
+	<enum id="org.gnome.shell.extensions.copyous.BackgroundSize">
+		<value nick="cover" value="0" />
+		<value nick="contain" value="1" />
+	</enum>
+
+	<flags id="org.gnome.shell.extensions.copyous.file-item.FilePreviewType">
+		<value nick="text" value="1"/>
+		<value nick="image" value="2"/>
+		<value nick="thumbnail" value="4" />
+	</flags>
+
+	<enum id="org.gnome.shell.extensions.copyous.file-item.FilePreviewVisibility">
+		<value nick="file-preview" value="0"/>
+		<value nick="file-info" value="1"/>
+		<value nick="file-preview-or-file-info" value="2"/>
+		<value nick="file-preview-and-file-info" value="3"/>
+		<value nick="hidden" value="4"/>
+	</enum>
+
+	<schema id="org.gnome.shell.extensions.copyous" path="/org/gnome/shell/extensions/copyous/">
+		<!-- State -->
+		<key name="incognito" type="b">
+			<default>false</default>
+			<summary>Do not record clipboard history</summary>
+		</key>
+		<key name="disable-gda-warning" type="b">
+			<default>false</default>
+			<summary>Disable Gda warning</summary>
+		</key>
+		<key name="disable-hljs-dialog" type="b">
+			<default>false</default>
+			<summary>Disable the hljs dialog from showing up when launching preferences if hljs is not installed</summary>
+		</key>
+
+		<!-- History -->
+		<key name="in-memory-database" type="b">
+			<default>false</default>
+			<summary>Store clipboard history in memory instead of on disk (Deprecated)</summary>
+		</key>
+		<key name="database-backend" enum="org.gnome.shell.extensions.copyous.DatabaseBackend">
+			<default>'default'</default>
+			<summary>Selects which backend to use for the clipboard database.</summary>
+		</key>
+		<key name="database-location" type="s">
+			<default>''</default>
+			<summary>Path to the database. When empty defaults to {XDG_DATA_HOME}/{EXTENSION UUID}/clipboard.{db,json} depending on the backend.</summary>
+		</key>
+		<key name="clipboard-history" enum="org.gnome.shell.extensions.copyous.ClipboardHistory">
+			<default>'keep-pinned-and-tagged'</default>
+			<summary>Choose what to do with your clipboard history when you restart, log out, or shut down your system</summary>
+		</key>
+		<key name="history-length" type="i">
+			<default>50</default>
+			<range min="10" max="500"/>
+			<summary>Number of unpinned and untagged items to keep in the clipboard history</summary>
+		</key>
+		<key name="history-time" type="i">
+			<default>0</default>
+			<range min="0" max="1440" />
+			<summary>Number of minutes to keep unpinned and untagged items in the clipboard history. Set to 0 to disable the time limit</summary>
+		</key>
+
+		<!-- Behavior -->
+		<key name="remember-search" type="b">
+			<default>false</default>
+			<summary>Remember the last search</summary>
+		</key>
+		<key name="exclude-pinned" type="b">
+			<default>false</default>
+			<summary>Pinned items appear only when searching for pinned items</summary>
+		</key>
+		<key name="exclude-tagged" type="b">
+			<default>false</default>
+			<summary>Tagged items appear only when searching for tagged items</summary>
+		</key>
+		<key name="protect-pinned" type="b">
+			<default>true</default>
+			<summary>Prevents pinned clipboard items from being deleted</summary>
+		</key>
+		<key name="protect-tagged" type="b">
+			<default>true</default>
+			<summary>Prevents tagged clipboard items from being deleted</summary>
+		</key>
+		<key name="paste-on-copy" type="b">
+			<default>true</default>
+			<summary>Automatically paste clipboard items when selected from clipboard history (Deprecated)</summary>
+		</key>
+		<key name="sync-primary" type="b">
+			<default>false</default>
+			<summary>Also copy clipboard items to the primary clipboard</summary>
+		</key>
+		<key name="update-date-on-copy" type="b">
+			<default>true</default>
+			<summary>Update the copied date of clipboard items when selected from clipboard history</summary>
+		</key>
+
+		<!-- Feedback -->
+		<key name="show-indicator" type="b">
+			<default>true</default>
+			<summary>Show an indicator on the top panel</summary>
+		</key>
+		<key name="show-content-indicator" type="b">
+			<default>false</default>
+			<summary>Show the current clipboard content in the indicator</summary>
+		</key>
+		<key name="wiggle-indicator" type="b">
+			<default>true</default>
+			<summary>Wiggle the indicator when a clipboard item is copied</summary>
+		</key>
+		<key name="send-notification" type="b">
+			<default>false</default>
+			<summary>Send a notification when a clipboard item is copied</summary>
+		</key>
+		<key name="sound" type="s">
+			<choices>
+				<choice value="none"/>
+				<choice value="click"/>
+				<choice value="hum"/>
+				<choice value="string"/>
+				<choice value="swing"/>
+				<choice value="message"/>
+				<choice value="message-new-instant" />
+				<choice value="bell"/>
+				<choice value="dialog-warning" />
+			</choices>
+			<default>'none'</default>
+			<summary>Sound to play when a clipboard item is copied</summary>
+		</key>
+		<key name="volume" type="d">
+			<default>0.0</default>
+			<range min="-20.0" max="20.0"/>
+			<summary>Volume of the sound as a decibel offset</summary>
+		</key>
+
+		<!-- App Exclusions -->
+		<key name="wmclass-exclusions" type="as">
+			<default>[]</default>
+			<summary>Apps that will be excluded from clipboard history</summary>
+		</key>
+
+		<!-- Dialog -->
+		<key name="show-at-pointer" type="b">
+			<default>false</default>
+			<summary>Show the clipboard dialog at the pointer position</summary>
+		</key>
+		<key name="show-at-cursor" type="b">
+			<default>false</default>
+			<summary>Show the clipboard dialog at the text cursor position</summary>
+		</key>
+		<key name="clipboard-orientation" enum="org.gnome.shell.extensions.copyous.Orientation">
+			<default>'horizontal'</default>
+			<summary>Orientation of the clipboard dialog</summary>
+		</key>
+		<key name="clipboard-position-vertical" enum="org.gnome.shell.extensions.copyous.Position">
+			<default>'top'</default>
+			<summary>Vertical position of the clipboard dialog</summary>
+
+			<aliases>
+				<alias value="left" target="top" />
+				<alias value="right" target="bottom" />
+			</aliases>
+		</key>
+		<key name="clipboard-position-horizontal" enum="org.gnome.shell.extensions.copyous.Position">
+			<default>'fill'</default>
+			<summary>Horizontal position of the clipboard dialog</summary>
+
+			<aliases>
+				<alias value="left" target="top" />
+				<alias value="right" target="bottom" />
+			</aliases>
+		</key>
+		<key name="clipboard-size" type="i">
+			<default>500</default>
+			<range min="200" max="10000" />
+			<summary>Width or height of the clipboard dialog depending on the orientation</summary>
+		</key>
+
+		<key name="clipboard-margin-top" type="i">
+			<default>6</default>
+			<range min="0" max="10000" />
+			<summary>Top margin of the clipboard dialog</summary>
+		</key>
+		<key name="clipboard-margin-right" type="i">
+			<default>6</default>
+			<range min="0" max="10000" />
+			<summary>Right margin of the clipboard dialog</summary>
+		</key>
+		<key name="clipboard-margin-bottom" type="i">
+			<default>6</default>
+			<range min="0" max="10000" />
+			<summary>Bottom margin of the clipboard dialog</summary>
+		</key>
+		<key name="clipboard-margin-left" type="i">
+			<default>6</default>
+			<range min="0" max="10000" />
+			<summary>Left margin of the clipboard dialog</summary>
+		</key>
+		<key name="auto-hide-search" type="b">
+			<default>false</default>
+			<summary>Automatically hide the search bar when not focused</summary>
+		</key>
+		<key name="show-scrollbar" type="b">
+			<default>true</default>
+			<summary>Show a scrollbar when items overflow</summary>
+		</key>
+
+		<!-- Item -->
+		<key name="item-width" type="i">
+			<default>250</default>
+			<range min="200" max="1000"/>
+			<summary>Width of a clipboard item</summary>
+		</key>
+		<key name="item-height" type="i">
+			<default>170</default>
+			<range min="50" max="1000"/>
+			<summary>Height of a clipboard item</summary>
+		</key>
+		<key name="dynamic-item-height" type="b">
+			<default>false</default>
+			<summary>Dynamically adjust the height of the clipboard items based on their content</summary>
+		</key>
+		<key name="tab-width" type="i">
+			<default>4</default>
+			<range min="1" max="8"/>
+			<summary>Tab width</summary>
+		</key>
+
+		<!-- Header -->
+		<key name="show-header" type="b">
+			<default>true</default>
+			<summary>Show the header of a clipboard item</summary>
+		</key>
+		<key name="header-controls-visibility" enum="org.gnome.shell.extensions.copyous.HeaderControlsVisibility">
+			<default>'visible'</default>
+			<summary>Visibility of the header controls of a clipboard item</summary>
+		</key>
+		<key name="show-item-title" type="b">
+			<default>true</default>
+			<summary>Show the title of a clipboard item</summary>
+		</key>
+
+		<!-- Items -->
+		<child name="text-item" schema="org.gnome.shell.extensions.copyous.text-item"/>
+		<child name="code-item" schema="org.gnome.shell.extensions.copyous.code-item" />
+		<child name="image-item" schema="org.gnome.shell.extensions.copyous.image-item"/>
+		<child name="file-item" schema="org.gnome.shell.extensions.copyous.file-item"/>
+		<child name="link-item" schema="org.gnome.shell.extensions.copyous.link-item"/>
+		<child name="character-item" schema="org.gnome.shell.extensions.copyous.character-item"/>
+
+		<!-- Theme -->
+		<child name="theme" schema="org.gnome.shell.extensions.copyous.theme"/>
+
+		<!-- Shortcuts -->
+		<key name="open-clipboard-dialog-shortcut" type="as">
+			<default>['&lt;Super&gt;&lt;Shift&gt;v']</default>
+			<summary>Shortcut to open the clipboard dialog</summary>
+		</key>
+		<key name="toggle-incognito-mode-shortcut" type="as">
+			<default>['&lt;Super&gt;&lt;Control&gt;&lt;Shift&gt;v']</default>
+			<summary>Shortcut to toggle incognito mode</summary>
+		</key>
+		<key name="open-clipboard-dialog-behavior" enum="org.gnome.shell.extensions.copyous.OpenClipboardDialogBehavior">
+			<default>'toggle'</default>
+			<summary>Behavior of the open clipboard dialog shortcut when the dialog is open/closed.</summary>
+		</key>
+
+		<key name="pin-item-shortcut" type="as">
+			<default>['&lt;Control&gt;s']</default>
+			<summary>Shortcut to pin a clipboard item</summary>
+		</key>
+		<key name="delete-item-shortcut" type="as">
+			<default>['Delete']</default>
+			<summary>Shortcut to delete a clipboard item</summary>
+		</key>
+		<key name="edit-item-shortcut" type="as">
+			<default>['&lt;Control&gt;e']</default>
+			<summary>Shortcut to edit a clipboard item</summary>
+		</key>
+		<key name="edit-title-shortcut" type="as">
+			<default>['&lt;Control&gt;t']</default>
+			<summary>Shortcut to edit the title of a clipboard item</summary>
+		</key>
+		<key name="open-menu-shortcut" type="as">
+			<default>['&lt;Control&gt;a']</default>
+			<summary>Shortcut to open the menu of a clipboard item</summary>
+		</key>
+
+		<key name="middle-click-action" enum="org.gnome.shell.extensions.copyous.MiddleClickAction">
+			<default>'pin'</default>
+			<summary>Action to perform when the middle mouse button is clicked</summary>
+		</key>
+
+		<key name="swap-copy-shortcut" type="b">
+			<default>false</default>
+			<summary>Swaps copy and paste shortcuts</summary>
+		</key>
+
+		<key name="swap-scroll-shortcut" type="b">
+			<default>false</default>
+			<summary>Swaps scroll shortcuts of cycling item types and item tags</summary>
+		</key>
+	</schema>
+
+	<schema id="org.gnome.shell.extensions.copyous.text-item" path="/org/gnome/shell/extensions/copyous/text-item/">
+		<key name="show-text-info" type="b">
+			<default>false</default>
+			<summary>Show extra information</summary>
+		</key>
+		<key name="text-count-mode" enum="org.gnome.shell.extensions.copyous.TextCountMode">
+			<default>'characters'</default>
+			<summary>Show the number of characters, words or lines</summary>
+		</key>
+	</schema>
+
+	<schema id="org.gnome.shell.extensions.copyous.code-item" path="/org/gnome/shell/extensions/copyous/code-item/">
+		<key name="syntax-highlighting" type="b">
+			<default>true</default>
+			<summary>Enable syntax highlighting</summary>
+		</key>
+		<key name="show-line-numbers" type="b">
+			<default>true</default>
+			<summary>Show line numbers</summary>
+		</key>
+		<key name="show-code-info" type="b">
+			<default>false</default>
+			<summary>Show extra information</summary>
+		</key>
+		<key name="text-count-mode" enum="org.gnome.shell.extensions.copyous.TextCountMode">
+			<default>'characters'</default>
+			<summary>Show the number of characters, words or lines</summary>
+		</key>
+	</schema>
+
+	<schema id="org.gnome.shell.extensions.copyous.image-item" path="/org/gnome/shell/extensions/copyous/image-item/">
+		<key name="show-image-info" type="b">
+			<default>false</default>
+			<summary>Show extra information</summary>
+		</key>
+		<key name="background-size" enum="org.gnome.shell.extensions.copyous.BackgroundSize">
+			<default>'cover'</default>
+			<summary>Background size of the image</summary>
+		</key>
+	</schema>
+
+	<schema id="org.gnome.shell.extensions.copyous.file-item" path="/org/gnome/shell/extensions/copyous/file-item/">
+		<key name="file-preview-visibility" enum="org.gnome.shell.extensions.copyous.file-item.FilePreviewVisibility">
+			<default>'file-preview-or-file-info'</default>
+			<summary>File preview shows a preview of the contents of a file. File info shows some information about the file.</summary>
+		</key>
+		<key name="file-preview-types" flags="org.gnome.shell.extensions.copyous.file-item.FilePreviewType">
+			<default>['text','image','thumbnail']</default>
+		</key>
+		<key name="file-preview-exclusion-patterns" type="as">
+			<default>[]</default>
+			<summary>Files matching these glob patterns will not have a preview</summary>
+		</key>
+		<key name="background-size" enum="org.gnome.shell.extensions.copyous.BackgroundSize">
+			<default>'cover'</default>
+			<summary>Background size of the image preview</summary>
+		</key>
+		<key name="syntax-highlighting" type="b">
+			<default>true</default>
+			<summary>Enable syntax highlighting in the text preview</summary>
+		</key>
+		<key name="show-line-numbers" type="b">
+			<default>true</default>
+			<summary>Show line numbers in the text preview</summary>
+		</key>
+	</schema>
+
+	<schema id="org.gnome.shell.extensions.copyous.link-item" path="/org/gnome/shell/extensions/copyous/link-item/">
+		<key name="show-link-preview" type="b">
+			<default>true</default>
+			<summary>Show a preview of the link</summary>
+		</key>
+		<key name="show-link-preview-image" type="b">
+			<default>true</default>
+			<summary>Show a preview image of the link</summary>
+		</key>
+		<key name="link-preview-image-background-size" enum="org.gnome.shell.extensions.copyous.BackgroundSize">
+			<default>'contain'</default>
+			<summary>Background size of the preview image of the link</summary>
+		</key>
+		<key name="link-preview-orientation" enum="org.gnome.shell.extensions.copyous.Orientation">
+			<default>'vertical'</default>
+			<summary>Orientation of the link preview</summary>
+		</key>
+		<key name="link-preview-exclusion-patterns" type="as">
+			<default>[]</default>
+			<summary>Links matching these regex patterns will not have a preview</summary>
+		</key>
+	</schema>
+
+	<schema id="org.gnome.shell.extensions.copyous.character-item" path="/org/gnome/shell/extensions/copyous/character-item/">
+		<key name="max-characters" type="i">
+			<default>1</default>
+			<range min="1" max="4"/>
+			<summary>Maximum number of characters that are recognized as a character</summary>
+		</key>
+		<key name="show-unicode" type="b">
+			<default>false</default>
+			<summary>Show the Unicode of the character</summary>
+		</key>
+	</schema>
+
+	<schema id="org.gnome.shell.extensions.copyous.theme" path="/org/gnome/shell/extensions/copyous/theme/">
+		<key name="theme" enum="org.gnome.shell.extensions.copyous.Theme">
+			<default>'default'</default>
+			<summary>The preferred theme</summary>
+		</key>
+		<key name="color-scheme" enum="org.gnome.shell.extensions.copyous.ColorScheme">
+			<default>'system'</default>
+			<summary>The color scheme of the theme</summary>
+		</key>
+		<key name="custom-color-scheme" enum="org.gnome.shell.extensions.copyous.CustomColorScheme">
+			<default>'dark'</default>
+			<summary>The color scheme of the custom theme</summary>
+		</key>
+		<key name="custom-bg-color" type="s">
+			<default>''</default>
+			<summary>The background color of the clipboard dialog</summary>
+		</key>
+		<key name="custom-fg-color" type="s">
+			<default>''</default>
+			<summary>The text color of the clipboard dialog</summary>
+		</key>
+		<key name="custom-card-bg-color" type="s">
+			<default>''</default>
+			<summary>The background color of clipboard items</summary>
+		</key>
+		<key name="custom-search-bg-color" type="s">
+			<default>''</default>
+			<summary>The background color of the search bar</summary>
+		</key>
+	</schema>
+</schemalist>

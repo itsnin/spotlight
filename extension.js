@@ -1,4 +1,4 @@
-// spotlight - integrates clipboard-indicator and emoji-copy features
+// spotlight - integrates Copyous clipboard manager and emoji-copy features
 // SPDX-License-Identifier: GPL-3.0-or-later
 import {Extension, gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 import Gio from 'gi://Gio';
@@ -7,8 +7,12 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import {SpotlightPopup} from './spotlightPopup.js';
 import {KeybindingManager} from './services/core/keybinding.js';
 import {PrefixedSettings} from './services/prefixedSettings.js';
-import {ClipboardPopup} from './popup/clipboardPopup.js';
+import CopyousExtension from './lib/copyousEntry.js';
 import {EmojiPopup} from './popup/emojiPopup.js';
+
+// Copyous schema ID (kept separate because it uses child schemas)
+const COPYOUS_SCHEMA = 'org.gnome.shell.extensions.copyous';
+const COPYOUS_UUID = 'copyous@boerdereinar.dev';
 
 export default class SpotlightExtension extends Extension {
     async enable() {
@@ -23,15 +27,14 @@ export default class SpotlightExtension extends Extension {
         this._keybindingManager = new KeybindingManager();
         this._keybindingManager.enable();
 
-        // --- Clipboard: wrap settings with clipboard- prefix for upstream code ---
-        const cbSettings = new PrefixedSettings(this._settings, 'clipboard-');
-        this._clipboardPopup = new ClipboardPopup(
-            cbSettings,
-            () => console.warn('[spotlight] clipboard openSettings not implemented'),
-            this.uuid,
-        );
+        // --- Copyous clipboard manager ---
+        this._copyous = this._createCopyousInstance();
+        this._copyous.enable();
+        // Hide the panel indicator that Copyous adds
+        const copyousIndicator = Main.panel.statusArea[COPYOUS_UUID];
+        if (copyousIndicator) copyousIndicator.visible = false;
 
-        // --- Emoji: wrap settings with emoji- prefix, initialize async ---
+        // --- Emoji popup ---
         const emSettings = new PrefixedSettings(this._settings, 'emoji-');
         this._emojiPopup = new EmojiPopup(emSettings, this.path, _);
         await this._emojiPopup.initialize();
@@ -51,6 +54,39 @@ export default class SpotlightExtension extends Extension {
         );
     }
 
+    /**
+     * Create a CopyousExtension instance with adapted metadata.
+     * Copyous uses child schemas so its schema is kept separate.
+     */
+    _createCopyousInstance() {
+        const metadata = {
+            uuid: COPYOUS_UUID,
+            path: this.path,
+            dir: this.dir,
+            metadata: {
+                uuid: COPYOUS_UUID,
+                name: 'Copyous',
+                version: 9,
+            },
+        };
+
+        const instance = new CopyousExtension(metadata);
+
+        // Override getSettings to return Copyous schema settings
+        instance.getSettings = () => new Gio.Settings({ schema: COPYOUS_SCHEMA });
+
+        // Override getLogger — provide simple console-based logger
+        instance.getLogger = () => ({
+            debug: (...args) => console.debug('[copyous]', ...args),
+            info: (...args) => console.info('[copyous]', ...args),
+            warning: (...args) => console.warn('[copyous]', ...args),
+            error: (...args) => console.error('[copyous]', ...args),
+            log: (...args) => console.log('[copyous]', ...args),
+        });
+
+        return instance;
+    }
+
     _registerShortcuts() {
         this._keybindingManager.unlisten();
 
@@ -68,7 +104,7 @@ export default class SpotlightExtension extends Extension {
             });
         }
 
-        // Ctrl+1 — open clipboard-indicator original PopupMenu
+        // Ctrl+1 — open Copyous clipboard dialog
         const cbShortcuts = this._settings.get_strv('clipboard-shortcut');
         if (cbShortcuts.length > 0) {
             this._keybindingManager.listenFor(cbShortcuts[0], () => {
@@ -77,22 +113,19 @@ export default class SpotlightExtension extends Extension {
                     this._emojiPopup.close();
                     return;
                 }
-                if (this._clipboardPopup) {
-                    if (this._clipboardPopup.isOpen)
-                        this._clipboardPopup.close();
-                    else
-                        this._clipboardPopup.open();
+                if (this._copyous?.clipboardDialog) {
+                    this._copyous.clipboardDialog.toggle();
                 }
             });
         }
 
-        // Ctrl+2 — open emoji-copy original PopupMenu
+        // Ctrl+2 — open emoji popup
         const emShortcuts = this._settings.get_strv('emoji-shortcut');
         if (emShortcuts.length > 0) {
             this._keybindingManager.listenFor(emShortcuts[0], () => {
                 if (this._popup?.visible) this._popup.close();
-                if (this._clipboardPopup?.isOpen) {
-                    this._clipboardPopup.close();
+                if (this._copyous?.clipboardDialog?.opened) {
+                    this._copyous.clipboardDialog.close();
                     return;
                 }
                 if (this._emojiPopup) {
@@ -106,7 +139,9 @@ export default class SpotlightExtension extends Extension {
     }
 
     _closeAllPopups() {
-        if (this._clipboardPopup?.isOpen) this._clipboardPopup.close();
+        if (this._copyous?.clipboardDialog?.opened) {
+            this._copyous.clipboardDialog.close();
+        }
         if (this._emojiPopup?.isOpen) this._emojiPopup.close();
     }
 
@@ -115,16 +150,16 @@ export default class SpotlightExtension extends Extension {
         this._keybindingManager.disable();
         this._keybindingManager = null;
 
-        // Clean up emoji first (async resources)
+        // Clean up emoji first
         if (this._emojiPopup) {
             this._emojiPopup.destroy();
             this._emojiPopup = null;
         }
 
-        // Clean up clipboard
-        if (this._clipboardPopup) {
-            this._clipboardPopup.destroy();
-            this._clipboardPopup = null;
+        // Clean up Copyous
+        if (this._copyous) {
+            this._copyous.disable();
+            this._copyous = null;
         }
 
         // Return stolen widgets back to overview
