@@ -1,5 +1,28 @@
 # extension-best-practices
 
+## directory structure convention
+
+use lib as the root folder for all library code organized by concern
+
+this is the convention used by the most sophisticated and widely adopted gnome shell extensions such as just perfection verified via web search of popular extension repositories
+
+```
+extension.js          entry point at root required by gnome
+prefs.js              prefs entry at root required by gnome
+stylesheet.css        at root required by gnome
+lib/
+    ui/               user interface components popups widgets
+    core/             core infrastructure services keybinding etc
+    utils/            shared utilities if needed
+prefs/                preference pages
+schemas/              gsettings schema xml at root required by gnome
+scripts/              build install helper scripts
+```
+
+src implies a build or compilation step use lib for extensions without a build step
+
+never invent deeply nested structures for small codebases two levels deep lib/category is sufficient
+
 ## GObject constructor rule
 
 never pass custom underscore prefixed properties through GObject constructors they get silently dropped and cause null reference crashes
