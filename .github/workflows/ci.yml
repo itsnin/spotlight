@@ -20,7 +20,7 @@ jobs:
       - name: Check all JS files parse as ES modules
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq nodejs
-          for f in $(find . -name "*.js" -not -path "./.git/*" -not -path "./services/emoji/libs/*"); do
+          for f in $(find . -name "*.js" -not -path "./.git/*"); do
             node --check "$f" || { echo "SYNTAX ERROR in $f"; exit 1; }
           done
           echo "All JS files parse successfully"
@@ -64,7 +64,7 @@ jobs:
 
       - name: Check no try/catch in shell code
         run: |
-          if grep -rn 'try\s*{' $(find . -name "*.js" -not -path "./.git/*" -not -path "./services/emoji/libs/*" -not -path "./prefs/*"); then
+          if grep -rn 'try\s*{' $(find . -name "*.js" -not -path "./.git/*" -not -path "./prefs/*"); then
             echo "WARNING: found try/catch in shell code (review needed)"
           else
             echo "No try/catch in shell code"
@@ -75,7 +75,7 @@ jobs:
           # optional chaining is prohibited only for GUARANTEED methods/objects per EGO guidelines
           # it is allowed for genuinely potentially-null objects (e.g. tracker.focus_window result)
           # this check flags occurrences for human review, not as a hard failure
-          if grep -rnE '\?\.' $(find . -name "*.js" -not -path "./.git/*" -not -path "./services/emoji/libs/*"); then
+          if grep -rnE '\?\.' $(find . -name "*.js" -not -path "./.git/*"); then
             echo "WARNING: found optional chaining (verify each is for a genuinely potentially-null object)"
             echo "See AGENTS.md 'optional chaining ?. nuanced rule' for guidance"
           else
@@ -91,7 +91,7 @@ jobs:
 import re, os, sys
 violations = []
 for root, dirs, files in os.walk('.'):
-    if '.git' in root or 'services/emoji/libs' in root:
+    if '.git' in root or False:
         continue
     for fn in files:
         if not fn.endswith('.js'):
@@ -123,7 +123,7 @@ PYEOF
 
       - name: Check no deprecated modules
         run: |
-          if grep -rn "imports.misc.lang\|imports.misc.mainloop\|imports.misc.byteArray" $(find . -name "*.js" -not -path "./.git/*" -not -path "./services/emoji/libs/*"); then
+          if grep -rn "imports.misc.lang\|imports.misc.mainloop\|imports.misc.byteArray" $(find . -name "*.js" -not -path "./.git/*"); then
             echo "ERROR: found deprecated module imports"
             exit 1
           fi
@@ -137,7 +137,7 @@ PYEOF
             exit 1
           fi
           echo "Checking shell files don't import GTK-only libs..."
-          if grep -rn "from 'gi://Gtk'\|from 'gi://Gdk'\|from 'gi://Adw'" $(find . -name "*.js" -not -path "./.git/*" -not -path "./services/emoji/libs/*" -not -path "./prefs/*" -not -name "prefs.js"); then
+          if grep -rn "from 'gi://Gtk'\|from 'gi://Gdk'\|from 'gi://Adw'" $(find . -name "*.js" -not -path "./.git/*" -not -path "./prefs/*" -not -name "prefs.js"); then
             echo "ERROR: shell files import GTK-only libraries"
             exit 1
           fi
@@ -154,6 +154,6 @@ PYEOF
       - name: Summary
         run: |
           echo "=== CI Summary ==="
-          echo "JS files: $(ls *.js popup/*.js services/*.js prefs/*.js | wc -l)"
+          echo "JS files: $(find . -name "*.js" -not -path "./.git/*" -not -path "./skills/*" | wc -l)"
           echo "Total files: $(find . -type f -not -path './.git/*' | wc -l)"
           echo "All checks passed"

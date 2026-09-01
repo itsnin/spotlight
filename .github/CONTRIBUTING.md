@@ -9,7 +9,7 @@ This project follows strict GNOME Shell extension coding standards. Before submi
 - **skills/extension-lifecycle/SKILL.md** — enable/disable symmetry and cleanup discipline
 - **skills/extension-signal-cleanup/SKILL.md** — signal connection patterns
 - **skills/extension-glib-sources/SKILL.md** — timeout_add, idle_add, and source removal
-- **skills/extension-gsettings/SKILL.md** — GSettings schema conventions and PrefixedSettings pattern
+- **skills/extension-gsettings/SKILL.md** — GSettings schema conventions
 - **skills/extension-prefs/SKILL.md** — preferences window and process isolation rules
 - **skills/extension-esm-imports/SKILL.md** — ESM import rules and process isolation
 - **skills/extension-review-guidelines/SKILL.md** — official EGO review guidelines
@@ -19,7 +19,7 @@ This project follows strict GNOME Shell extension coding standards. Before submi
 1. Run the CI checks locally:
    ```bash
    # Check JS syntax
-   for f in $(find . -name "*.js" -not -path "./.git/*" -not -path "./services/emoji/libs/*"); do node --check "$f"; done
+   for f in $(find . -name "*.js" -not -path "./.git/*" -not -path "./skills/*"); do node --check "$f"; done
    
    # Check schema compiles
    glib-compile-schemas --strict schemas/
@@ -39,7 +39,4 @@ journalctl -b /usr/bin/gnome-shell | grep spotlight
 ## Commit Messages
 
 Use the imperative mood. Reference the component being changed. Examples:
-- `Fix: GObject constructor crash in clipboardView`
-- `Add: centerOnPrimary method to PopupPositioner`
-- `Cleanup: remove dead emojiCategory.js`
 - `Docs: update skills with undefined method lesson`

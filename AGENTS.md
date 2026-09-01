@@ -90,26 +90,20 @@ ego supports multi-versioning where you upload separate zips for different gnome
 
 ## architecture
 
-### three separate popups search clipboard and emoji
+### single focused popup
 
-spotlight has three independent popup windows
-
-- main spotlight popup search only contains the search bar no mode buttons
-- clipboard popup dedicated standalone window for clipboard history opened via shortcut
-- emoji popup dedicated standalone window for emoji picker opened via shortcut
-
-the main popup is search only keyboard shortcuts open dedicated feature popups directly
+spotlight has one popup the main search popup it permanently steals the overview search entry and controller
 
 ### spotlight is first-class overview search is second-class
 
-on enable spotlight permanently steals the overview's search entry and search controller and hides them overview search is gone for as long as spotlight is enabled the overview itself stays functional window picker app grid workspaces only its search ui is permanently hijacked
+on enable spotlight permanently steals the overview search entry and search controller and hides them overview search is gone for as long as spotlight is enabled the overview itself stays functional window picker app grid workspaces only its search ui is permanently hijacked
 
-when the popup opens spotlight reparents the already-stolen widgets into its popup when the popup closes spotlight removes them from the popup but keeps them stolen and hidden they are only returned to the overview on disable
+when the popup opens spotlight reparents the already stolen widgets into its popup when the popup closes spotlight removes them from the popup but keeps them stolen and hidden they are only returned to the overview on disable
 
 this is achieved through two methods on SpotlightPopup
 
-- `stealOverviewSearch()` called once from extension.enable()
-- `returnOverviewSearch()` called once from extension.disable()
+- stealOverviewSearch called once from extension enable
+- returnOverviewSearch called once from extension disable
 
 the popup open and close methods only reparent widgets between our content box and a hidden state they never return widgets to the overview
 
@@ -117,55 +111,26 @@ the popup open and close methods only reparent widgets between our content box a
 
 ```
 spotlight/
-    extension.js              entry point constructs popups delegates to modules
+    extension.js              entry point constructs popup and keybinding manager
     prefs.js                  preferences entry point
     spotlightPopup.js         main search popup open close destroy lifecycle
     stylesheet.css            spotlight styling
     metadata.json             extension metadata
-    popup/                    popup components split for maintainability
-        overviewSearch.js     steals and returns overview search widgets
-        themeManager.js       theme detection and application
+    popup/                    popup infrastructure
         popupBackdrop.js      transparent click outside detection
-        popupPositioner.js    positions centers and shows the popup
-        clipboardPopup.js     standalone clipboard history popup
-        emojiPopup.js         standalone emoji picker popup
-        clipboardView.js      clipboard history list view
-        emojiView.js          emoji selector grid view
+        popupPositioner.js    sizing centering and monitor detection
     services/
-        prefixedSettings.js   shared utility wraps Gio.Settings with key prefix
         core/
-            keybinding.js     keybinding manager
-            virtualKeyboard.js virtual input device for paste simulation
-        clipboard/
-            constants.js      clipboard settings key names
-            entry.js          DEPRECATED merged into registry.js
-            manager.js        clipboard history tracking deduplication
-            registry.js       disk persistence and ClipboardEntry class
-            keyboard.js       virtual keyboard helper
-            confirmDialog.js  confirmation dialog helper
-            stylesheet.css    clipboard-specific styles
-        emoji/
-            data.js           emoji data loading tagging search popularity
-            emojiButton.js    individual emoji button (from upstream, unused)
-            emojiCategory.js  emoji category component (from upstream, unused)
-            emojiOptionsBar.js skin tone options bar (from upstream, unused)
-            emojiSearchItem.js search item (from upstream, unused)
-            handlers/sql.js   sqlite handler (from upstream, unused)
-            libs/sql.js       sql.js library (from upstream, unused)
-            stylesheet.css    emoji-specific styles
-    schemas/                  gsettings schema single merged schema
+            keybinding.js     keybinding manager via grab_accelerator
+    schemas/                  gsettings schema
         org.gnome.shell.extensions.spotlight.gschema.xml
     prefs/                    preference pages
-        shortcutPage.js
-        appearancePage.js
-        aboutPage.js
-    data/
-        emojis.json           bundled emoji data unicode plus keywords
-        emojis.db             sqlite database (from upstream, unused)
-    locale/                   translation source files gettext
-        spotlight.pot         translation template
+        shortcutPage.js       shortcut customization
+        appearancePage.js     theme preference
+        aboutPage.js          extension info
     scripts/
-        build.sh              curl installer downloads from main branch
+        install.sh            curl installer downloads latest release from github
+        build.sh              symlink to install.sh backward compatibility
 ```
 
 ### process isolation
@@ -199,21 +164,6 @@ in `disable()` or `destroy()` we call `disconnectObject(this)` which removes eve
 for signals connected to short lived widgets like buttons list items that our code destroys plain `connect` is safe because gobject automatically disconnects all signal handlers when the emitting object is finalized verified via https://discourse.gnome.org/t/run-dispose-in-gjs/16722 and official gobject signal documentation
 
 do not use plain `connect` for signals from long lived objects always use `connectObject` for those
-
-### prefixed settings utility
-
-since all features share one gsettings schema feature-specific keys use name prefixes to avoid collisions the `PrefixedSettings` class in `services/prefixedSettings.js` wraps a `Gio.Settings` object and transparently prepends a prefix to every key access
-
-```javascript
-import { PrefixedSettings } from '../prefixedSettings.js';
-const settings = new PrefixedSettings(baseSettings, 'clipboard-');
-settings.get_int('history-size'); // reads schema key clipboard-history-size
-settings.set_boolean('private-mode', true); // writes schema key clipboard-private-mode
-```
-
-all methods of `Gio.Settings` are proxied `get_boolean` `set_boolean` `get_int` `set_int` `get_string` `set_string` `get_strv` `set_strv` `get_value` `set_value` `connect` `disconnect` `bind` `reset` `has_key`
-
-always use `PrefixedSettings` for feature-specific settings never access prefixed keys directly with string concatenation
 
 ### popup positioning
 
@@ -347,9 +297,6 @@ the keybinding uses `global.display.grab_accelerator()` not `Main.wm.addKeybindi
 
 the popup can be closed in three ways pressing the toggle shortcut again pressing `Escape` or clicking outside the popup bounds
 
-clipboard history opens via its own dedicated shortcut default Alt 1
-emoji picker opens via its own dedicated shortcut default Alt 2
-
 see the `keybinding.js` file for the implementation
 
 ## gsettings schema
@@ -364,37 +311,13 @@ see https://gjs.guide/extensions/development/preferences.html#gsettings
 
 ### schema keys
 
-all keys live in a single merged schema `org.gnome.shell.extensions.spotlight` feature-specific keys use name prefixes
+schema id is `org.gnome.shell.extensions.spotlight` path is `/org/gnome/shell/extensions/spotlight/`
 
-core spotlight keys
 - `toggle-shortcut` type `as` default `['<Control>space']` keyboard shortcut to open and close the popup
 - `theme-preference` type `s` default `'default'` controls visual theme
-  - `'default'` follows gnome system color scheme via `org.gnome.desktop.interface color-scheme`
+  - `'default'` follows gnome system color scheme
   - `'dark'` always uses dark appearance
   - `'light'` always uses light appearance
-- `clipboard-shortcut` type `as` default `['<Alt>1']` keyboard shortcut to open clipboard popup
-- `emoji-shortcut` type `as` default `['<Alt>2']` keyboard shortcut to open emoji popup
-
-clipboard keys prefixed with `clipboard-` accessed via `PrefixedSettings(settings, 'clipboard-')`
-- `clipboard-history-size` type `i` default `20` range `5-100` maximum number of clipboard entries
-- `clipboard-paste-on-select` type `b` default `false` automatically paste after selecting entry
-- `clipboard-strip-text` type `b` default `true` strip whitespace from text entries
-- `clipboard-private-mode` type `b` default `false` do not track clipboard history
-- `clipboard-move-item-first` type `b` default `true` move selected entry to top of history
-- `clipboard-notify-on-copy` type `b` default `true` show notification on copy
-- `clipboard-confirm-on-clear` type `b` default `true` confirm before clearing history
-- `clipboard-cache-only-favorite` type `b` default `false` only persist favorites to disk
-- `clipboard-excluded-apps` type `as` default `[]` wm classes to exclude from tracking
-- plus 30+ more clipboard settings see schema xml for complete list
-
-emoji keys prefixed with `emoji-` accessed via `PrefixedSettings(settings, 'emoji-')`
-- `emoji-emojisize` type `i` default `24` emoji grid size in pixels
-- `emoji-nbcols` type `i` default `8` number of columns in emoji grid
-- `emoji-skin-tone` type `i` default `0` range `0-5` default skin tone
-- `emoji-gender` type `i` default `0` range `0-2` default gender
-- `emoji-paste-on-select` type `b` default `true` paste after selecting emoji
-- `emoji-keep-open` type `b` default `false` keep emoji picker open after selection
-- `emoji-recently-used` type `as` default `[]` recently used emojis
 
 ## appearance theme
 

@@ -15,7 +15,7 @@ If you find a security vulnerability, please report it privately by emailing the
 
 This extension:
 - Runs inside the GNOME Shell process
-- Reads clipboard contents
+- Reads keyboard input via grab_accelerator
 - Does NOT send any data over the network
 - Does NOT use telemetry
 - Does NOT execute arbitrary code from untrusted sources
@@ -23,6 +23,6 @@ This extension:
 ## Security Best Practices
 
 - Clipboard data stays on your machine
-- SQLite database for emojis is read-only (shipped with the extension)
+- No external databases or network connections
 - Clipboard history is stored locally in your extension data directory
 - No external network connections are made

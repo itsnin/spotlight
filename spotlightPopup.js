@@ -7,8 +7,8 @@ import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
 import Gio from 'gi://Gio';
 import Clutter from 'gi://Clutter';
-import {PopupBackdrop} from './popupBackdrop.js';
-import {PopupPositioner} from './popupPositioner.js';
+import {PopupBackdrop} from './popup/popupBackdrop.js';
+import {PopupPositioner} from './popup/popupPositioner.js';
 
 export const SpotlightPopup = GObject.registerClass(
 class SpotlightPopup extends St.Widget {
