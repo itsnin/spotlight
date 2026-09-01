@@ -1,8 +1,8 @@
 // spotlight - a compact launcher for gnome shell
 // SPDX-License-Identifier: GPL-3.0-or-later
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
-import {SpotlightPopup} from './spotlightPopup.js';
-import {KeybindingManager} from './services/core/keybinding.js';
+import {SpotlightPopup} from './lib/ui/spotlightPopup.js';
+import {KeybindingManager} from './lib/core/keybinding.js';
 
 // entry point enable and disable are kept next to each other for easy review
 export default class SpotlightExtension extends Extension {

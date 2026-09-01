@@ -82,31 +82,24 @@ Compiled GSettings schemas (`gschemas.compiled`) are **not shipped** in the repo
 
 Spotlight uses three independent popup windows. The main search popup permanently takes over GNOME Overview's search infrastructure. On enable, it steals the Overview's search entry and search controller widgets and hides them. When the popup opens, these already-stolen widgets are reparented into the popup. When the popup closes, they are removed from the popup but kept stolen and hidden. They are only returned to the Overview on disable.
 
-Keyboard shortcuts open dedicated standalone popups directly: Ctrl+Space for search, Alt+1 for clipboard history, Alt+2 for emoji picker.
+Open with Ctrl+Space (configurable in preferences). Spotlight permanently hijacks the Overview search entry so results appear in a compact centered popup instead of the full Overview.
 
 This approach means Spotlight automatically benefits from every search provider registered with GNOME Shell, with zero custom provider code.
 
 | File | Responsibility |
 |---|---|
-| `extension.js` | Entry point — constructs all three popups, wires callbacks, manages standalone features |
-| `spotlightPopup.js` | Main search popup lifecycle — open/close/destroy, mode buttons as triggers |
-| `popup/clipboardPopup.js` | Standalone clipboard history popup |
-| `popup/emojiPopup.js` | Standalone emoji picker popup |
-| `popup/overviewSearch.js` | Steals and returns Overview search widgets |
-| `popup/themeManager.js` | Theme detection and application (dark/light/system) |
-| `popup/popupBackdrop.js` | Transparent click-outside detection via chrome layer |
-| `popup/popupPositioner.js` | Sizes, centers, and shows popups |
-| `popup/clipboardView.js` | Clipboard history view with favorites, tags, edit, private mode |
-| `popup/emojiView.js` | Emoji picker with categories, skin tones, gender |
-| `services/prefixedSettings.js` | Shared utility — wraps Gio.Settings with key name prefixing |
-| `services/core/` | Core Spotlight services — keybinding, virtual keyboard |
-| `services/clipboard/` | Clipboard history feature — manager, registry, keyboard, dialogs, constants |
-| `services/emoji/` | Emoji picker feature — data manager, UI components |
+| `extension.js` | Entry point — constructs popup and keybinding manager, manages lifecycle |
+| `lib/ui/spotlightPopup.js` | Main search popup lifecycle — open/close/destroy |
+| `lib/ui/popupBackdrop.js` | Transparent click-outside detection via chrome layer |
+| `lib/ui/popupPositioner.js` | Sizes, centers, and shows popups on the correct monitor |
+| `lib/core/keybinding.js` | Keybinding manager via grab_accelerator |
 | `prefs.js` | Preferences window entry point |
 | `prefs/shortcutPage.js` | Keyboard shortcut configuration |
-| `prefs/appearancePage.js` | Visual theme, clipboard and emoji behavior |
+| `prefs/appearancePage.js` | Visual theme preference |
 | `prefs/aboutPage.js` | About section |
-| `schemas/*.gschema.xml` | Single merged GSettings schema definitions (not pre-compiled) |
+| `schemas/*.gschema.xml` | GSettings schema definitions |
+
+Structure follows the lib based convention used by the most sophisticated widely adopted gnome shell extensions such as just perfection
 ## Design Principles
 
 - **Dark, not black.** Background `#1c1c1e` with text `#f5f5f7`. Pure black is harsh on OLED and inaccurate on IPS panels.

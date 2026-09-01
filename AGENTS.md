@@ -113,14 +113,14 @@ the popup open and close methods only reparent widgets between our content box a
 spotlight/
     extension.js              entry point constructs popup and keybinding manager
     prefs.js                  preferences entry point
-    spotlightPopup.js         main search popup open close destroy lifecycle
     stylesheet.css            spotlight styling
     metadata.json             extension metadata
-    popup/                    popup infrastructure
-        popupBackdrop.js      transparent click outside detection
-        popupPositioner.js    sizing centering and monitor detection
-    services/
-        core/
+    lib/                      library code organized by concern
+        ui/                   user interface components
+            spotlightPopup.js main search popup open close destroy lifecycle
+            popupBackdrop.js  transparent click outside detection
+            popupPositioner.js sizing centering and monitor detection
+        core/                 core infrastructure services
             keybinding.js     keybinding manager via grab_accelerator
     schemas/                  gsettings schema
         org.gnome.shell.extensions.spotlight.gschema.xml
@@ -132,6 +132,8 @@ spotlight/
         install.sh            curl installer downloads latest release from github
         build.sh              symlink to install.sh backward compatibility
 ```
+
+this lib based structure follows the convention used by the most sophisticated and widely adopted gnome shell extensions such as just perfection verified via web search of popular extension repositories
 
 ### process isolation
 
@@ -267,7 +269,7 @@ standard methods like `destroy()` `connect()` `disconnect()` `addChrome()` `set_
 try/catch is legitimate only for genuine external failure points:
 - file io loading saving to disk files can be deleted corrupt or permission denied
 - json parsing of data that originated outside our code
-- clipboard reading content owned by other applications
+- external content reading data from sources outside our control
 - settings string values that users could manually edit
 when catching always explain why the operation can genuinely fail
 
