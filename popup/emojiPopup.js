@@ -119,6 +119,10 @@ export class EmojiPopup extends St.Widget {
             this._backdrop = null;
         }
         global.stage.disconnectObject(this);
+        if (this._positioner) {
+            this._positioner.stop();
+            this._positioner = null;
+        }
         super.destroy();
     }
 }

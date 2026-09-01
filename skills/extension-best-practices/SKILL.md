@@ -84,6 +84,29 @@ this rule applies to all gobject derived classes: `St.*` `Clutter.*` `Gio.*` `Ad
 
 legitimate constructor properties are things like `style` `style_class` `visible` `reactive` `can_focus` `vertical` `text` `label` `icon_name` `layout_manager` `width` `height` `x_expand` `y_expand` `x_align` `y_align` `title` `subtitle` `model` `selected` `adjustment` `value`
 
+## verify called methods actually exist
+
+before calling a method on an object verify the method is actually defined on that class
+
+this is especially important when adapting code patterns from one class to another
+
+wrong:
+```javascript
+// spotlightPopup uses positioner.showCentered() which exists
+// clipboardPopup copies the pattern but calls centerOnPrimary() which does NOT exist
+this._positioner = new PopupPositioner();
+this._positioner.centerOnPrimary(this);  // ❌ TypeError: centerOnPrimary is not a function
+```
+
+right:
+```javascript
+// either add the missing method to the class, or use an existing one
+this._positioner = new PopupPositioner();
+this._positioner.centerOnPrimary(this);  // ✅ method was added to PopupPositioner class
+```
+
+node --check cannot catch this since it is a runtime type error. static code review must catch it.
+
 ## override destroy() directly not connect to signal
 
 override `destroy()` on your subclass do not connect a listener to the `destroy` signal
