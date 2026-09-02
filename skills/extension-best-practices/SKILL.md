@@ -38,3 +38,7 @@ verify every called method exists on the target class before calling
 
 ## settings assignment
 when adapting constructors assign this._settings before any method call that needs it
+
+## gnome search results activation
+when overriding gnome search results behavior override both activateDefault and activate
+activateDefault handles enter on first result activate handles tab selected specific results

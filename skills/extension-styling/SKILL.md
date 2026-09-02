@@ -17,3 +17,8 @@ add style class via widget.add_style_class_name never inline style strings
 
 ## themes
 dark light detection via org.gnome.desktop.interface color-scheme
+
+## transparency
+use rgba colors for background to achieve glass effect rgba r g b a
+true background blur requires complex shaders or gnome 51 ext background effect protocol
+alpha 0.80 to 0.90 balances glass feel with readability

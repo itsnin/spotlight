@@ -12,7 +12,7 @@
 }
 /* container - single unified window dark default */
 .spotlight-container {
-  background-color: #1c1c1e;
+  background-color: rgba(28, 28, 30, 0.85);
   border-radius: 36px;
   padding: 10px;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
@@ -21,7 +21,7 @@
 }
 /* light theme overrides applied when container has theme-light class */
 .spotlight-container.theme-light {
-  background-color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.88);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
   color: #1d1d1f;
 }

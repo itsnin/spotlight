@@ -17,3 +17,7 @@ use Gio.SettingsBindFlags.DEFAULT for widget binding in prefs
 
 ## listening
 connectObject on changed key or changed for all keys
+
+## system settings
+org.gnome.desktop.interface color scheme provides system dark light preference
+connect to changed color scheme for live theme updates when ui is visible
