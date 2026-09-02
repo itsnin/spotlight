@@ -15,3 +15,6 @@ settings.bind key widget property Gio.SettingsBindFlags.DEFAULT
 
 ## shortcut rows
 use Adw.ActionRow with Gtk.ShortcutLabel or custom accelerator capture
+
+## gdk keyval name
+Gdk.keyval_name can return null for unknown keyvals always null check before calling methods on the result

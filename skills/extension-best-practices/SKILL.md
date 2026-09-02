@@ -42,3 +42,7 @@ when adapting constructors assign this._settings before any method call that nee
 ## gnome search results activation
 when overriding gnome search results behavior override both activateDefault and activate
 activateDefault handles enter on first result activate handles tab selected specific results
+
+## st widget style class check
+use has_style_class_name className not style_class includes className
+string includes can false match on longer class names like popup menu item

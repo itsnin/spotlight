@@ -26,7 +26,3 @@ build scripts:
   - changed-files:
       - any-glob-to-any-file:
           - scripts/**
-translations:
-  - changed-files:
-      - any-glob-to-any-file:
-          - locale/**

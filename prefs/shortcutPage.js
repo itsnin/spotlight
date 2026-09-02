@@ -56,7 +56,10 @@ export function buildShortcutPage(settings) {
             accelerator += '<Alt>';
         if (state & Gdk.ModifierType.META_MASK)
             accelerator += '<Meta>';
-        accelerator += Gdk.keyval_name(keyval).toLowerCase();
+        const keyvalName = Gdk.keyval_name(keyval);
+        if (!keyvalName)
+            return true;
+        accelerator += keyvalName.toLowerCase();
 
         settings.set_strv('toggle-shortcut', [accelerator]);
         shortcutLabel.label = formatShortcut([accelerator]);
