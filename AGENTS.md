@@ -1,374 +1,128 @@
 # agents guide for spotlight
 
-this file is the single source of truth for any person ai or agent working on this extension read it fully before touching any code it covers design philosophy architecture gnome version support code style ego review constraints and the why behind every non-obvious decision
+read this file before touching code it covers architecture design decisions code style and ego review constraints
 
-if you are an ai agent read the whole file do not skim
+## supplementary skills
 
-## supplementary skills reference
+the skills directory contains focused single topic skill files extracted from official gjs guide documentation these are reference material this file remains the single source of truth for project specific rules
 
-the `skills/` directory contains focused single topic skill files extracted from the official gjs.guide documentation
-
-each skill covers one specific area in depth:
-
-- `skills/extension-getting-started/` — basic setup required files directory structure
-- `skills/extension-esm-imports/` — es module import rules process isolation
-- `skills/extension-lifecycle/` — enable disable symmetry cleanup discipline
-- `skills/extension-signal-cleanup/` — connectobject signal patterns and cleanup
-- `skills/extension-gsettings/` — schema conventions binding metadata integration
-- `skills/extension-prefs/` — fillPreferencesWindow adw gtk4 process isolation
-- `skills/extension-styling/` — stylesheet.css st css limitations transparency icon style
-- `skills/extension-debugging/` — looking glass journalctl nested shell
-- `skills/extension-review-guidelines/` — ego review rules rejection reasons
-- `skills/extension-best-practices/` — code quality search activation signal patterns
-- `skills/extension-metadata/` — metadata.json fields conventions validation
-- `skills/extension-guideline/` — gjs guide reference docs
-- `skills/extension-esm-imports/` — es module import rules process isolation
-- `skills/extension-getting-started/` — basic setup required files
-- `skills/extension-lifecycle/` — enable disable symmetry cleanup discipline
-- `skills/extension-signal-cleanup/` — connectobject signal patterns and cleanup
-
-these skills are supplementary reference material this file agemt.md remains the single source of truth for project specific rules architecture and design decisions
+actual skills available:
+- extension-getting-started
+- extension-esm-imports
+- extension-lifecycle
+- extension-signal-cleanup
+- extension-gsettings
+- extension-prefs
+- extension-styling
+- extension-debugging
+- extension-review-guidelines
+- extension-best-practices
+- extension-metadata
+- extension-guideline
 
 ## what this extension is
 
-spotlight is a compact launcher for gnome shell inspired by a keyboard-driven launcher design you press a shortcut a centered popup appears you type and results show up in real time
+spotlight is a compact launcher for gnome shell press a shortcut a centered translucent glass popup appears type and results show up in real time it permanently steals the overview search widgets overview itself stays functional only its search ui is replaced
 
-the goal is to feel like a dedicated launcher not look like a generic shell extension that means dark compact rounded translucent glass background no title bar no chrome just a floating input box with results below it
+## supported versions
 
-## design philosophy
+gnome shell 45 46 47 48 49 50 listed in metadata.json under shell-version minimum is 45 because gnome shell 45 switched to es modules
 
-### minimal ui no chrome
-
-the popup has no title bar no close button no backdrop overlay clicking outside or pressing escape closes it the popup floats above all windows via the chrome layer keyboard input is captured via grab_key_focus on the entry and stage level captured-event while open and released on close
-
-### dark not black
-
-the background is `rgba(28,28,30,0.85)` translucent glass not pure black pure black looks harsh on oled and wrong on ips the text is `#f5f5f7` not pure white to reduce eye strain selection uses `rgba(255,255,255,0.12)` a subtle white overlay not the gnome blue accent this matches a clean dark glass appearance
-
-### compact not full screen
-
-the popup is 520px wide centered on the monitor where the cursor currently sits it grows downward as results appear but never exceeds 380px total height fits minimum supported resolution 1366x768 with 37px bottom margin zero cropping results scroll internally via gnome built in StScrollView this keeps it unobtrusive across all supported resolutions
-
-### translucent glass background no animations
-
-the popup uses a translucent glass background rgba(28,28,30,0.85) balancing readability with visual depth true background blur requires complex shaders or gnome 51 ext background effect protocol rgba transparency is the most sophisticated reliable approach that works across all supported versions the popup appears instantly with no fade-in or slide animation this is intentional instant response feels fast extensions that animate feel slow
-
-## gnome shell version support
-
-### supported versions
-
-spotlight supports gnome shell 45 46 47 48 49 and 50 listed in metadata.json under shell-version
-
-the minimum is 45 because gnome shell 45 switched to es modules import export syntax extensions using es modules cannot run on gnome shell 44 or earlier there is no way around this it is a hard requirement of the javascript engine
-
-see https://gjs.guide/extensions/upgrading/gnome-shell-45.html#esm
-
-### no x11 support
-
-gnome shell 50 removed x11 support entirely spotlight does not support x11 on any version if you are on x11 use gnome's overview search instead do not add x11 compatibility code x11 is deprecated and will be removed from gnome shell entirely in future releases
-
-### wayland only
-
-spotlight is tested on wayland only the keybinding uses `global.display.grab_accelerator` which works on both wayland and x11 in theory but since we do not support x11 we do not test on it
-
-### version-specific api notes
-
-the codebase calls `set_vertical(true)` after `_init()` for st box layouts not `orientation: Clutter.Orientation.VERTICAL` inside the constructor the `orientation` property is not reliably settable on gnome shell 45 and 46 a real user report hit `Error: No property orientation` when the constructor tried to set it
-
-`vertical` and `set_vertical()` are confirmed to exist across the full 45 through 50 range so this is the correct choice do not switch back to `orientation` in the constructor without first confirming it against the actual minimum supported version not just the newest one
-
-similarly `St.BoxLayout` has no `spacing` gobject property and no `set_spacing()` method spacing must be set via css using the `style` property for example `box.style = 'spacing: 10px;'` real user reports hit both `Error: No property spacing on StBoxLayout` and `TypeError: set_spacing is not a function` always use css for spacing
-
-also `padding_top` `padding_bottom` `margin_top` `margin_bottom` and other box model properties are css properties not gobject properties they must be set via the `style` property not in the constructor real user report hit `Error: No property padding_top on StBoxLayout`
-
-general rule if a property sounds like css it probably is css use `actor.style = 'property: value;'` not constructor properties only use constructor properties that are explicitly documented in the official st or clutter api docs
-
-keybinding validation in preferences uses two layers first require at least one modifier to prevent bare keys like g or space that would cause accidental triggering during typing second validate via `Gtk.accelerator_valid(keyval, modifiers)` which rejects modifier only keys and other invalid combinations note `Gtk.accelerator_valid` does not reject bare alphanumeric keys it only rejects modifier only keys so the manual modifier check is still required
-
-### single package for all versions
-
-ego supports multi-versioning where you upload separate zips for different gnome versions spotlight does not do this one zip works on all supported versions if a future gnome version breaks something fix it in the same codebase do not maintain a fork
+wayland only x11 is not supported gnome shell 50 removed x11 entirely
 
 ## architecture
 
-### single focused popup
+one popup permanently steals overview search entry and controller widgets are stolen once in enable returned once in disable open and close only reparent widgets between our content box and hidden state they never return to overview while extension is enabled
 
-spotlight has one popup the main search popup it permanently steals the overview search entry and controller
+file layout:
+- extension.js entry point
+- lib/ui/ user interface components
+- lib/core/ core infrastructure
+- prefs.js prefs entry point
+- prefs/ preference pages
+- schemas/ gsettings schema
+- scripts/ installer
+- stylesheet.css styling
 
-### spotlight is first-class overview search is second-class
+## process isolation
 
-on enable spotlight permanently steals the overview search entry and search controller and hides them overview search is gone for as long as spotlight is enabled the overview itself stays functional window picker app grid workspaces only its search ui is permanently hijacked
+shell process runs extension.js and lib files it must not import Gtk Gdk Adw
+prefs process runs prefs.js and prefs files it must not import St Clutter Meta Shell
+ego review rejects violations
 
-when the popup opens spotlight reparents the already stolen widgets into its popup when the popup closes spotlight removes them from the popup but keeps them stolen and hidden they are only returned to the overview on disable
+## signal management
 
-this is achieved through two methods on SpotlightPopup
+use connectObject with this as owner disconnectObject this in destroy or disable cleans all
+use plain connect with explicit id tracking only for signals that must persist across open close cycles
 
-- stealOverviewSearch called once from extension enable
-- returnOverviewSearch called once from extension disable
+## popup positioning
 
-the popup open and close methods only reparent widgets between our content box and a hidden state they never return widgets to the overview
+positioned once at open based on empty state height grows downward from fixed anchor never reposition on size changes it causes visible drift
 
-### file layout
+## click outside detection
 
-```
-spotlight/
-    extension.js              entry point constructs popup and keybinding manager
-    prefs.js                  preferences entry point
-    stylesheet.css            spotlight styling
-    metadata.json             extension metadata
-    lib/                      library code organized by concern
-        ui/                   user interface components
-            spotlightPopup.js main search popup open close destroy lifecycle
-            popupBackdrop.js  transparent click outside detection
-            popupPositioner.js sizing centering and monitor detection
-        core/                 core infrastructure services
-            keybinding.js     keybinding manager via grab_accelerator
-    schemas/                  gsettings schema
-        org.gnome.shell.extensions.spotlight.gschema.xml
-    prefs/                    preference pages
-        shortcutPage.js       shortcut customization
-        appearancePage.js     theme preference
-        aboutPage.js          extension info
-    scripts/
-        install.sh            curl installer downloads latest release from github
-        build.sh              symlink to install.sh backward compatibility
-```
+transparent full screen st widget in chrome layer behind popup backdrop covers target monitor listens for button release event popup sits above backdrop in stack so clicks on popup work normally
 
-this lib based structure follows the standard convention for library code organized by concern ui components under lib ui core infrastructure under lib core
+## popup close mechanisms
 
-### process isolation
+popup closes on toggle shortcut escape click outside plus comprehensive activation close defense:
+1. button press event on search results catches mouse clicks on any result
+2. enter or space key capture when focus is on result buttons not entry
+3. global display notify focus window tracks external app focus at window manager level
 
-gnome shell extensions run in two processes
+## object lifecycle
 
-- the shell process runs `extension.js` and all root-level js files it has access to `St` `Clutter` `Meta` `Shell` `GLib` `GObject` `Gio` and `Main` it must not import `Gtk` `Gdk` or `Adw` these conflict with clutter
-- the preferences process runs `prefs.js` and `prefs/*.js` it has access to `Gtk` `Gdk` `Adw` `Gio` it must not import `St` `Clutter` `Meta` or `Shell` these conflict with gtk
+every object created in enable destroyed in disable every widget added to chrome removed every main loop source removed every signal disconnected if you add something add cleanup ego review rejects leaks
 
-never import a shell-only library in a prefs file or vice versa ego review rejects extensions that violate process isolation see https://gjs.guide/extensions/development/preferences.html
+## module scope restrictions
 
-### search providers
-
-spotlight does not implement custom search providers instead it reuses gnome overview's entire search infrastructure by stealing its widgets this automatically gives every search provider registered with gnome
-
-- calculator via gnome-calculator search provider
-- applications via Shell.AppSystem
-- files via tracker
-- settings via gnome-control-center search provider
-- system actions via gnome shell built-in provider
-- any third-party search providers the user has installed
-
-search priority and behavior are entirely controlled by gnome shell not by spotlight
-
-### signal management
-
-for signals on long lived objects like `global.stage` `global.display` `Shell.AppSystem` that outlive our extension use `connectObject` and `disconnectObject` this is a gnome shell 42 plus api that auto-disconnects all signals connected with a given owner object see https://gjs.guide/extensions/upgrading/gnome-shell-42.html
-
-in `disable()` or `destroy()` we call `disconnectObject(this)` which removes every signal connected with `this` as the owner this prevents signal leaks if you forget to disconnect one manually
-
-for signals connected to short lived widgets like buttons list items that our code destroys plain `connect` is safe because gobject automatically disconnects all signal handlers when the emitting object is finalized verified via https://discourse.gnome.org/t/run-dispose-in-gjs/16722 and official gobject signal documentation
-
-do not use plain `connect` for signals from long lived objects always use `connectObject` for those
-
-### popup positioning
-
-the popup is positioned once in `open()` via `PopupPositioner.showCentered()` based on the empty-state height just the search entry with no results the popup then grows downward from this fixed position as results appear
-
-do not reposition the popup on `notify::allocation` or any other size-change signal doing so causes the popup to shift upward when results grow because the centering math recalculates with the new height and moves the top edge up the user perceives this as the popup drifting from center to upper side
-
-if the monitor geometry changes while the popup is open for example the user changes resolution the popup will be repositioned on next open not live this is acceptable
-
-### input capture and click outside to close
-
-the popup does not use `Main.pushModal` a modal grab swallows pointer events before they reach the stage which makes click-outside detection impossible instead the popup uses two mechanisms working together
-
-first a transparent full-screen reactive `St.Widget` called the backdrop is added to the chrome layer before the popup itself the backdrop covers the entire target monitor and listens for `button-release-event` when the user clicks anywhere outside the popup the click lands on the backdrop and the popup closes the popup sits above the backdrop in the chrome stack so clicks on the popup itself are received normally
-
-second the popup monitors `notify::key-focus` on `global.stage` if keyboard focus moves to an actor outside the popup for example via alt-tab the popup closes unless focus moves to a popup-menu which some results open and should not dismiss us
-
-keyboard input is captured by calling `grab_key_focus()` on the search entry which directs all key events to the entry while it holds focus the escape key closes the popup arrow keys move the selection and enter activates the selected result all handled internally by gnome's search widgets
-
-### object lifecycle
-
-every object created in `enable()` is destroyed in `disable()` every widget added to the chrome layer is removed every main loop source is removed every signal is disconnected
-
-the popup widget overrides `destroy()` to call `close()` first which removes the backdrop disconnects the focus handler and removes idle sources then it removes itself from the chrome layer and chains up to the parent destroy
-
-if you add a new widget or source you must add cleanup for it in `disable()` or the relevant destroy method ego review rejects extensions that leak objects
-
-### module-scope restrictions
-
-gnome shell extensions must not create any objects connect any signals add any main loop sources or modify the shell during module initialization this means no `new SomeClass()` no `something.connect()` no `GLib.timeout_add()` at the top level of any js file
-
-the only exception is static data structures like arrays objects maps sets and regexps
-
-see https://gjs.guide/extensions/review-guidelines/review-guidelines.html#only-use-initialization-for-static-resources
+no objects no signals no main loop sources at top level of any js file only static data structures arrays objects maps sets regexps are allowed
 
 ## code style
 
-### comments
+comments explain why not what lowercase minimal punctuation no block comment boxes no jsdoc no references to other projects no llm phrases like here we lets note that important todo fixme maximum three consecutive comment lines without code
 
-comments should read like a thoughtful engineer speaking to a colleague across the table not a linter reciting grammar rules the goal is clarity and warmth not mechanical perfection
+enable and disable adjacent in extension.js split logic into small files each with single responsibility no typescript plain javascript no build step
 
-guiding principles:
-- favor lowercase and minimal punctuation as a default baseline it keeps comments visually quiet and scannable
-- capitalization and punctuation are not forbidden they are permitted when they genuinely serve clarity proper nouns acronyms code symbols and the occasional question mark or exclamation that captures the right tone are all acceptable
-- a stray capital letter or period is better than stilted unreadable prose do not contort sentences to satisfy an absolute rule
-- explain why not what the code already shows what it does
-- no block comment boxes no jsdoc no `/* */` banners use plain `//` comments only
-- no references to other projects or extensions in comments by name
-- no llm-smell phrases like "here we" "let's" "we need to" "note that" "important:" "todo" "fixme"
-- for obscure or uncommon code provide both what and why for common code provide only why
-- provide verified working links whenever possible prefer https://gjs.guide links over blog posts
-- maximum three consecutive comment lines without intervening code the fourth line must be code or the structure must be refactored to interleave comments and code comments are annotations not paragraphs
+## ego verified rules
 
-### code structure
-
-- split logic into many small files each with a single responsibility
-- keep the entry point `extension.js` as small as possible it should only wire things together
-- keep `enable()` and `disable()` next to each other in the entry point for easy review
-- one concept per file one file per concept
-- prefer pure functions with no side effects in utility files
-- no typescript this is plain javascript no build step
-
-### ego verified coding rules
-
-these rules are verified against the official ego review guidelines
-source: https://gjs.guide/extensions/review-guidelines/review-guidelines.html
-source: https://gjs.guide/extensions/review-guidelines/best-practices.html
-
-#### no `imports.gi.*` use esm
-always use es module syntax `import Gio from 'gi://Gio'` never the legacy `imports.gi.Gio`
-gnome shell 45 switched to es modules and the legacy syntax is deprecated
-
-#### use `console.*` api with appropriate log levels
-the official gjs guide recommends the console api with functions determined by log level
-- `console.debug()` development only information logged at level debug
-- `console.warn()` unexpected errors that may indicate a bug logged at level warning
-- `console.error()` programmer errors and assertion failures logged at level critical
-`log()` still works but is only an alias for `console.log()` without a specific severity level
-using proper levels allows filtering via journalctl and triggers stack traces with
-`SHELL_DEBUG=backtrace-warnings` for warn and error levels
-source: official gjs.guide logging documentation verified via docs-gnome-extension repo
-
-#### no `run_dispose()` unless absolutely necessary
-extensions should not call `GObject.Object.run_dispose()` unless absolutely necessary
-if absolutely necessary any call must have a comment explaining the real world situation that makes it a requirement
-
-#### optional chaining `?.` nuanced rule
-do not use optional chaining or nullish coalescing for guaranteed methods or built in apis
-the ego guideline specifically prohibits redundant checks on objects that are guaranteed to exist
-example prohibited: `this._keyboard?.destroy()` where `_keyboard` is always created in the constructor
-
-optional chaining is allowed and encouraged for genuinely potentially null objects
-example allowed: `focussedWindow?.get_wm_class()` where `focussedWindow` comes from `tracker.focus_window` which can return null
-
-if an object is guaranteed to exist call it directly without guards
-if an object can genuinely be null optional chaining is cleaner than verbose ternary checks
-
-#### avoid unnecessary try catch wrappers
-do not wrap standard api calls in try/catch blocks
-standard methods like `destroy()` `connect()` `disconnect()` `addChrome()` `set_position()` do not throw
-try/catch is legitimate only for genuine external failure points:
-- file io loading saving to disk files can be deleted corrupt or permission denied
-- json parsing of data that originated outside our code
-- external content reading data from sources outside our control
-- settings string values that users could manually edit
-when catching always explain why the operation can genuinely fail
-
-#### css uses only `/* */` comments
-the st stylesheet parser does not support `//` line comments only `/* */` block comments
-this is a technical requirement of the st css parser not a style preference
-
-#### do not mask bugs with defensive code
-do not add defensive null checks that mask bugs instead of handling them
-do not add "just in case" code for situations that cannot occur
-do not add comments that describe what a line does only describe why
-
-### review discipline
-
-- before producing final output read every single line you wrote
-- look for potential issues on every line not just the line you are currently editing
-- when fixing a bug check whether the same bug pattern exists elsewhere in the codebase
-- do not assume a fix works verify it against the actual code
+no imports.gi use esm import gi name
+console api with appropriate levels debug warn error not bare log
+no run_dispose unless absolutely necessary
+optional chaining only for genuinely potentially null objects never for guaranteed objects
+no try catch around standard api calls only for file io json parsing external data
+css only block comments never line comments
+no defensive null checks that mask bugs
 
 ## keybinding
 
-the default shortcut is `Ctrl+Space` stored in gsettings as `['<Control>space']`
-
-`Super+Space` is grabbed by gnome shell for input source switching on some setups and `grab_accelerator` fails silently when this happens use `Ctrl+Space` instead users can change it in preferences
-
-the keybinding uses `global.display.grab_accelerator()` not `Main.wm.addKeybinding()` because `addKeybinding` can fail if the schema is not ready at enable time `grab_accelerator` is more reliable
-
-the popup can be closed by pressing the toggle shortcut again pressing `Escape` or clicking outside the popup bounds additionally the popup automatically closes when any result is activated via keyboard enter mouse click or when focus moves to an external application window this is handled through three layers button press event on search results enter space key capture on result buttons and global display notify focus window tracking
-
-see the `keybinding.js` file for the implementation
+default shortcut ctrl space stored as control space super space is grabbed by gnome shell for input source switching on some setups
+uses global display grab accelerator not main wm addKeybinding because addKeybinding can fail if schema not ready at enable time
 
 ## gsettings schema
 
-the schema id is `org.gnome.shell.extensions.spotlight` and the path is `/org/gnome/shell/extensions/spotlight/` both follow the gnome shell extension convention
+schema id org.gnome.shell.extensions.spotlight path org gnome shell extensions spotlight
+gschemas.compiled is not shipped gnome shell 44 plus compiles automatically on install
 
-the schema file is `schemas/org.gnome.shell.extensions.spotlight.gschema.xml` the filename must match the schema id pattern
-
-the `gschemas.compiled` binary is not shipped in the zip gnome shell 44 and later compiles schemas automatically on install shipping the compiled binary is unnecessary
-
-see https://gjs.guide/extensions/development/preferences.html#gsettings
-
-### schema keys
-
-schema id is `org.gnome.shell.extensions.spotlight` path is `/org/gnome/shell/extensions/spotlight/`
-
-- `toggle-shortcut` type `as` default `['<Control>space']` keyboard shortcut to open and close the popup
-- `theme-preference` type `s` default `'default'` controls visual theme
-  - `'default'` follows gnome system color scheme
-  - `'dark'` always uses dark appearance
-  - `'light'` always uses light appearance
+keys:
+- toggle-shortcut type as default control space
+- theme-preference type s default default dark light
 
 ## appearance theme
 
-the popup supports three theme modes controlled by the `theme-preference` gsettings key
+three modes controlled by theme preference gsettings key
+dark default rgba 28 28 30 0 85 text f5f5f7
+light rgba 255 255 255 0 88 text 1d1d1f
+theme light class added to content container for light mode
+applied in applyTheme called from doOpen before showing
+when preference is default listens to org gnome desktop interface changed color scheme and updates live while open
 
-dark is the default stylesheet colors background `rgba(28,28,30,0.85)` text `#f5f5f7` selection `rgba(255,255,255,0.12)`
+## multi monitor
 
-light mode is applied by adding the `theme-light` style class to the content container
-light colors background `rgba(255,255,255,0.88)` text `#1d1d1f` selection `rgba(0,122,255,0.12)`
-
-the theme class is applied in `_applyTheme()` called from `_doOpen()` before the popup is shown
-
-when theme preference is set to default the popup listens to `org.gnome.desktop.interface changed::color-scheme` and updates live while open following the system dark light preference
-
-## multi monitor behavior
-
-the popup always opens on the monitor where the cursor currently sits
-
-`PopupPositioner.getTargetMonitor()` calls `global.get_pointer()` and checks which monitor rectangle contains the cursor coordinates
-
-falls back to `Main.layoutManager.primaryMonitor` if cursor position cannot be determined
-
-the backdrop covers only the target monitor users on other monitors can interact normally
+popup opens on monitor where cursor currently sits getTargetMonitor calls global get_pointer checks which monitor rectangle contains cursor coordinates falls back to primary monitor backdrop covers only target monitor users on other monitors can interact normally
 
 ## testing
 
-### static analysis
-
-run the ego-style static analyzer to check for module-scope issues deprecated imports process isolation violations and metadata well-formedness
-
-the analyzer is not shipped with the extension it lives in the development environment if you do not have it use `gjs -c` to parse each file
-
-```bash
-gjs -c "Reflect.parse(readFile('extension.js'), { target: 'module' })"
-```
-
-### schema validation
-
-compile the schema to verify the xml is valid
-
-```bash
-glib-compile-schemas schemas/
-```
-
-### syntax check
-
-every js file must parse as an es module if any file has a syntax error gnome shell will fail to load the extension silently
-
-### manual testing
-
-test on gnome shell 50 wayland first then test on at least one older version if possible the extension should work identically across all supported versions
+every js file must parse as es module
+schema must compile with glib compile schemas
+test on gnome shell 50 wayland first
