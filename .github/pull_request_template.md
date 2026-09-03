@@ -12,7 +12,7 @@ Briefly describe what this PR changes and why.
 
 ## Checklist
 
-- [ ] Comments are lowercase with no punctuation (unless meaning requires it)
+- [ ] Comments are natural, human style — capitals where they make sense, light punctuation
 - [ ] No `try`/`catch` around standard API calls
 - [ ] No `?.` or `??` for guaranteed methods
 - [ ] `enable()` and `disable()` are adjacent

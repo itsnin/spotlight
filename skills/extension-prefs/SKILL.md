@@ -1,20 +1,20 @@
 # extension-prefs
 
-## entry point
-prefs.js at root exports default class extending ExtensionPreferences
+## Entry point
+prefs.js at root. Exports default class extending ExtensionPreferences.
 
 ## fillPreferencesWindow
-single method receives Adw.PreferencesWindow add Adw.PreferencesPage instances
+Single method receives Adw.PreferencesWindow. Add Adw.PreferencesPage instances.
 
-## process isolation
-prefs process must never import St Clutter Meta Shell
-only Adw Gtk Gio GLib GObject allowed
+## Process isolation
+Prefs process must never import St, Clutter, Meta, or Shell.
+Only Adw, Gtk, Gio, GLib, GObject allowed.
 
-## binding
-settings.bind key widget property Gio.SettingsBindFlags.DEFAULT
+## Binding
+settings.bind(key, widget, property, Gio.SettingsBindFlags.DEFAULT).
 
-## shortcut rows
-use Adw.ActionRow with Gtk.ShortcutLabel or custom accelerator capture
+## Shortcut rows
+Use Adw.ActionRow with Gtk.ShortcutLabel or custom accelerator capture.
 
-## gdk keyval name
-Gdk.keyval_name can return null for unknown keyvals always null check before calling methods on the result
+## Gdk keyval name
+Gdk.keyval_name() can return null for unknown keyvals. Always null-check before calling methods on the result.

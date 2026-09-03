@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
   <schema id="org.gnome.shell.extensions.spotlight" path="/org/gnome/shell/extensions/spotlight/">
-    <!-- default is ctrl space super space has timing issues on some gnome 50 setups -->
+    <!-- Default is Ctrl+Space. Super+Space has timing issues on some GNOME 50 setups. -->
     <key name="toggle-shortcut" type="as">
       <default>['&lt;Control&gt;space']</default>
       <summary>Toggle shortcut</summary>
       <description>Keyboard shortcut to open Spotlight. Default is Ctrl+Space.</description>
     </key>
-    <!-- appearance theme default follows gnome system dark forces dark light forces light -->
+    <!-- Appearance theme: 'default' follows GNOME system, 'dark' forces dark, 'light' forces light. -->
     <key name="theme-preference" type="s">
       <default>'default'</default>
       <summary>Theme preference</summary>

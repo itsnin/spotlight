@@ -62,6 +62,25 @@ gnome-extensions prefs spotlight@nin
 - **Instant.** No animations.
 - **Live theme.** Default mode follows system dark/light changes live.
 
+## Architecture
+
+Spotlight permanently takes over GNOME Overview's search infrastructure. On enable, it steals the Overview's search entry and search controller widgets and hides them. When the popup opens, these already-stolen widgets are reparented into the popup. When the popup closes, they're removed from the popup but kept stolen and hidden. They're only returned to the Overview on disable.
+
+This approach means Spotlight automatically benefits from every search provider registered with GNOME Shell, with zero custom provider code.
+
+| File | Responsibility |
+|---|---|
+| `extension.js` | Entry point — constructs popup and keybinding manager, manages lifecycle |
+| `lib/ui/spotlightPopup.js` | Main search popup lifecycle — open/close/destroy |
+| `lib/ui/popupBackdrop.js` | Transparent click-outside detection via chrome layer |
+| `lib/ui/popupPositioner.js` | Sizes, centers, and shows popup on the correct monitor |
+| `lib/core/keybinding.js` | Keybinding manager via grab_accelerator |
+| `prefs.js` | Preferences window entry point |
+| `prefs/shortcutPage.js` | Keyboard shortcut configuration |
+| `prefs/appearancePage.js` | Visual theme preference |
+| `prefs/aboutPage.js` | About section |
+| `schemas/*.gschema.xml` | GSettings schema definitions |
+
 ## License
 
 GPL-3.0-or-later. See [LICENSE](LICENSE).

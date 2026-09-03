@@ -19,7 +19,7 @@ jobs:
       - name: Install tools
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq nodejs libglib2.0-dev shellcheck yamllint
+          sudo apt-get install -y -qq nodejs libglib2.0-dev shellcheck yamllint python3
 
       - name: metadata.json valid JSON
         run: python3 -c "import json; json.load(open('metadata.json'))"
@@ -36,33 +36,10 @@ jobs:
       - name: No old UUID references
         run: |
           if grep -r "spotlight@ninx" . --exclude-dir=.git --exclude-dir=.github; then
-            echo "ERROR: found spotlight@ninx references"; exit 1;
-          fi
+            echo "ERROR: found spotlight@ninx references"; exit 1; fi
 
-      - name: UUID consistency
-        run: |
-          UUID=$(python3 -c "import json; print(json.load(open('metadata.json'))['uuid'])")
-          SCHEMA=$(python3 -c "import json; print(json.load(open('metadata.json'))['settings-schema'])")
-          echo "UUID: $UUID"
-          echo "Schema: $SCHEMA"
-          grep -q "$SCHEMA" schemas/*.gschema.xml || { echo "ERROR: schema mismatch"; exit 1; }
-
-      - name: version-name valid
-        run: |
-          VERSION=$(python3 -c "import json; print(json.load(open('metadata.json'))['version-name'])")
-          LEN=${#VERSION}
-          if [ "$LEN" -gt 16 ]; then echo "ERROR: version-name too long ($LEN > 16)"; exit 1; fi
-          echo "version-name: $VERSION ($LEN chars)"
-
-      - name: shell-version entries valid
-        run: |
-          python3 -c "
-          import json
-          m = json.load(open('metadata.json'))
-          valid = {'45','46','47','48','49','50'}
-          for v in m['shell-version']:
-              assert v in valid, f'invalid shell-version: {v}'
-          print(f'shell-version: {m[\"shell-version\"]}')"
+      - name: Metadata checks
+        run: python3 scripts/check-metadata.py
 
       - name: Process isolation
         run: |
@@ -84,37 +61,16 @@ jobs:
       - name: No try/catch in shell code
         run: |
           if grep -rn 'try\s*{' $(find . -name "*.js" -not -path "./.git/*" -not -path "./prefs/*"); then
-            echo "WARNING: try/catch in shell code (review)"; fi
+            echo "WARNING: try/catch in shell code (review needed)"; fi
 
       - name: No GObject constructor JS-only properties
-        run: |
-          python3 << 'PYEOF'
-import re, os, sys
-violations = []
-for root, dirs, files in os.walk('.'):
-    if '.git' in root: continue
-    for fn in files:
-        if not fn.endswith('.js'): continue
-        fp = os.path.join(root, fn)
-        with open(fp, 'r', errors='replace') as f: c = f.read()
-        for m in re.finditer(r'new (St|Clutter|Gio|Adw|Gtk|GObject|Meta|Shell)\.([A-Za-z]+)\(\{([^}]*)\}', c):
-            params = m.group(3)
-            for prop in re.findall(r'^\s*(_[a-zA-Z_][a-zA-Z0-9_]*)\s*:', params, re.MULTILINE):
-                line_no = c[:m.start()].count('\n') + 1
-                violations.append(f'  {fp}:{line_no} — {m.group(1)}.{m.group(2)}({{ {prop}: ... }})')
-if violations:
-    print('ERROR: GObject constructor violations:')
-    for v in violations: print(v)
-    sys.exit(1)
-print('No GObject constructor violations')
-PYEOF
+        run: python3 scripts/check-gobject-constructors.py
 
       - name: AGENTS.md skill references exist
         run: |
           MISSING=0
           for skill in extension-getting-started extension-esm-imports extension-lifecycle extension-signal-cleanup extension-gsettings extension-prefs extension-styling extension-debugging extension-review-guidelines extension-best-practices extension-metadata extension-guideline; do
-            if [ ! -d "skills/$skill" ]; then
-              echo "MISSING: skills/$skill"; MISSING=$((MISSING+1)); fi
+            if [ ! -d "skills/$skill" ]; then echo "MISSING: skills/$skill"; MISSING=$((MISSING+1)); fi
           done
           if [ "$MISSING" -gt 0 ]; then exit 1; fi
           echo "All AGENTS.md skill references exist"
@@ -129,9 +85,7 @@ PYEOF
         run: shellcheck scripts/*.sh
 
       - name: yamllint
-        run: |
-          echo "--- Checking .github/ ---"
-          yamllint .github/ -d "{extends: default, rules: {line-length: disable, truthy: disable, document-start: disable, braces: disable}}" || true
+        run: yamllint .github/ -c .yamllint
 
       - name: Summary
         run: |

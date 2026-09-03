@@ -1,19 +1,19 @@
-## getting help with spotlight
+## Getting help with Spotlight
 
-if spotlight is not working as expected, check these first
+If Spotlight isn't working as expected, check these first:
 
-- read the readme for installation and usage instructions
-- check the issues tab for existing reports of the same problem
-- run `journalctl -b /usr/bin/gnome-shell | grep spotlight` and check for errors mentioning spotlight
+- Read the README for installation and usage instructions.
+- Check the Issues tab for existing reports of the same problem.
+- Run `journalctl -b /usr/bin/gnome-shell | grep spotlight` and check for errors.
 
-## reporting a bug
+## Reporting a bug
 
-open a bug report issue using the bug report template it asks for the information needed to reproduce and fix the problem, including gnome shell version, distribution, and relevant log lines
+Open a bug report issue using the bug report template. It asks for the information needed to reproduce and fix the problem, including GNOME Shell version, distribution, and relevant log lines.
 
-## requesting a feature
+## Requesting a feature
 
-open a feature request issue using the feature request template
+Open a feature request issue using the feature request template.
 
-## security issues
+## Security issues
 
-do not open a public issue for a security vulnerability, see [SECURITY.md](SECURITY.md) for the private reporting process
+Don't open a public issue for a security vulnerability. See [SECURITY.md](SECURITY.md) for the private reporting process.

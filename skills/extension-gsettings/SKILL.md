@@ -1,23 +1,23 @@
 # extension-gsettings
 
-## schema location
-schemas directory at extension root filename must match schema id pattern
+## Schema location
+schemas/ directory at extension root. Filename must match schema ID pattern.
 
-## schema id
-org.gnome.shell.extensions.extensionname follows gnome convention
+## Schema ID
+org.gnome.shell.extensions.<extensionname> — follows GNOME convention.
 
-## schema compilation
-gschemas.compiled must never be shipped gnome shell 44 compiles automatically on install
+## Schema compilation
+gschemas.compiled must never be shipped. GNOME Shell 44+ compiles automatically on install.
 
-## key types
-as string array for shortcuts b boolean i integer s string
+## Key types
+'as' = string array (for shortcuts), 'b' = boolean, 'i' = integer, 's' = string.
 
-## binding
-use Gio.SettingsBindFlags.DEFAULT for widget binding in prefs
+## Binding
+Use Gio.SettingsBindFlags.DEFAULT for widget binding in prefs.
 
-## listening
-connectObject on changed key or changed for all keys
+## Listening
+connectObject on 'changed::<key>' or 'changed' for all keys.
 
-## system settings
-org.gnome.desktop.interface color scheme provides system dark light preference
-connect to changed color scheme for live theme updates when ui is visible
+## System settings
+org.gnome.desktop.interface color-scheme provides system dark/light preference.
+Connect to 'changed::color-scheme' for live theme updates when UI is visible.

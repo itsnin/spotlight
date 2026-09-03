@@ -1,19 +1,19 @@
 # extension-lifecycle
 
-## enable disable symmetry
-enable and disable must be adjacent in extension.js
+## Enable/disable symmetry
+enable and disable must be adjacent in extension.js.
 
-## construction order
-create settings first then managers then ui widgets
+## Construction order
+Create settings first, then managers, then UI widgets.
 
-## destruction order
-destroy in reverse order of creation ui first then managers then settings
+## Destruction order
+Destroy in reverse order of creation: UI first, then managers, then settings.
 
-## cleanup completeness
-every object assigned to this in enable must be set to null in disable
+## Cleanup completeness
+Every object assigned to this in enable must be set to null in disable.
 
 ## GObject dispose
-never call run_dispose unless absolutely necessary destroy is sufficient for st widgets
+Never call run_dispose() unless absolutely necessary. destroy() is sufficient for St widgets.
 
-## async resources
-async initializers must have matching destroy that cancels pending operations
+## Async resources
+Async initializers must have matching destroy that cancels pending operations.

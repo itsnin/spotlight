@@ -1,16 +1,16 @@
 # extension-debugging
 
-## logs
-journalctl b /usr/bin/gnome-shell grep extensionname
+## Logs
+journalctl -b /usr/bin/gnome-shell | grep extensionname
 
-## log levels
-console.debug console.info console.warn console.error prefer appropriate level
+## Log levels
+console.debug, console.info, console.warn, console.error. Prefer appropriate level.
 
-## looking glass
-alt f2 type lg inspect objects and signals live
+## Looking Glass
+Alt+F2, type 'lg'. Inspect objects and signals live.
 
-## nested shell
-dbus run session gnome shell nested wayland for safe testing
+## Nested shell
+dbus-run-session gnome-shell --nested --wayland for safe testing.
 
-## schema reload
-glib compile schemas schemas after schema changes
+## Schema reload
+glib-compile-schemas schemas/ after schema changes.

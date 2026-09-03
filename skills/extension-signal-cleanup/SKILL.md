@@ -1,16 +1,16 @@
 # extension-signal-cleanup
 
 ## connectObject
-preferred pattern for all objects that support it pass this as final argument
-disconnectObject this in destroy or disable cleans all handlers at once
+Preferred pattern for all objects that support it. Pass 'this' as final argument.
+disconnectObject(this) in destroy or disable cleans all handlers at once.
 
-## plain connect
-use plain connect for signals that need to stay connected across open close cycles
-store handler id in this._someId call disconnect with explicit id in cleanup
-example overview key capture in spotlightPopup that persists while extension is enabled
+## Plain connect
+Use plain connect for signals that need to stay connected across open/close cycles.
+Store handler ID in this._someId. Call disconnect with explicit ID in cleanup.
+Example: overview key capture in Spotlight that persists while extension is enabled.
 
-## never mix
-do not use plain connect for objects that support connectObject it causes leaks
+## Never mix
+Don't use plain connect for objects that support connectObject — it causes leaks.
 
-## short lived widgets
-plain connect is safe for short lived widgets gobject auto disconnects on finalize
+## Short-lived widgets
+Plain connect is safe for short-lived widgets. GObject auto-disconnects on finalize.

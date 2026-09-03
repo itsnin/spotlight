@@ -1,19 +1,19 @@
 # extension-esm-imports
 
-## syntax
-import Name from gi://Gio
-import {Exported} from ./relative/path.js
+## Syntax
+import Name from 'gi://Gio'
+import {Exported} from './relative/path.js'
 
-## forbidden
-imports.gi.* legacy imports are forbidden
+## Forbidden
+imports.gi.* legacy imports are forbidden.
 
-## process isolation
-shell files must never import Gtk Gdk Adw
-prefs files must never import St Clutter Meta Shell
+## Process isolation
+Shell files must never import Gtk, Gdk, or Adw.
+Prefs files must never import St, Clutter, Meta, or Shell.
 
-## relative paths
-imports resolve relative to the file location use correct number of dot dots
+## Relative paths
+Imports resolve relative to the file location. Use correct number of dot-dots.
 
-## extension base
-import Extension from resource:///org/gnome/shell/extensions/extension.js
-import ExtensionPreferences from resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js
+## Extension base
+import Extension from 'resource:///org/gnome/shell/extensions/extension.js'
+import ExtensionPreferences from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js'

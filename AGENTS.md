@@ -80,7 +80,7 @@ no objects no signals no main loop sources at top level of any js file only stat
 
 ## code style
 
-comments explain why not what lowercase minimal punctuation no block comment boxes no jsdoc no references to other projects no llm phrases like here we lets note that important todo fixme maximum three consecutive comment lines without code
+comments explain why not what write like a lazy senior engineer natural not forced grammar use capitals where they make sense proper nouns acronyms start of sentences light punctuation periods at the end of complete thoughts no banners no jsdoc no references to other projects no llm phrases like here we lets note that important todo fixme maximum three consecutive comment lines without code
 
 enable and disable adjacent in extension.js split logic into small files each with single responsibility no typescript plain javascript no build step
 

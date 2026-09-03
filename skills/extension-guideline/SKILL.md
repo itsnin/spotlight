@@ -1,25 +1,25 @@
 # extension-guideline
 
-## process isolation
-shell no Gtk Gdk Adw prefs no St Clutter Meta Shell
+## Process isolation
+Shell: no Gtk, Gdk, Adw. Prefs: no St, Clutter, Meta, Shell.
 
-## cleanup
-everything created in enable destroyed in disable signals cleaned
+## Cleanup
+Everything created in enable destroyed in disable. Signals cleaned.
 
-## signals
-connectObject preferred plain connect only for global.display global.stage
+## Signals
+connectObject preferred. Plain connect only for signals that must persist across open/close.
 
-## esm
-import gi://Name not imports.gi.Name
+## ESM
+import 'gi://Name', not imports.gi.Name.
 
-## constructor
-no underscore properties in GObject constructors assign after
+## Constructor
+No underscore properties in GObject constructors. Assign after.
 
-## css
-only /* */ comments
+## CSS
+Only /* */ comments.
 
-## try catch
-only file io json parsing regex
+## Try/catch
+Only file I/O, JSON parsing, regex.
 
-## optional chaining
-prohibited for guaranteed objects
+## Optional chaining
+Prohibited for guaranteed objects.
