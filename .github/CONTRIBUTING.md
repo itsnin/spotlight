@@ -2,40 +2,35 @@
 
 ## Coding Standards
 
-This project follows strict GNOME Shell extension coding standards. Before submitting code, please read:
-
-- **AGENTS.md** in the project root — the master AI coding rules and architectural decisions
-- **skills/extension-best-practices/SKILL.md** — common pitfalls and what to avoid
-- **skills/extension-lifecycle/SKILL.md** — enable/disable symmetry and cleanup discipline
-- **skills/extension-signal-cleanup/SKILL.md** — signal connection patterns
-- **skills/extension-gsettings/SKILL.md** — GSettings schema conventions
-- **skills/extension-prefs/SKILL.md** — preferences window and process isolation rules
-- **skills/extension-esm-imports/SKILL.md** — ESM import rules and process isolation
-- **skills/extension-review-guidelines/SKILL.md** — official EGO review guidelines
+Read these before submitting:
+- **AGENTS.md** — project rules and architecture
+- **skills/extension-best-practices/SKILL.md**
+- **skills/extension-lifecycle/SKILL.md**
+- **skills/extension-signal-cleanup/SKILL.md**
+- **skills/extension-gsettings/SKILL.md**
+- **skills/extension-prefs/SKILL.md**
+- **skills/extension-esm-imports/SKILL.md**
+- **skills/extension-review-guidelines/SKILL.md**
 
 ## Before Submitting
 
-1. Run the CI checks locally:
-   ```bash
-   # Check JS syntax
-   for f in $(find . -name "*.js" -not -path "./.git/*" -not -path "./skills/*"); do node --check "$f"; done
-   
-   # Check schema compiles
-   glib-compile-schemas --strict schemas/
-   ```
+```bash
+# JS syntax
+for f in $(find . -name "*.js" -not -path "./.git/*" -not -path "./skills/*"); do node --check "$f"; done
 
-2. Verify the checklist in the pull request template
+# Schema
+glib-compile-schemas --strict schemas/
+```
 
-3. Test on GNOME Shell 45-50
+Verify the PR template checklist. Test on GNOME Shell 45-50.
 
 ## Crash Reports
 
-When reporting a crash, always include:
 ```bash
 journalctl -b /usr/bin/gnome-shell | grep spotlight
 ```
 
 ## Commit Messages
 
-Use the imperative mood. Reference the component being changed. Examples:
-- `Docs: update skills with undefined method lesson`
+Imperative mood. Reference the component. Example:
+`Docs: update skills`
