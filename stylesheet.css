@@ -8,7 +8,7 @@
   border: none;
   outline: none;
   box-shadow: none;
-  -st-icon-style: symbolic;
+  -st-icon-style: requested;
 }
 /* container - single unified window dark default */
 .spotlight-container {

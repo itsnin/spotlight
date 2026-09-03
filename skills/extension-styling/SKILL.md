@@ -22,3 +22,9 @@ dark light detection via org.gnome.desktop.interface color-scheme
 use rgba colors for background to achieve glass effect rgba r g b a
 true background blur requires complex shaders or gnome 51 ext background effect protocol
 alpha 0.80 to 0.90 balances glass feel with readability
+## st icon style
+-st-icon-style values verified via official gnome st docs
+requested use icon natural style default behavior
+regular force full color even for symbolic names
+symbolic force symbolic even for regular names
+never force symbolic globally it breaks gnome core app icons
