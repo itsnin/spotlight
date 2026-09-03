@@ -99,12 +99,12 @@ Structure follows the lib based convention for library code organized by concern
 
 ## Design Principles
 
-- **Dark, not black.** Background `#1c1c1e` with text `#f5f5f7`. Pure black is harsh on OLED and inaccurate on IPS panels.
+- **Dark glass, not black.** Background `rgba(28, 28, 30, 0.85)` with text `#f5f5f7`. Translucent glass effect balances visual depth with readability. Pure black is harsh on OLED and inaccurate on IPS panels.
 - **Compact.** 520 px wide, 380 px max height, centered on the monitor where the cursor currently sits. Search results scroll internally via GNOME's built-in `St.ScrollView` when they exceed available space. Minimum supported resolution is 1366×768 — fits perfectly with 37 px bottom margin, zero cropping.
 - **Extreme rounded corners.** 36 px border radius on the popup.
-- **Solid dark background.** `#1c1c1e` with text `#f5f5f7` for maximum readability.
 - **Fixed anchor.** The popup is positioned once at open time and grows downward from that anchor. It never drifts upward when results appear.
 - **Instant.** No fade-in, no slide animation. The popup appears the same frame the shortcut is registered.
+- **Live theme.** When set to Default, follows GNOME system dark/light mode changes live while the popup is open.
 
 ## License
 

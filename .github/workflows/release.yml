@@ -1,0 +1,27 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build extension zip
+        run: |
+          sudo apt-get install -y -qq libglib2.0-dev
+          glib-compile-schemas --strict schemas/
+          rm -f schemas/gschemas.compiled
+          mkdir -p build/spotlight@nin
+          cp -r extension.js prefs.js stylesheet.css metadata.json lib prefs schemas scripts build/spotlight@nin/
+          cd build && zip -r ../spotlight@nin.shell-extension.zip spotlight@nin
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: spotlight@nin.shell-extension.zip
+          generate_release_notes: true

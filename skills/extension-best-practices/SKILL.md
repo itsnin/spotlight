@@ -12,7 +12,8 @@ enable and disable must be adjacent in extension.js every object created in enab
 
 ## signals
 use connectObject with this as owner for all signals on objects supporting it
-exceptions global.display and global.stage use plain connect with explicit id tracking and disconnect
+connectObject works on global.display and global.stage in gnome shell 45 plus
+use plain connect with explicit id tracking only for signals that must persist across open close cycles
 
 ## key events
 use notify_keyval with Clutter.KEY_ symbols not notify_key with hardware keycodes

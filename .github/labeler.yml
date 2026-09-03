@@ -26,3 +26,9 @@ build scripts:
   - changed-files:
       - any-glob-to-any-file:
           - scripts/**
+
+dependencies:
+  - changed-files:
+      - any-glob-to-any-file:
+          - .github/workflows/**
+          - .github/dependabot.yml

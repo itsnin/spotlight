@@ -14,17 +14,18 @@ each skill covers one specific area in depth:
 - `skills/extension-esm-imports/` — es module import rules process isolation
 - `skills/extension-lifecycle/` — enable disable symmetry cleanup discipline
 - `skills/extension-signal-cleanup/` — connectobject signal patterns and cleanup
-- `skills/extension-glib-sources/` — timeout_add idle_add source removal
 - `skills/extension-gsettings/` — schema conventions binding metadata integration
 - `skills/extension-prefs/` — fillPreferencesWindow adw gtk4 process isolation
-- `skills/extension-styling/` — stylesheet.css st css limitations box model
-- `skills/extension-translations/` — gettext marking strings pot files
+- `skills/extension-styling/` — stylesheet.css st css limitations transparency icon style
 - `skills/extension-debugging/` — looking glass journalctl nested shell
 - `skills/extension-review-guidelines/` — ego review rules rejection reasons
-- `skills/extension-best-practices/` — ai specific guidance code quality
+- `skills/extension-best-practices/` — code quality search activation signal patterns
 - `skills/extension-metadata/` — metadata.json fields conventions validation
-- `skills/extension-injection/` — injectionmanager method patching patterns
-- `skills/extension-accessibility/` — atk roles states relationships
+- `skills/extension-guideline/` — gjs guide reference docs
+- `skills/extension-esm-imports/` — es module import rules process isolation
+- `skills/extension-getting-started/` — basic setup required files
+- `skills/extension-lifecycle/` — enable disable symmetry cleanup discipline
+- `skills/extension-signal-cleanup/` — connectobject signal patterns and cleanup
 
 these skills are supplementary reference material this file agemt.md remains the single source of truth for project specific rules architecture and design decisions
 
@@ -32,7 +33,7 @@ these skills are supplementary reference material this file agemt.md remains the
 
 spotlight is a compact launcher for gnome shell inspired by a keyboard-driven launcher design you press a shortcut a centered popup appears you type and results show up in real time
 
-the goal is to feel like a dedicated launcher not look like a generic shell extension that means dark compact rounded solid dark background no title bar no chrome just a floating input box with results below it
+the goal is to feel like a dedicated launcher not look like a generic shell extension that means dark compact rounded translucent glass background no title bar no chrome just a floating input box with results below it
 
 ## design philosophy
 
@@ -42,15 +43,15 @@ the popup has no title bar no close button no backdrop overlay clicking outside 
 
 ### dark not black
 
-the background is `#1c1c1e` not pure black pure black looks harsh on oled and wrong on ips the text is `#f5f5f7` not pure white to reduce eye strain selection uses `rgba(255,255,255,0.12)` a subtle white overlay not the gnome blue accent this matches a clean dark appearance
+the background is `rgba(28,28,30,0.85)` translucent glass not pure black pure black looks harsh on oled and wrong on ips the text is `#f5f5f7` not pure white to reduce eye strain selection uses `rgba(255,255,255,0.12)` a subtle white overlay not the gnome blue accent this matches a clean dark glass appearance
 
 ### compact not full screen
 
 the popup is 520px wide centered on the monitor where the cursor currently sits it grows downward as results appear but never exceeds 380px total height fits minimum supported resolution 1366x768 with 37px bottom margin zero cropping results scroll internally via gnome built in StScrollView this keeps it unobtrusive across all supported resolutions
 
-### solid dark background no animations
+### translucent glass background no animations
 
-the popup uses a solid dark background color #1c1c1e for maximum readability no blur or transparency effects the popup appears instantly with no fade-in or slide animation this is intentional instant response feels fast extensions that animate feel slow
+the popup uses a translucent glass background rgba(28,28,30,0.85) balancing readability with visual depth true background blur requires complex shaders or gnome 51 ext background effect protocol rgba transparency is the most sophisticated reliable approach that works across all supported versions the popup appears instantly with no fade-in or slide animation this is intentional instant response feels fast extensions that animate feel slow
 
 ## gnome shell version support
 
@@ -297,7 +298,7 @@ the default shortcut is `Ctrl+Space` stored in gsettings as `['<Control>space']`
 
 the keybinding uses `global.display.grab_accelerator()` not `Main.wm.addKeybinding()` because `addKeybinding` can fail if the schema is not ready at enable time `grab_accelerator` is more reliable
 
-the popup can be closed in three ways pressing the toggle shortcut again pressing `Escape` or clicking outside the popup bounds
+the popup can be closed by pressing the toggle shortcut again pressing `Escape` or clicking outside the popup bounds additionally the popup automatically closes when any result is activated via keyboard enter mouse click or when focus moves to an external application window this is handled through three layers button press event on search results enter space key capture on result buttons and global display notify focus window tracking
 
 see the `keybinding.js` file for the implementation
 
@@ -325,14 +326,14 @@ schema id is `org.gnome.shell.extensions.spotlight` path is `/org/gnome/shell/ex
 
 the popup supports three theme modes controlled by the `theme-preference` gsettings key
 
-dark is the default stylesheet colors background `#1c1c1e` text `#f5f5f7` selection `rgba(255,255,255,0.12)`
+dark is the default stylesheet colors background `rgba(28,28,30,0.85)` text `#f5f5f7` selection `rgba(255,255,255,0.12)`
 
 light mode is applied by adding the `theme-light` style class to the content container
-light colors background `#ffffff` text `#1d1d1f` selection `rgba(0,122,255,0.12)`
+light colors background `rgba(255,255,255,0.88)` text `#1d1d1f` selection `rgba(0,122,255,0.12)`
 
 the theme class is applied in `_applyTheme()` called from `_doOpen()` before the popup is shown
 
-theme is determined once at open time it does not update live if the system theme changes while the popup is open
+when theme preference is set to default the popup listens to `org.gnome.desktop.interface changed::color-scheme` and updates live while open following the system dark light preference
 
 ## multi monitor behavior
 
