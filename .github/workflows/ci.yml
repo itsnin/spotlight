@@ -5,6 +5,10 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   validate:
@@ -12,144 +16,122 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check metadata.json is valid JSON
+      - name: Install tools
         run: |
-          python3 -c "import json; json.load(open('metadata.json'))"
-          echo "metadata.json is valid JSON"
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq nodejs libglib2.0-dev shellcheck yamllint
 
-      - name: Check all JS files parse as ES modules
+      - name: metadata.json valid JSON
+        run: python3 -c "import json; json.load(open('metadata.json'))"
+
+      - name: All JS files parse as ES modules
         run: |
-          sudo apt-get update -qq && sudo apt-get install -y -qq nodejs
           for f in $(find . -name "*.js" -not -path "./.git/*"); do
             node --check "$f" || { echo "SYNTAX ERROR in $f"; exit 1; }
           done
-          echo "All JS files parse successfully"
 
-      - name: Check gschema.xml compiles
-        run: |
-          sudo apt-get install -y -qq libglib2.0-dev
-          glib-compile-schemas schemas/
-          echo "Schema compiles successfully"
+      - name: Schema compiles
+        run: glib-compile-schemas --strict schemas/
 
-      - name: Check no spotlight@ninx references
+      - name: No old UUID references
         run: |
           if grep -r "spotlight@ninx" . --exclude-dir=.git --exclude-dir=.github; then
-            echo "ERROR: found spotlight@ninx references"
-            exit 1
+            echo "ERROR: found spotlight@ninx references"; exit 1;
           fi
-          echo "No old UUID references found"
 
-      - name: Check version-name length
+      - name: UUID consistency
+        run: |
+          UUID=$(python3 -c "import json; print(json.load(open('metadata.json'))['uuid'])")
+          SCHEMA=$(python3 -c "import json; print(json.load(open('metadata.json'))['settings-schema'])")
+          echo "UUID: $UUID"
+          echo "Schema: $SCHEMA"
+          grep -q "$SCHEMA" schemas/*.gschema.xml || { echo "ERROR: schema mismatch"; exit 1; }
+
+      - name: version-name valid
         run: |
           VERSION=$(python3 -c "import json; print(json.load(open('metadata.json'))['version-name'])")
           LEN=${#VERSION}
-          if [ "$LEN" -gt 16 ]; then
-            echo "ERROR: version-name '$VERSION' is $LEN chars, max is 16"
-            exit 1
-          fi
-          echo "version-name '$VERSION' is valid ($LEN chars)"
+          if [ "$LEN" -gt 16 ]; then echo "ERROR: version-name too long ($LEN > 16)"; exit 1; fi
+          echo "version-name: $VERSION ($LEN chars)"
 
-      - name: Check shell-version entries
+      - name: shell-version entries valid
         run: |
           python3 -c "
           import json
           m = json.load(open('metadata.json'))
-          sv = m['shell-version']
           valid = {'45','46','47','48','49','50'}
-          for v in sv:
-              if v not in valid:
-                  print(f'WARNING: unusual shell-version entry: {v}')
-          print(f'shell-version: {sv}')
-          "
+          for v in m['shell-version']:
+              assert v in valid, f'invalid shell-version: {v}'
+          print(f'shell-version: {m[\"shell-version\"]}')"
 
-      - name: Check no try/catch in shell code
+      - name: Process isolation
+        run: |
+          if grep -rn "from 'gi://Gtk'\|from 'gi://Gdk'\|from 'gi://Adw'" $(find . -name "*.js" -not -path "./.git/*" -not -path "./prefs/*" -not -name "prefs.js"); then
+            echo "ERROR: shell files import GTK libs"; exit 1; fi
+          if grep -rn "from 'gi://St'\|from 'gi://Clutter'\|from 'gi://Meta'\|from 'gi://Shell'" prefs/ prefs.js; then
+            echo "ERROR: prefs files import shell libs"; exit 1; fi
+
+      - name: No deprecated imports
+        run: |
+          if grep -rn "imports\.misc\." $(find . -name "*.js" -not -path "./.git/*"); then
+            echo "ERROR: deprecated imports"; exit 1; fi
+
+      - name: CSS uses only /* */ comments
+        run: |
+          if grep -rn '^\s*//' stylesheet.css; then
+            echo "ERROR: CSS uses // comments"; exit 1; fi
+
+      - name: No try/catch in shell code
         run: |
           if grep -rn 'try\s*{' $(find . -name "*.js" -not -path "./.git/*" -not -path "./prefs/*"); then
-            echo "WARNING: found try/catch in shell code (review needed)"
-          else
-            echo "No try/catch in shell code"
-          fi
+            echo "WARNING: try/catch in shell code (review)"; fi
 
-      - name: Check optional chaining usage
+      - name: No GObject constructor JS-only properties
         run: |
-          # optional chaining is prohibited only for GUARANTEED methods/objects per EGO guidelines
-          # it is allowed for genuinely potentially-null objects (e.g. tracker.focus_window result)
-          # this check flags occurrences for human review, not as a hard failure
-          if grep -rnE '\?\.' $(find . -name "*.js" -not -path "./.git/*"); then
-            echo "WARNING: found optional chaining (verify each is for a genuinely potentially-null object)"
-            echo "See AGENTS.md 'optional chaining ?. nuanced rule' for guidance"
-          else
-            echo "No optional chaining found"
-          fi
-      - name: Check no JS-only properties in GObject constructors
-        run: |
-          # GObject constructors only accept registered GObject properties
-          # Passing JS-only props like _entry, _data, _item through St.BoxLayout({...}) etc.
-          # causes runtime crash: "No property _x on TypeName"
-          # This check looks for _prefixed identifiers inside GObject constructor params
-          VIOLATIONS=$(python3 << 'PYEOF'
+          python3 << 'PYEOF'
 import re, os, sys
 violations = []
 for root, dirs, files in os.walk('.'):
-    if '.git' in root or False:
-        continue
+    if '.git' in root: continue
     for fn in files:
-        if not fn.endswith('.js'):
-            continue
+        if not fn.endswith('.js'): continue
         fp = os.path.join(root, fn)
-        with open(fp, 'r', errors='replace') as f:
-            content = f.read()
-        # Find constructor calls and check for _prefixed props
-        for m in re.finditer(r'new (St|Clutter|Gio|Adw|Gtk|GObject|Meta|Shell)\.([A-Za-z]+)\(\{([^}]*)\}', content):
+        with open(fp, 'r', errors='replace') as f: c = f.read()
+        for m in re.finditer(r'new (St|Clutter|Gio|Adw|Gtk|GObject|Meta|Shell)\.([A-Za-z]+)\(\{([^}]*)\}', c):
             params = m.group(3)
             for prop in re.findall(r'^\s*(_[a-zA-Z_][a-zA-Z0-9_]*)\s*:', params, re.MULTILINE):
-                # Get approximate line number
-                line_no = content[:m.start()].count('\n') + 1
-                violations.append(f"  {fp}:{line_no} — {m.group(1)}.{m.group(2)}({{ {prop}: ... }})")
+                line_no = c[:m.start()].count('\n') + 1
+                violations.append(f'  {fp}:{line_no} — {m.group(1)}.{m.group(2)}({{ {prop}: ... }})')
 if violations:
-    print("ERROR: found JS-only properties in GObject constructors:")
-    for v in violations:
-        print(v)
-    print("Fix: assign as item._prop = value AFTER construction, not inside constructor params")
+    print('ERROR: GObject constructor violations:')
+    for v in violations: print(v)
     sys.exit(1)
-else:
-    print("No GObject constructor property violations found")
+print('No GObject constructor violations')
 PYEOF
-)
-          echo "$VIOLATIONS"
-          if echo "$VIOLATIONS" | grep -q "ERROR"; then
-            exit 1
-          fi
 
-      - name: Check no deprecated modules
+      - name: AGENTS.md skill references exist
         run: |
-          if grep -rn "imports.misc.lang\|imports.misc.mainloop\|imports.misc.byteArray" $(find . -name "*.js" -not -path "./.git/*"); then
-            echo "ERROR: found deprecated module imports"
-            exit 1
-          fi
-          echo "No deprecated module imports"
+          MISSING=0
+          for skill in extension-getting-started extension-esm-imports extension-lifecycle extension-signal-cleanup extension-gsettings extension-prefs extension-styling extension-debugging extension-review-guidelines extension-best-practices extension-metadata extension-guideline; do
+            if [ ! -d "skills/$skill" ]; then
+              echo "MISSING: skills/$skill"; MISSING=$((MISSING+1)); fi
+          done
+          if [ "$MISSING" -gt 0 ]; then exit 1; fi
+          echo "All AGENTS.md skill references exist"
 
-      - name: Check process isolation
+      - name: No stale feature references
         run: |
-          echo "Checking prefs don't import shell-only libs..."
-          if grep -rn "from 'gi://St'\|from 'gi://Clutter'\|from 'gi://Meta'\|from 'gi://Shell'" prefs/ prefs.js; then
-            echo "ERROR: prefs files import shell-only libraries"
-            exit 1
-          fi
-          echo "Checking shell files don't import GTK-only libs..."
-          if grep -rn "from 'gi://Gtk'\|from 'gi://Gdk'\|from 'gi://Adw'" $(find . -name "*.js" -not -path "./.git/*" -not -path "./prefs/*" -not -name "prefs.js"); then
-            echo "ERROR: shell files import GTK-only libraries"
-            exit 1
-          fi
-          echo "Process isolation verified"
+          if grep -rn "clipboard\|emoji\|Alt+1\|Alt+2\|three independent\|standalone clipboard\|standalone emoji\|just perfection\|Just Perfection" --include="*.md" --include="*.yml" --include="*.yaml" . --exclude-dir=.git --exclude-dir=skills | grep -v "three consecutive"; then
+            echo "ERROR: stale references found"; exit 1; fi
+          echo "No stale references"
 
-      - name: Check CSS uses only /* */ comments
+      - name: ShellCheck bash scripts
+        run: shellcheck scripts/*.sh
+
+      - name: yamllint
         run: |
-          if grep -rn '^\s*//' stylesheet.css; then
-            echo "ERROR: CSS uses // comments (St only supports /* */)"
-            exit 1
-          fi
-          echo "CSS comments are valid"
+          echo "--- Checking .github/ ---"
+          yamllint .github/ -d "{extends: default, rules: {line-length: disable, truthy: disable, document-start: disable, braces: disable}}" || true
 
       - name: Summary
         run: |
