@@ -1,7 +1,7 @@
-/* Spotlight: stylesheet */
-/* Reuses GNOME Overview's search widgets, styles them to fit our popup. */
-/* Dark: background rgba(28,28,30,0.85), text #f5f5f7, selection rgba(255,255,255,0.12) */
-/* Light: background rgba(255,255,255,0.88), text #1d1d1f, selection rgba(0,122,255,0.12) */
+/* Spotlight stylesheet */
+/* Reuses the GNOME Overview search widgets and styles them to fit our popup. */
+/* Dark mode: background rgba(28,28,30,0.85), text #f5f5f7, selection rgba(255,255,255,0.12) */
+/* Light mode: background rgba(255,255,255,0.88), text #1d1d1f, selection rgba(0,122,255,0.12) */
 /* Global reset, kill inherited focus outlines or borders from parent theme. */
 .spotlight-container,
 .spotlight-container * {
@@ -19,7 +19,7 @@
   color: #f5f5f7;
   max-height: 380px;
 }
-/* Light theme overrides, applied when container has .theme-light class. */
+/* Light theme overrides applied when the container carries the theme-light class. */
 .spotlight-container.theme-light {
   background-color: rgba(255, 255, 255, 0.88);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
@@ -56,7 +56,7 @@
   border-radius: 12px;
   padding: 2px;
 }
-/* Individual result rows, dark default. */
+/* Individual result rows, dark by default. */
 .spotlight-container .list-search-result,
 .spotlight-container .overview-tile,
 .spotlight-container .search-provider-icon,
@@ -71,7 +71,7 @@
 .spotlight-container.theme-light .list-search-provider-content {
   color: #1d1d1f;
 }
-/* Selected / hover state, dark default. */
+/* Selected and hover state, dark by default. */
 .spotlight-container .list-search-result:selected,
 .spotlight-container .overview-tile:selected,
 .spotlight-container .list-search-result:hover,
@@ -98,7 +98,7 @@
   background-color: rgba(0, 122, 255, 0.12) !important;
   color: #000000;
 }
-/* Result text colors, dark default. */
+/* Result text colors, dark by default. */
 .spotlight-container .list-search-result,
 .spotlight-container .list-search-result StLabel {
   color: #f5f5f7;
@@ -117,7 +117,7 @@
 .spotlight-container.theme-light .list-search-result:focus StLabel {
   color: #000000;
 }
-/* Provider section headers, dark default. */
+/* Provider section headers, dark by default. */
 .spotlight-container .search-provider-icon {
   color: #98989d;
   font-size: 10px;

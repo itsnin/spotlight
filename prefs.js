@@ -6,8 +6,8 @@ import {buildShortcutPage} from './prefs/shortcutPage.js';
 import {buildAppearancePage} from './prefs/appearancePage.js';
 import {buildAboutPage} from './prefs/aboutPage.js';
 
-// Each category gets its own page tab in the sidebar:
-// keyboard shortcuts, appearance theme, and about.
+// Each category gets its own page tab in the sidebar, covering
+// keyboard shortcuts, appearance theme and the about section.
 export default class SpotlightPreferences extends ExtensionPreferences {
     fillPreferencesWindow(window) {
         const settings = this.getSettings();

@@ -2,69 +2,28 @@
 
 ## Prerequisites
 
-- GNOME Shell 45 or later
-- Working knowledge of JavaScript and the GNOME Shell extension API
-- A Wayland session for testing (X11 is not supported)
+GNOME Shell 45 or later, working knowledge of JavaScript and the GNOME Shell extension API, and a Wayland session for testing since X11 is not supported.
 
 ## Getting Started
 
-```bash
-git clone https://github.com/itsnin/spotlight.git
-cd spotlight
-```
-
-Install for testing:
-```bash
-scripts/build.sh
-gnome-extensions enable spotlight@nin
-```
-
-Log out and back in on Wayland before enabling.
+Clone the repository and step into it. Then run the build script to install for testing, enable the extension and log out and back in on Wayland before using it.
 
 ## Project Structure
 
-- `extension.js`: entry point
-- `lib/ui/`: UI components
-- `lib/core/`: core services
-- `prefs/`: preference pages (separate process)
-- `schemas/`: GSettings schema
-- `stylesheet.css`: styling
+extension.js serves as the entry point. UI components live under lib/ui, core services under lib/core and preference pages under prefs in a separate process. The schemas directory holds the GSettings schema and stylesheet.css contains the styling.
 
 ## Code Style
 
-Read `AGENTS.md` for the full rules. Key points:
-
-- Comments explain why, not what
-- Natural, human style: capitals where they make sense, light punctuation
-- No references to other projects
-- No AI-generated phrasing
-- `enable()` and `disable()` are adjacent in `extension.js`
-- Process isolation: shell no Gtk/Gdk/Adw, prefs no St/Clutter/Meta/Shell
-- `connectObject` for signals, `disconnectObject` in `destroy()`
-- No module-scope objects or signals
+Read AGENTS.md for the full rules. Comments explain the reasons rather than just stating facts, written in a natural style with capitals where they make sense and light punctuation. No references to other projects, no AI-generated phrasing. Enable and disable sit adjacent in extension.js. Process isolation means shell code gets no Gtk, Gdk or Adw while prefs code gets no St, Clutter, Meta or Shell. Signals use connectObject with disconnectObject in destroy. No module-scope objects or signals.
 
 ## Testing
 
-```bash
-# JS syntax
-for f in $(find . -name "*.js" -not -path "./.git/*" -not -path "./skills/*"); do node --check "$f"; done
-
-# Schema
-glib-compile-schemas schemas/
-```
-
-Test manually on GNOME Shell 50 Wayland.
+Check that every JS file parses correctly and that the schema compiles. Test manually on GNOME Shell 50 Wayland.
 
 ## Submitting
 
-1. Test locally
-2. Run CI checks
-3. Open a pull request
+Test locally, run the CI checks and open a pull request.
 
 ## Reporting Bugs
 
-Open an issue on GitHub with:
-- GNOME Shell version
-- Linux distribution
-- Steps to reproduce
-- `journalctl -b /usr/bin/gnome-shell | grep spotlight`
+Open an issue on GitHub with the GNOME Shell version, the Linux distribution, steps to reproduce and the output of journalctl filtered for gnome-shell and spotlight.

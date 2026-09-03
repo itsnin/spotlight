@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Requires bash, will not run correctly under sh, zsh, or fish.
+# Requires bash and will not run correctly under sh, zsh or fish.
 # Downloads and installs the latest Spotlight release from GitHub.
-# Usage: ./scripts/install.sh (or ./scripts/build.sh for backward compatibility)
+# Usage: ./scripts/install.sh or ./scripts/build.sh for backward compatibility
 #    or: curl -sL https://raw.githubusercontent.com/itsnin/spotlight/main/scripts/build.sh | sh
 set -e
 
-# Re-exec with bash if invoked via sh or another shell.
+# Re-exec with bash if invoked through sh or another shell.
 if [ -z "$BASH_VERSION" ]; then
     SCRIPT_URL="https://raw.githubusercontent.com/itsnin/spotlight/main/scripts/build.sh"
     if [ -f "$0" ]; then
@@ -25,8 +25,8 @@ API_URL="https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases/latest
 
 echo "Fetching latest release from GitHub..."
 
-# Get the download URL for the extension zip.
-# Prefer jq if available, fall back to grep/sed.
+# Get the download URL for the extension zip file.
+# Prefer jq when available and fall back to grep and sed otherwise.
 if command -v jq >/dev/null 2>&1; then
     DOWNLOAD_URL=$(curl -sL "$API_URL" | jq -r ".assets[] | select(.name==\"${ASSET_NAME}\") | .browser_download_url")
 else
@@ -41,7 +41,7 @@ fi
 
 echo "Downloading: ${DOWNLOAD_URL}"
 
-# Download the release zip to a temp file.
+# Download the release zip into a temporary file.
 TEMP_ZIP=$(mktemp /tmp/spotlight.XXXXXX.zip)
 curl -sL --fail "$DOWNLOAD_URL" -o "$TEMP_ZIP"
 

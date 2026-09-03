@@ -3,7 +3,7 @@
 import Adw from 'gi://Adw';
 import Gtk from 'gi://Gtk';
 
-// Theme options: 'default' follows GNOME system, 'dark' and 'light' force specific.
+// Theme options. Default follows the GNOME system style, while dark and light force a specific appearance.
 const THEMES = [
     { value: 'default', label: 'Default', subtitle: 'Follow GNOME system style' },
     { value: 'dark', label: 'Dark', subtitle: 'Always use dark appearance' },
