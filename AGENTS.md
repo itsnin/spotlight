@@ -133,7 +133,7 @@ spotlight/
         build.sh              symlink to install.sh backward compatibility
 ```
 
-this lib based structure follows the convention used by the most sophisticated and widely adopted gnome shell extensions such as just perfection verified via web search of popular extension repositories
+this lib based structure follows the standard convention for library code organized by concern ui components under lib ui core infrastructure under lib core
 
 ### process isolation
 

@@ -95,7 +95,7 @@ This approach means Spotlight automatically benefits from every search provider 
 | `prefs/aboutPage.js` | About section |
 | `schemas/*.gschema.xml` | GSettings schema definitions |
 
-Structure follows the lib based convention used by the most sophisticated widely adopted gnome shell extensions such as just perfection
+Structure follows the lib based convention for library code organized by concern
 
 ## Design Principles
 

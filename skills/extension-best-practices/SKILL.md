@@ -46,3 +46,9 @@ activateDefault handles enter on first result activate handles tab selected spec
 ## st widget style class check
 use has_style_class_name className not style_class includes className
 string includes can false match on longer class names like popup menu item
+## activation close comprehensive
+notify key focus only tracks focus within the shell stage
+mouse clicks on result buttons stay within the stage and do not trigger close
+use global display notify focus window to detect external app focus at window manager level
+this catches all cases web search existing browser new tab copy to clipboard any external activation
+connect in doOpen disconnect in doClose guard with this visible check close when focus window is not null
