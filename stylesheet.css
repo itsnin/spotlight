@@ -1,8 +1,8 @@
-/* Spotlight — stylesheet */
+/* Spotlight: stylesheet */
 /* Reuses GNOME Overview's search widgets, styles them to fit our popup. */
 /* Dark: background rgba(28,28,30,0.85), text #f5f5f7, selection rgba(255,255,255,0.12) */
 /* Light: background rgba(255,255,255,0.88), text #1d1d1f, selection rgba(0,122,255,0.12) */
-/* Global reset — kill inherited focus outlines or borders from parent theme. */
+/* Global reset, kill inherited focus outlines or borders from parent theme. */
 .spotlight-container,
 .spotlight-container * {
   border: none;
@@ -10,7 +10,7 @@
   box-shadow: none;
   -st-icon-style: requested;
 }
-/* Container — single unified window, dark default. */
+/* Container, single unified window, dark default. */
 .spotlight-container {
   background-color: rgba(28, 28, 30, 0.85);
   border-radius: 36px;
@@ -25,7 +25,7 @@
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
   color: #1d1d1f;
 }
-/* Search entry — make it blend into unified window, dark default. */
+/* Search entry, make it blend into unified window, dark default. */
 .spotlight-container > StEntry,
 .spotlight-container > StEntry:focus {
   background-color: transparent;
@@ -50,7 +50,7 @@
 .spotlight-container.theme-light > StEntry StLabel.hint-text {
   color: rgba(29, 29, 31, 0.35);
 }
-/* Search results area — transparent so it blends with container. */
+/* Search results area, transparent so it blends with container. */
 .spotlight-container .search-section-content {
   background-color: transparent !important;
   border-radius: 12px;

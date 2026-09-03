@@ -3,7 +3,7 @@
 ## Coding Standards
 
 Read these before submitting:
-- **AGENTS.md** — project rules and architecture
+- **AGENTS.md** : project rules and architecture
 - **skills/extension-best-practices/SKILL.md**
 - **skills/extension-lifecycle/SKILL.md**
 - **skills/extension-signal-cleanup/SKILL.md**

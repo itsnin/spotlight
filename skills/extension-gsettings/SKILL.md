@@ -4,7 +4,7 @@
 `schemas/` directory at the extension root. Filename must match the schema ID pattern.
 
 ## Schema ID
-`org.gnome.shell.extensions.<extensionname>` — follows the GNOME convention.
+`org.gnome.shell.extensions.<extensionname>`, follows the GNOME convention.
 
 ## Schema Compilation
 `gschemas.compiled` must never be shipped. GNOME Shell 44+ compiles automatically on install.

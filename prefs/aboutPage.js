@@ -1,4 +1,4 @@
-// Spotlight — about preferences page
+// Spotlight: about preferences page
 // SPDX-License-Identifier: GPL-3.0-or-later
 import Adw from 'gi://Adw';
 

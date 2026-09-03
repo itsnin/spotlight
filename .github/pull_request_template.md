@@ -12,7 +12,7 @@ Briefly describe what this PR changes and why.
 
 ## Checklist
 
-- [ ] Comments are natural, human style — capitals where they make sense, light punctuation
+- [ ] Comments are natural, human style : capitals where they make sense, light punctuation
 - [ ] No `try`/`catch` around standard API calls
 - [ ] No `?.` or `??` for guaranteed methods
 - [ ] `enable()` and `disable()` are adjacent
@@ -21,7 +21,7 @@ Briefly describe what this PR changes and why.
 - [ ] No module-scope instances, signals, or main-loop sources
 - [ ] Shell files don't import `Gtk`/`Gdk`/`Adw`
 - [ ] Prefs files don't import `St`/`Clutter`/`Meta`/`Shell`
-- [ ] No JS-only properties (like `_entry`, `_data`) in GObject constructors — assign with `item._prop = value` after construction
+- [ ] No JS-only properties (like `_entry`, `_data`) in GObject constructors : assign with `item._prop = value` after construction
 - [ ] Tested on GNOME Shell 50 Wayland
 - [ ] All JS files parse as ES modules
 

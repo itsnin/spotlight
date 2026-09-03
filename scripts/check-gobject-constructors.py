@@ -15,7 +15,7 @@ for root, dirs, files in os.walk('.'):
             params = m.group(3)
             for prop in re.findall(r'^\s*(_[a-zA-Z_][a-zA-Z0-9_]*)\s*:', params, re.MULTILINE):
                 line_no = c[:m.start()].count('\n') + 1
-                violations.append(f'  {fp}:{line_no} — {m.group(1)}.{m.group(2)}({{ {prop}: ... }})')
+                violations.append(f'  {fp}:{line_no}, {m.group(1)}.{m.group(2)}({{ {prop}: ... }})')
 
 if violations:
     print('ERROR: found JS-only properties in GObject constructors:')

@@ -1,4 +1,4 @@
-// Spotlight — appearance preferences page
+// Spotlight: appearance preferences page
 // SPDX-License-Identifier: GPL-3.0-or-later
 import Adw from 'gi://Adw';
 import Gtk from 'gi://Gtk';

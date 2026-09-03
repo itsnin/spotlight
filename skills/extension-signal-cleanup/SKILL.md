@@ -10,7 +10,7 @@ Store the handler ID in `this._someId`. Call `disconnect` with the explicit ID i
 Example: overview key capture in Spotlight that persists while the extension is enabled.
 
 ## Never Mix
-Don't use plain `connect` for objects that support `connectObject` — it causes leaks.
+Don't use plain `connect` for objects that support `connectObject`, it causes leaks.
 
 ## Short-Lived Widgets
 Plain `connect` is safe for short-lived widgets. GObject auto-disconnects on finalize.

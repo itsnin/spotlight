@@ -4,7 +4,7 @@
 `uuid`, `name`, `description`, `shell-version`, `url`.
 
 ## UUID Format
-`extensionname@domain` — unique email-like format. Matches the directory name.
+`extensionname@domain`, unique email-like format. Matches the directory name.
 
 ## Shell Version
 Array of strings: `'45'`, `'46'`, `'47'`, `'48'`, `'49'`, `'50'`.

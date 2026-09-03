@@ -25,8 +25,8 @@ Alpha 0.80 to 0.90 balances the glass feel with readability.
 
 ## St Icon Style
 `-st-icon-style` values (verified via official GNOME St docs):
-- `'requested'` — use the icon's natural style (default behavior)
-- `'regular'` — force full-color even for symbolic names
-- `'symbolic'` — force symbolic even for regular names
+- `'requested'`: use the icon's natural style (default behavior)
+- `'regular'`: force full-color even for symbolic names
+- `'symbolic'`: force symbolic even for regular names
 
 Never force symbolic globally. It breaks GNOME core app icons.

@@ -51,7 +51,7 @@ When overriding GNOME search results behavior, override BOTH `activateDefault` A
 Use `has_style_class_name(className)`, not `style_class.includes(className)`.
 String includes can false-match on longer class names like `popup-menu-item`.
 
-## Activation Close — Comprehensive
+## Activation Close: Comprehensive
 `notify::key-focus` only tracks focus within the shell stage.
 Mouse clicks on result buttons stay within the stage and don't trigger close.
 Use `global.display` `notify::focus-window` to detect external app focus at the window manager level.
@@ -60,6 +60,6 @@ Connect in `_doOpen()`, disconnect in `_doClose()`. Guard with `this._visible` c
 Close when `focus_window` is not null.
 
 Three-layer defense:
-1. `button-press-event` on `_search` — catches ALL mouse clicks on results
-2. Enter/Space key capture in `captured-event` — catches keyboard activation of result buttons
-3. `global.display` `notify::focus-window` — catches external app focus at WM level
+1. `button-press-event` on `_search`, catches ALL mouse clicks on results
+2. Enter/Space key capture in `captured-event`, catches keyboard activation of result buttons
+3. `global.display` `notify::focus-window`, catches external app focus at WM level

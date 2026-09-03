@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Requires bash — will not run correctly under sh, zsh, or fish.
+# Requires bash, will not run correctly under sh, zsh, or fish.
 # Downloads and installs the latest Spotlight release from GitHub.
 # Usage: ./scripts/install.sh (or ./scripts/build.sh for backward compatibility)
 #    or: curl -sL https://raw.githubusercontent.com/itsnin/spotlight/main/scripts/build.sh | sh

@@ -23,19 +23,19 @@ Log out and back in on Wayland before enabling.
 
 ## Project Structure
 
-- `extension.js` — entry point
-- `lib/ui/` — UI components
-- `lib/core/` — core services
-- `prefs/` — preference pages (separate process)
-- `schemas/` — GSettings schema
-- `stylesheet.css` — styling
+- `extension.js`: entry point
+- `lib/ui/`: UI components
+- `lib/core/`: core services
+- `prefs/`: preference pages (separate process)
+- `schemas/`: GSettings schema
+- `stylesheet.css`: styling
 
 ## Code Style
 
 Read `AGENTS.md` for the full rules. Key points:
 
 - Comments explain why, not what
-- Natural, human style — capitals where they make sense, light punctuation
+- Natural, human style: capitals where they make sense, light punctuation
 - No references to other projects
 - No AI-generated phrasing
 - `enable()` and `disable()` are adjacent in `extension.js`

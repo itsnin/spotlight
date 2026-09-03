@@ -1,4 +1,4 @@
-// Spotlight — shortcut preferences page
+// Spotlight: shortcut preferences page
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import Gtk from 'gi://Gtk';

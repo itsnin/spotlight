@@ -70,8 +70,8 @@ This approach means Spotlight automatically benefits from every search provider 
 
 | File | Responsibility |
 |---|---|
-| `extension.js` | Entry point — constructs popup and keybinding manager, manages lifecycle |
-| `lib/ui/spotlightPopup.js` | Main search popup lifecycle — open/close/destroy |
+| `extension.js` | Entry point: constructs popup and keybinding manager, manages lifecycle |
+| `lib/ui/spotlightPopup.js` | Main search popup lifecycle: open/close/destroy |
 | `lib/ui/popupBackdrop.js` | Transparent click-outside detection via chrome layer |
 | `lib/ui/popupPositioner.js` | Sizes, centers, and shows popup on the correct monitor |
 | `lib/core/keybinding.js` | Keybinding manager via grab_accelerator |

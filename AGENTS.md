@@ -26,7 +26,7 @@ Spotlight is a compact launcher for GNOME Shell. Press a shortcut, a centered tr
 
 ## Supported Versions
 
-GNOME Shell 45, 46, 47, 48, 49, 50 — listed in metadata.json under `shell-version`. Minimum is 45 because GNOME Shell 45 switched to ES modules.
+GNOME Shell 45, 46, 47, 48, 49, 50, listed in metadata.json under `shell-version`. Minimum is 45 because GNOME Shell 45 switched to ES modules.
 
 Wayland only. X11 is not supported. GNOME Shell 50 removed X11 entirely.
 
@@ -35,14 +35,14 @@ Wayland only. X11 is not supported. GNOME Shell 50 removed X11 entirely.
 One popup permanently steals the Overview search entry and controller. Widgets are stolen once in `enable()`, returned once in `disable()`. Open and close only reparent widgets between our content box and a hidden state. They never return to the Overview while the extension is enabled.
 
 File layout:
-- `extension.js` — entry point
-- `lib/ui/` — user interface components
-- `lib/core/` — core infrastructure
-- `prefs.js` — preferences entry point
-- `prefs/` — preference pages
-- `schemas/` — GSettings schema
-- `scripts/` — installer
-- `stylesheet.css` — styling
+- `extension.js`: entry point
+- `lib/ui/`: user interface components
+- `lib/core/`: core infrastructure
+- `prefs.js`: preferences entry point
+- `prefs/`: preference pages
+- `schemas/`: GSettings schema
+- `scripts/`: installer
+- `stylesheet.css`: styling
 
 ## Process Isolation
 
@@ -57,7 +57,7 @@ Use plain `connect` with explicit ID tracking only for signals that must persist
 
 ## Popup Positioning
 
-Positioned once at open based on empty-state height. Grows downward from a fixed anchor. Never reposition on size changes — it causes visible drift.
+Positioned once at open based on empty-state height. Grows downward from a fixed anchor. Never reposition on size changes, it causes visible drift.
 
 ## Click-Outside Detection
 
@@ -66,9 +66,9 @@ Transparent full-screen St widget in the chrome layer, behind the popup. Backdro
 ## Popup Close Mechanisms
 
 Popup closes on toggle shortcut, Escape, or click outside, plus a comprehensive activation-close defense:
-1. `button-press-event` on search results — catches mouse clicks on any result
+1. `button-press-event` on search results, catches mouse clicks on any result
 2. Enter or Space key capture when focus is on result buttons (not the entry)
-3. `global.display` `notify::focus-window` — tracks external app focus at window manager level
+3. `global.display` `notify::focus-window`, tracks external app focus at window manager level
 
 ## Object Lifecycle
 
@@ -76,17 +76,17 @@ Every object created in `enable()` is destroyed in `disable()`. Every widget add
 
 ## Module-Scope Restrictions
 
-No objects, no signals, no main loop sources at the top level of any JS file. Only static data structures — arrays, objects, Maps, Sets, RegExps — are allowed.
+No objects, no signals, no main loop sources at the top level of any JS file. Only static data structures, arrays, objects, Maps, Sets, RegExps, are allowed.
 
 ## Code Style
 
-Comments explain why, not what. Write like a lazy senior engineer: natural, not forced grammar. Use capitals where they make sense — proper nouns, acronyms, start of sentences. Light punctuation. Periods at the end of complete thoughts. No banners, no JSDoc, no references to other projects. No LLM phrases like "here we," "let's," "note that," "important," "TODO," "FIXME." Maximum three consecutive comment lines without intervening code.
+Comments explain why, not what. Write like a lazy senior engineer: natural, not forced grammar. Use capitals where they make sense, proper nouns, acronyms, start of sentences. Light punctuation. Periods at the end of complete thoughts. No banners, no JSDoc, no references to other projects. No LLM phrases like "here we," "let's," "note that," "important," "TODO," "FIXME." Maximum three consecutive comment lines without intervening code.
 
 `enable()` and `disable()` are adjacent in `extension.js`. Split logic into small files, each with a single responsibility. No TypeScript. Plain JavaScript, no build step.
 
 ## EGO Verified Rules
 
-- No `imports.gi.*` — use ESM `import 'gi://Name'`
+- No `imports.gi.*`: use ESM `import 'gi://Name'`
 - Console API with appropriate levels: `debug`, `warn`, `error`. Not bare `log`.
 - No `run_dispose()` unless absolutely necessary
 - Optional chaining only for genuinely potentially-null objects. Never for guaranteed objects.
@@ -105,8 +105,8 @@ Schema ID: `org.gnome.shell.extensions.spotlight`. Path: `/org/gnome/shell/exten
 `gschemas.compiled` is not shipped. GNOME Shell 44+ compiles automatically on install.
 
 Keys:
-- `toggle-shortcut` — type `as`, default `['<Control>space']`
-- `theme-preference` — type `s`, default `'default'`. Values: `'default'`, `'dark'`, `'light'`
+- `toggle-shortcut`: type `as`, default `['<Control>space']`
+- `theme-preference`: type `s`, default `'default'`. Values: `'default'`, `'dark'`, `'light'`
 
 ## Appearance Theme
 
