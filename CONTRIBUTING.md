@@ -3,8 +3,8 @@
 ## Prerequisites
 
 - GNOME Shell 45 or later
-- JavaScript and GNOME Shell extension API knowledge
-- Wayland session (X11 not supported)
+- Working knowledge of JavaScript and the GNOME Shell extension API
+- A Wayland session for testing (X11 is not supported)
 
 ## Getting Started
 
@@ -19,7 +19,7 @@ scripts/build.sh
 gnome-extensions enable spotlight@nin
 ```
 
-Log out and back in on Wayland.
+Log out and back in on Wayland before enabling.
 
 ## Project Structure
 
@@ -32,14 +32,15 @@ Log out and back in on Wayland.
 
 ## Code Style
 
-Read `AGENTS.md` for full rules. Key points:
-- Comments explain why not what
-- Lowercase minimal punctuation
+Read `AGENTS.md` for the full rules. Key points:
+
+- Comments explain why, not what
+- Natural, human style — capitals where they make sense, light punctuation
 - No references to other projects
-- No LLM-generated phrasing
-- enable and disable adjacent in extension.js
+- No AI-generated phrasing
+- `enable()` and `disable()` are adjacent in `extension.js`
 - Process isolation: shell no Gtk/Gdk/Adw, prefs no St/Clutter/Meta/Shell
-- connectObject for signals, disconnectObject in destroy
+- `connectObject` for signals, `disconnectObject` in `destroy()`
 - No module-scope objects or signals
 
 ## Testing
@@ -50,9 +51,9 @@ for f in $(find . -name "*.js" -not -path "./.git/*" -not -path "./skills/*"); d
 
 # Schema
 glib-compile-schemas schemas/
-
-# Manual test on GNOME Shell 50 Wayland
 ```
+
+Test manually on GNOME Shell 50 Wayland.
 
 ## Submitting
 
@@ -64,6 +65,6 @@ glib-compile-schemas schemas/
 
 Open an issue on GitHub with:
 - GNOME Shell version
-- Distribution
+- Linux distribution
 - Steps to reproduce
 - `journalctl -b /usr/bin/gnome-shell | grep spotlight`

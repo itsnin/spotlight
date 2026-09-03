@@ -1,4 +1,4 @@
-// spotlight - preferences window
+// Spotlight — preferences window
 // SPDX-License-Identifier: GPL-3.0-or-later
 import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 import Adw from 'gi://Adw';

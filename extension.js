@@ -1,4 +1,4 @@
-// spotlight - a compact launcher for gnome shell
+// Spotlight — a compact launcher for GNOME Shell
 // SPDX-License-Identifier: GPL-3.0-or-later
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 import {SpotlightPopup} from './lib/ui/spotlightPopup.js';
