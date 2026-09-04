@@ -26,7 +26,7 @@ API_URL="https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases/latest
 echo "Fetching latest release from GitHub..."
 
 # Get the download URL for the extension zip file.
-# Prefer jq when available and fall back to grep and sed otherwise.
+# Prefer jq when available, fall back to grep and sed otherwise.
 if command -v jq >/dev/null 2>&1; then
     DOWNLOAD_URL=$(curl -sL "$API_URL" | jq -r ".assets[] | select(.name==\"${ASSET_NAME}\") | .browser_download_url")
 else

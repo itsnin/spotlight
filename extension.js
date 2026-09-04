@@ -4,13 +4,13 @@ import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 import {SpotlightPopup} from './lib/ui/spotlightPopup.js';
 import {KeybindingManager} from './lib/core/keybinding.js';
 
-// Entry point. We keep enable and disable next to each other so they're easy to review together.
+// Entry point. Keeping enable and disable adjacent makes the cleanup symmetry obvious at a glance.
 export default class SpotlightExtension extends Extension {
     enable() {
         this._settings = this.getSettings();
         this._popup = new SpotlightPopup(this._settings);
-        // Permanently steal the overview search widgets when the extension enables.
-        // The overview search stays gone for as long as Spotlight remains loaded.
+        // Steal the overview search widgets permanently. The overview search stays gone
+        // for as long as Spotlight is loaded, which is the whole point of the extension.
         this._popup.stealOverviewSearch();
         this._keybindingManager = new KeybindingManager();
         this._keybindingManager.enable();
@@ -38,7 +38,7 @@ export default class SpotlightExtension extends Extension {
         this._settings.disconnectObject(this);
         this._keybindingManager.disable();
         this._keybindingManager = null;
-        // Return the stolen widgets back to the overview before we destroy things.
+        // Return the stolen widgets to the overview before destroying things so nothing leaks.
         this._popup.returnOverviewSearch();
         this._popup.destroy();
         this._popup = null;

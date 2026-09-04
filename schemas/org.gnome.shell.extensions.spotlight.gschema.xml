@@ -7,7 +7,7 @@
       <summary>Toggle shortcut</summary>
       <description>Keyboard shortcut to open Spotlight. Default is Ctrl+Space.</description>
     </key>
-    <!-- Appearance theme. Default follows the GNOME system style, dark forces dark, light forces light. -->
+    <!-- Appearance theme. Default follows the system style, dark forces dark, light forces light. -->
     <key name="theme-preference" type="s">
       <default>'default'</default>
       <summary>Theme preference</summary>
