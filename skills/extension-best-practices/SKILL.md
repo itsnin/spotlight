@@ -72,3 +72,7 @@ primary monitor thumbnails box and the SecondaryMonitorDisplay prototype method
 _getThumbnailsHeight for multi-monitor setups. Always back up the original values
 in enable and restore them in disable.
 
+## Overview Type-to-Search Interception
+
+The GNOME overview has a start-typing-to-search feature that activates on any printable key press at the stage level. When an extension permanently steals the overview search widgets, this feature causes a black screen because it tries to render results in widgets that no longer exist in the overview hierarchy. The fix requires intercepting printable keys at the stage captured-event level. However, the overview handler connects earlier and fires first in the capture chain. Simply consuming the event works when the popup is closed, but when the popup is open the entry needs to receive the key. The solution is to always intercept printable keys when the overview is visible, and when the popup is open, manually forward the event to the entry via entry.event(event) before returning EVENT_STOP. This prevents the overview handler from ever seeing the key while ensuring the popup entry still receives it.
+
