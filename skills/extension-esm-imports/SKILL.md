@@ -17,3 +17,8 @@ Imports resolve relative to the file location. Use the correct number of dot-dot
 ## Extension Base
 `import Extension from 'resource:///org/gnome/shell/extensions/extension.js'`
 `import ExtensionPreferences from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js'`
+
+## GNOME 51 SearchEntry
+
+ControlsManager in ui/overviewControls.js now uses SearchEntry from ui/search.js instead of St.Entry. SearchEntry emits activate-new-instance on Ctrl+Enter. If an extension steals Main.overview.searchEntry, it should still work with basic St.Entry methods since SearchEntry likely extends St.Entry.
+

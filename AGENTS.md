@@ -27,7 +27,7 @@ Spotlight is a compact launcher for GNOME Shell. Press a shortcut, a centered tr
 
 ## Supported Versions
 
-GNOME Shell 45, 46, 47, 48, 49 and 50, listed in metadata.json under shell-version. The minimum is 45 because that is when GNOME Shell switched to ES modules.
+GNOME Shell 45, 46, 47, 48, 49, 50 and 51, listed in metadata.json under shell-version. The minimum is 45 because that is when GNOME Shell switched to ES modules. GNOME 51 support added.
 
 Wayland only. X11 is not supported. GNOME Shell 50 removed X11 entirely.
 
