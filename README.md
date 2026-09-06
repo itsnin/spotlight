@@ -18,26 +18,6 @@
 
 <img width="1366" height="768" alt="Screenshot" src="https://github.com/user-attachments/assets/7d3d6cfb-86eb-44a7-83a0-f9810ded63f8" />
 
-## Features
-
-- Reuses GNOME's built-in search infrastructure
-- Results from apps, calculator, files, system actions, settings, web search
-- Centered popup, grows downward, never drifts
-- Translucent glass appearance, dark and light modes
-- Live system theme following when set to Default
-
-## Usage
-
-| Action | Input |
-|---|---|
-| Open Spotlight | `Ctrl + Space` |
-| Launch app | Type name, `Enter` |
-| Evaluate expression | Type math, `Enter` |
-| Lock screen | Type `lock`, `Enter` |
-| Open Wi-Fi settings | Type `wifi`, `Enter` |
-| Search the web | Type query, `Enter` |
-| Traverse results | `↑` / `↓` |
-| Dismiss | `Esc`, `Ctrl + Space`, or click outside |
 
 ## Installation
 
@@ -60,6 +40,28 @@ gnome-extensions prefs spotlight@nin
 
 - Toggle keyboard shortcut (default `Ctrl+Space`)
 - Visual theme: Default (follows system), Dark, or Light
+
+
+## Features
+
+- Reuses GNOME's built-in search infrastructure
+- Results from apps, calculator, files, system actions, settings, web search
+- Centered popup, grows downward, never drifts
+- Translucent glass appearance, dark and light modes
+- Live system theme following when set to Default
+
+## Usage
+
+| Action | Input |
+|---|---|
+| Open Spotlight | `Ctrl + Space` |
+| Launch app | Type name, `Enter` |
+| Evaluate expression | Type math, `Enter` |
+| Lock screen | Type `lock`, `Enter` |
+| Open Wi-Fi settings | Type `wifi`, `Enter` |
+| Search the web | Type query, `Enter` |
+| Traverse results | `↑` / `↓` |
+| Dismiss | `Esc`, `Ctrl + Space`, or click outside |
 
 ## Architecture
 
