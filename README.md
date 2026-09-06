@@ -61,15 +61,6 @@ gnome-extensions prefs spotlight@nin
 - Toggle keyboard shortcut (default `Ctrl+Space`)
 - Visual theme: Default (follows system), Dark, or Light
 
-## Design
-
-- **Translucent glass.** Dark `rgba(28, 28, 30, 0.85)` / Light `rgba(255, 255, 255, 0.88)`.
-- **Compact.** 520 px wide, 380 px max height. Min resolution 1366×768.
-- **36 px rounded corners.**
-- **Fixed anchor.** Positioned once at open, grows downward. No drift.
-- **Instant.** No animations.
-- **Live theme.** Default mode follows system dark/light changes live.
-
 ## Architecture
 
 Spotlight permanently takes over GNOME Overview's search infrastructure. On enable, it steals the Overview's search entry and search controller widgets and hides them. When the popup opens, these already-stolen widgets are reparented into the popup. When the popup closes, they're removed from the popup but kept stolen and hidden. They're only returned to the Overview on disable.
@@ -88,6 +79,18 @@ This approach means Spotlight automatically benefits from every search provider 
 | `prefs/appearancePage.js` | Visual theme preference |
 | `prefs/aboutPage.js` | About section |
 | `schemas/*.gschema.xml` | GSettings schema definitions |
+
+## Contributing
+
+Contributions of all types are welcome — bug fixes, new features, documentation improvements, design proposals. Before starting, please read the [contributor guide](./CONTRIBUTING.md) and the [agent standards](./AGENTS.md) which describe the project's design philosophy, architecture, code style, and verification discipline.
+
+## Code of Conduct
+
+This project follows the [Contributor Covenant](./CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
+
+## Security
+
+For security vulnerabilities, please do not open a public issue. See the [security policy](./SECURITY.md) for the private reporting process.
 
 ## License
 

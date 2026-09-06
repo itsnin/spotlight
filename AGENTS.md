@@ -103,6 +103,10 @@ Keys:
 - toggle-shortcut of type as, default Control+Space
 - theme-preference of type s, default default. Values are default, dark and light.
 
+## Design
+
+Translucent glass. Dark rgba(28, 28, 30, 0.85), light rgba(255, 255, 255, 0.88). Compact. 520 px wide, 380 px max height. Min resolution 1366 by 768. 36 px rounded corners. Fixed anchor. Positioned once at open, grows downward. No drift. Instant. No animations. Live theme. Default mode follows system dark and light changes live.
+
 ## Appearance Theme
 
 Three modes controlled by the theme-preference GSettings key. Dark by default with background rgba(28,28,30,0.85) and text #f5f5f7. Light uses background rgba(255,255,255,0.88) and text #1d1d1f. The theme-light class gets added to the content container for light mode. Applied in _applyTheme which gets called from _doOpen before showing. When the preference is set to default, the code listens to org.gnome.desktop.interface changed::color-scheme and updates live while the popup is open.
