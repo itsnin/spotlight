@@ -15,3 +15,7 @@ Write like you're explaining something to a colleague across the table. Flowing 
 - Arrow-like em dashes used as separators everywhere
 - Bullet-point lists that read like a specification document
 - Phrases that sound like they came from a language model
+
+## In Spotlight
+
+Comments explain the reasons behind decisions, not just what the code does. Tone is that of an experienced but lazy senior engineer. Natural grammar, capital letters when appropriate, light punctuation only. No banners, no JSDoc, no references to other extensions. Avoid phrases like "here we", "let us", "note that". Maximum two consecutive comment lines without intervening code. This applies to code comments, AGENTS.md, skills, .github files, scripts, and documentation.
