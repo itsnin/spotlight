@@ -20,6 +20,8 @@ Available skills:
 - extension-metadata
 - extension-guideline
 - extension-writing-standards
+- extension-overview-search-stealing
+- extension-popup-close-defense
 
 ## What This Extension Is
 
@@ -27,7 +29,7 @@ Spotlight is a compact launcher for GNOME Shell. Press a shortcut, a centered tr
 
 ## Supported Versions
 
-GNOME Shell 45, 46, 47, 48, 49 and 50, listed in metadata.json under shell-version. The minimum is 45 because that is when GNOME Shell switched to ES modules.
+GNOME Shell 45, 46, 47, 48, 49, 50 and 51, listed in metadata.json under shell-version. The minimum is 45 because that is when GNOME Shell switched to ES modules.
 
 Wayland only. X11 is not supported. GNOME Shell 50 removed X11 entirely.
 
@@ -102,6 +104,10 @@ Schema ID is org.gnome.shell.extensions.spotlight. Path is /org/gnome/shell/exte
 Keys:
 - toggle-shortcut of type as, default Control+Space
 - theme-preference of type s, default default. Values are default, dark and light.
+
+## Design
+
+Translucent glass. Dark rgba(28, 28, 30, 0.85), light rgba(255, 255, 255, 0.88). Compact. 520 px wide, 380 px max height. Min resolution 1366 by 768. 36 px rounded corners. Fixed anchor. Positioned once at open, grows downward. No drift. Instant. No animations. Live theme. Default mode follows system dark and light changes live.
 
 ## Appearance Theme
 

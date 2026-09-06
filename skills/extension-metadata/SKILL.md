@@ -7,7 +7,7 @@
 `extensionname@domain`, unique email-like format. Matches the directory name.
 
 ## Shell Version
-Array of strings: `'45'`, `'46'`, `'47'`, `'48'`, `'49'`, `'50'`.
+Array of strings: `'45'`, `'46'`, `'47'`, `'48'`, `'49'`, `'50'`, `'51'`.
 
 ## Settings Schema
 `settings-schema` field is optional. Defaults to `org.gnome.shell.extensions.<uuid>`.
@@ -17,3 +17,7 @@ String up to 16 characters. Shown on EGO.
 
 ## Gettext Domain
 `gettext-domain` field required for translations.
+
+## In Spotlight
+
+UUID is `spotlight@nin`. `version-name` is `2026.10`. `shell-version` array contains `'45'`, `'46'`, `'47'`, `'48'`, `'49'`, `'50'`, `'51'`. `settings-schema` is `org.gnome.shell.extensions.spotlight`. `gettext-domain` is `spotlight`. `description` is `A compact, keyboard-driven launcher for GNOME Shell.` `url` is `https://github.com/itsnin/spotlight`.

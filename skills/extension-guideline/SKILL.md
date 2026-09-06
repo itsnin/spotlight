@@ -23,3 +23,7 @@ Only file I/O, JSON parsing, regex.
 
 ## Optional Chaining
 Prohibited for guaranteed objects.
+
+## In Spotlight
+
+Spotlight follows a design philosophy of minimal settings and fixed behavior. The popup width is hardcoded at 520px, workspace thumbnail scale is hardcoded at 200%, no animations, no drift. The extension permanently steals the overview search infrastructure rather than building a custom search system. This design decision trades configurability for reliability, consistency, and automatic access to all GNOME search providers.

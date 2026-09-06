@@ -24,7 +24,7 @@ if len(version) > 16:
     sys.exit(1)
 
 # shell-version valid
-valid = {'45','46','47','48','49','50'}
+valid = {'45','46','47','48','49','50','51'}
 for v in m['shell-version']:
     if v not in valid:
         print(f'ERROR: invalid shell-version: {v}')
