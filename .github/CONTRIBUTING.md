@@ -3,7 +3,7 @@
 ## Coding Standards
 
 Read these before submitting:
-- **AGENTS.md** : project rules and architecture
+- **AGENTS.md** — project rules and architecture
 - **skills/extension-best-practices/SKILL.md**
 - **skills/extension-lifecycle/SKILL.md**
 - **skills/extension-signal-cleanup/SKILL.md**
@@ -11,6 +11,21 @@ Read these before submitting:
 - **skills/extension-prefs/SKILL.md**
 - **skills/extension-esm-imports/SKILL.md**
 - **skills/extension-review-guidelines/SKILL.md**
+- **skills/extension-writing-standards/SKILL.md**
+
+## Architecture Overview
+
+```mermaid
+flowchart TD
+    A[extension.js] --> B[KeybindingManager]
+    A --> C[SpotlightPopup]
+    C --> D[PopupBackdrop]
+    C --> E[PopupPositioner]
+    C -->|steals| F[GNOME Overview Search]
+    G[Search Providers] --> F
+```
+
+Spotlight permanently steals the GNOME Overview search widgets on enable. The popup reparents them when opened. This gives Spotlight access to all GNOME search providers with zero custom code.
 
 ## Before Submitting
 
@@ -22,7 +37,7 @@ for f in $(find . -name "*.js" -not -path "./.git/*" -not -path "./skills/*"); d
 glib-compile-schemas --strict schemas/
 ```
 
-Verify the PR template checklist. Test on GNOME Shell 45-51.
+Verify the PR template checklist. Test on GNOME Shell 45-51 Wayland.
 
 ## Crash Reports
 
@@ -32,5 +47,7 @@ journalctl -b /usr/bin/gnome-shell | grep spotlight
 
 ## Commit Messages
 
-Imperative mood. Reference the component. Example:
-`Docs: update skills`
+Imperative mood. Reference the component. Examples:
+- `Popup: fix activation close on middle click`
+- `Docs: update architecture diagram`
+- `CI: add shellcheck validation`

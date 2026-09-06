@@ -1,12 +1,20 @@
-# Spotlight
+<h1 align="center">Spotlight</h1>
 
-A compact, keyboard-driven launcher for GNOME Shell 45 through 51.
+<p align="center">
+  <strong>A compact, keyboard-driven launcher for GNOME Shell 45 through 51.</strong>
+</p>
 
-[Repository](https://github.com/itsnin/spotlight) • [GNOME Extensions](https://extensions.gnome.org/extension/10666/spotlight/)
+<p align="center">
+  <a href="https://github.com/itsnin/spotlight">Repository</a>
+  •
+  <a href="https://extensions.gnome.org/extension/10666/spotlight/">GNOME Extensions</a>
+</p>
 
-**Version:** 2026.10
-
-`Ctrl + Space`
+<p align="center">
+  <strong>Version:</strong> 2026.10
+  &nbsp;•&nbsp;
+  <strong>Shortcut:</strong> <code>Ctrl + Space</code>
+</p>
 
 <img width="1366" height="768" alt="Screenshot" src="https://github.com/user-attachments/assets/7d3d6cfb-86eb-44a7-83a0-f9810ded63f8" />
 
