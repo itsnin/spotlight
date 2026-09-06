@@ -4,7 +4,7 @@ A compact, keyboard-driven launcher for GNOME Shell 45 through 51.
 
 [Repository](https://github.com/itsnin/spotlight) • [GNOME Extensions](https://extensions.gnome.org/extension/10666/spotlight/)
 
-**Version:** 2026.09
+**Version:** 2026.10
 
 `Ctrl + Space`
 
