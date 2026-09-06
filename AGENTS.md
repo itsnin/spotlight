@@ -20,6 +20,8 @@ Available skills:
 - extension-metadata
 - extension-guideline
 - extension-writing-standards
+- extension-overview-search-stealing
+- extension-popup-close-defense
 
 ## What This Extension Is
 
