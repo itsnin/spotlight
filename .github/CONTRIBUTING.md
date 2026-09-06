@@ -22,7 +22,7 @@ for f in $(find . -name "*.js" -not -path "./.git/*" -not -path "./skills/*"); d
 glib-compile-schemas --strict schemas/
 ```
 
-Verify the PR template checklist. Test on GNOME Shell 45-50.
+Verify the PR template checklist. Test on GNOME Shell 45-51.
 
 ## Crash Reports
 

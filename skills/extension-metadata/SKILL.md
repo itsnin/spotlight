@@ -7,7 +7,7 @@
 `extensionname@domain`, unique email-like format. Matches the directory name.
 
 ## Shell Version
-Array of strings: `'45'`, `'46'`, `'47'`, `'48'`, `'49'`, `'50'`.
+Array of strings: `'45'`, `'46'`, `'47'`, `'48'`, `'49'`, `'50'`, `'51'`.
 
 ## Settings Schema
 `settings-schema` field is optional. Defaults to `org.gnome.shell.extensions.<uuid>`.

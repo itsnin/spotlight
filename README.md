@@ -1,6 +1,6 @@
 # Spotlight
 
-A compact, keyboard-driven launcher for GNOME Shell 45 through 50.
+A compact, keyboard-driven launcher for GNOME Shell 45 through 51.
 
 [Repository](https://github.com/itsnin/spotlight) • [GNOME Extensions](https://extensions.gnome.org/extension/10666/spotlight/)
 
