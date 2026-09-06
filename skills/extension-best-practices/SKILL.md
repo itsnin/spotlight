@@ -61,3 +61,14 @@ Use has_style_class_name rather than style_class.includes. The string version ca
 The notify::key-focus signal only tracks focus within the shell stage. Mouse clicks on result buttons stay within the stage and do not trigger a close. Use global.display notify::focus-window to detect external app focus at the window manager level. This catches all cases including web search, existing browser new tabs, copy to clipboard and any other external activation. Connect in _doOpen, disconnect in _doClose and guard with the this._visible check. Close when focus_window is not null.
 
 Three-layer defense. First, button-press-event on _search catches all mouse clicks on results. Second, Enter or Space key capture in captured-event catches keyboard activation of result buttons. Third, global.display notify::focus-window catches external app focus at the WM level.
+
+## Workspace Thumbnail Scale
+
+GNOME Shell workspace thumbnails in the overview are intentionally small by default.
+To make them actually usable on modern high-resolution displays, increase the
+_maxThumbnailScale value. The default is approximately 0.05, setting it to 0.1
+effectively doubles the maximum available size. This must be applied to both the
+primary monitor thumbnails box and the SecondaryMonitorDisplay prototype method
+_getThumbnailsHeight for multi-monitor setups. Always back up the original values
+in enable and restore them in disable.
+

@@ -61,6 +61,10 @@ Positioned once at open based on the empty-state height. Grows downward from a f
 
 A transparent full-screen St widget sits in the chrome layer behind the popup. The backdrop covers the target monitor and listens for button-release events. The popup sits above the backdrop in the stacking order so clicks on the popup work normally.
 
+## Workspace Thumbnail Scale
+
+Workspace thumbnails in the overview are intentionally small by default. Spotlight increases _maxThumbnailScale from its default to 0.1, effectively doubling the maximum available size so thumbnails are actually usable on modern high-resolution displays. Applied to both the primary monitor thumbnails box and the SecondaryMonitorDisplay prototype method _getThumbnailsHeight for multi-monitor setups. Original values are backed up in stealOverviewSearch and restored in returnOverviewSearch.
+
 ## Popup Close Mechanisms
 
 The popup closes on toggle shortcut, Escape or click outside, plus a comprehensive activation-close defense. First, button-press-event on the search results catches mouse clicks on any result. Second, Enter or Space key capture when focus sits on result buttons rather than the entry. Third, global.display notify::focus-window tracks external app focus at the window manager level.
