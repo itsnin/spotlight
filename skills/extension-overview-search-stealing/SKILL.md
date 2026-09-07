@@ -45,3 +45,11 @@ Defense in depth is required:
 
 3. **Stage key capture.** Still useful for when the popup is NOT visible. Consumes printable keys so typing in the overview does nothing. When the popup IS visible, forwards keys to the entry manually since focus routing alone is not sufficient defense.
 
+## Black Screen Defense
+
+When the popup is open and the user types, the entry receives key events through focus routing or manual forwarding. The search controller activates and its notify::search-active signal fires. The ControlsManager reacts by calling _onSearchChanged() which fades out the app display and workspaces display (opacity to 0) and fades in the search controller. Since the search controller widgets were permanently stolen, fading it in renders as empty black space.
+
+The fix overrides ControlsManager._onSearchChanged() on the instance at Main.overview._overview._controls. The override checks if the popup is visible and returns early if so, skipping the fade animations entirely. When the popup is not visible, it delegates to the original bound method. Root cause verified in actual GNOME Shell source code: js/ui/overviewControls.js _onSearchChanged() method.
+
+Stage key capture is still needed for when the popup is NOT visible — it consumes printable keys so typing in the overview does nothing. When the popup IS visible, it manually forwards keys to the entry via entry.event(event) because EVENT_STOP at capture phase prevents normal target-phase delivery.
+
