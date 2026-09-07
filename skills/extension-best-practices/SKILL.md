@@ -83,3 +83,8 @@ GNOME 51 introduces SearchEntry in ui/search.js which replaces St.Entry in Contr
 ## In Spotlight
 
 Key Spotlight patterns: never pass custom underscore-prefixed properties through GObject constructors, assign after construction. `enable()` and `disable()` are adjacent. Use `connectObject` for signal cleanup. Use `notify_keyval` not `notify_key`. Use `-st-icon-style: requested` instead of forcing symbolic globally. For activation close, override both `activateDefault` AND `activate` on search results. Use three-layer defense: button-press-event, Enter/Space key capture, and `global.display notify::focus-window`.
+
+## Workspace Thumbnail Background
+
+GNOME Shell uses a solid grey color for workspace thumbnails by default. To show the actual wallpaper instead, override WorkspaceThumbnail.prototype._init to create a BackgroundManager with the thumbnail's _contents container and vignette disabled. Also override _onDestroy to clean up the BackgroundManager and its signal connections. Connect to the BackgroundManager's 'loaded' and 'changed' signals to queue_relayout on the background actor, working around a Shell 50 bug where thumbnails stay blank until a relayout is forced.
+

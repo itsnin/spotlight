@@ -67,9 +67,19 @@ A transparent full-screen St widget sits in the chrome layer behind the popup. T
 
 Workspace thumbnails in the overview are intentionally small by default. Spotlight increases _maxThumbnailScale from its default to 0.1, effectively doubling the maximum available size so thumbnails are actually usable on modern high-resolution displays. Applied to both the primary monitor thumbnails box and the SecondaryMonitorDisplay prototype method _getThumbnailsHeight for multi-monitor setups. Original values are backed up in stealOverviewSearch and restored in returnOverviewSearch.
 
+## Workspace Thumbnail Background
+
+GNOME Shell uses a solid grey color for workspace thumbnails by default. Spotlight overrides WorkspaceThumbnail.prototype._init to create a BackgroundManager for each thumbnail's contents container, which shows the actual wallpaper instead. Also overrides _onDestroy to clean up the BackgroundManager and its signal connections. Connects to loaded and changed signals on the BackgroundManager to queue relayout, working around a Shell 50 bug where thumbnails stay blank until something else forces a relayout.
+
 ## Overview Type-to-Search Interception
 
-The GNOME overview has a start-typing-to-search feature that activates on any printable key press at the stage level. Since Spotlight permanently steals the overview search widgets, this feature would cause a black screen by trying to render results in widgets that no longer exist in the overview hierarchy. The fix intercepts printable keys at the stage captured-event level whenever the overview is visible. When the popup is closed, keys are simply consumed. When the popup is open, the event is forwarded to the entry manually via entry.event(event) before returning EVENT_STOP, ensuring the overview handler never sees the key while our entry still receives it.
+The GNOME overview has a start-typing-to-search feature that activates on any printable key press at the stage level. Since Spotlight permanently steals the overview search widgets, this feature causes a black screen by trying to render results in widgets that no longer exist in the overview hierarchy.
+
+The overview handler connects to stage captured-event at shell startup, before any extension loads, so it always fires first. Returning EVENT_STOP from a later handler cannot prevent it. Defense in depth is required:
+
+1. Proactive container hiding. When stealing widgets, the original parent containers are hidden so the overview has nothing visible to render.
+2. Reactive notify::search-active. Connects to the search controller and immediately re-hides containers if the overview tries to show them while the popup is open.
+3. Stage key capture. Consumes printable keys when the popup is closed. Forwards to the entry manually when the popup is open.
 
 ## Popup Close Mechanisms
 

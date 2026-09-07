@@ -32,3 +32,16 @@ The search controller continues running in the background regardless of where it
 - The entry must be hidden when stolen, otherwise it would show in the overview in a broken state
 - The search controller must not be allowed to cancel itself, which it would normally do when its entry gets hidden
 - The overview toggle override ensures pressing Super while Spotlight is open does not dismiss Spotlight
+
+## Black Screen Defense
+
+The overview type-to-search handler connects to stage captured-event at shell startup, before any extension loads. Due to capture handler firing order, an extension handler can never prevent the overview handler from running first. The overview handler detects printable keys and activates the search controller, which triggers the ControlsManager to switch to search view. Since Spotlight permanently stole the search widgets, this view renders as empty black space.
+
+Defense in depth is required:
+
+1. **Proactive container hiding.** When stealing the entry and search controller, also hide their original parent containers. Even if the overview tries to show the search view, there is nothing visible to render.
+
+2. **Reactive notify::search-active.** Connect to the search controller's notify::search-active signal. When it becomes true while the popup is visible, immediately re-hide the parent containers. This counteracts the ControlsManager's view switch even though it fires after the fact.
+
+3. **Stage key capture.** Still useful for when the popup is NOT visible. Consumes printable keys so typing in the overview does nothing. When the popup IS visible, forwards keys to the entry manually since focus routing alone is not sufficient defense.
+
