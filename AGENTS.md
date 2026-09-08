@@ -73,9 +73,9 @@ GNOME Shell uses a solid grey color for workspace thumbnails by default. Spotlig
 
 ## Overview Type-to-Search Interception
 
-The GNOME overview has a start-typing-to-search feature. When Spotlight's popup is open in the overview and the user types, the ControlsManager reacts to the search controller notify::search-active by calling _onSearchChanged(). This method fades out the app display and workspaces display (opacity to 0) and fades in the search controller. Since the search controller widgets were permanently stolen, fading it in renders as empty black space.
+The GNOME overview has a start-typing-to-search feature. When Spotlight's popup is open and the user types, the entry receives keys through focus routing, the search controller activates, and the ControlsManager reacts to notify::search-active by calling _onSearchChanged(). This method fades out the app display and workspaces display (opacity to 0) and fades in the search controller. Since the search controller widgets were permanently stolen, fading it in renders as empty black space.
 
-The fix overrides the ease() method individually on each of the three ControlsManager actors: _appDisplay, _workspacesDisplay, and _searchController. Each override checks if the Spotlight popup is visible and returns early if so, blocking only the fade animations. The rest of _onSearchChanged() runs normally, including _searchController.show() and _updateThumbnailsBox(true) which are needed for search results to render properly. Root cause verified in actual GNOME Shell source: js/ui/overviewControls.js _onSearchChanged().
+The fix overrides ControlsManager._onSearchChanged() on the instance at Main.overview._overview._controls. The override checks if the popup is visible and returns early if so, skipping the fade animations entirely. When the popup is not visible, it delegates to the original bound method. Root cause verified in actual GNOME Shell source: js/ui/overviewControls.js _onSearchChanged().
 
 Stage key capture is still needed for when the popup is NOT visible — it consumes printable keys so typing in the overview does nothing. When the popup IS visible, it manually forwards keys to the entry because EVENT_STOP at capture phase prevents normal target-phase delivery.
 

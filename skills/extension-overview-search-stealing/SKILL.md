@@ -35,17 +35,20 @@ The search controller continues running in the background regardless of where it
 
 ## Black Screen Defense
 
-When the popup is open and the user types, the entry receives key events through focus routing or manual forwarding. The search controller activates and its notify::search-active signal fires. The ControlsManager reacts by calling _onSearchChanged() which fades out the app display and workspaces display (opacity to 0) and fades in the search controller. Since the search controller widgets were permanently stolen, fading it in renders as empty black space.
+When the popup is open in the overview and the user types, the ControlsManager reacts to the search controller notify::search-active by calling _onSearchChanged(). This method calls _searchController.show() and _updateThumbnailsBox(true), then eases three actors to opacity 0 (_appDisplay, _workspacesDisplay) while easing _searchController to opacity 255. Since the search controller widgets were permanently stolen, fading it in renders as empty black space. The _updateThumbnailsBox(true) call also hides the workspace thumbnails via its own ease call.
 
-The fix overrides ControlsManager._onSearchChanged() on the instance at Main.overview._overview._controls. The override checks if the popup is visible and returns early if so, skipping the fade animations entirely. When the popup is not visible, it delegates to the original bound method. Root cause verified in actual GNOME Shell source code: js/ui/overviewControls.js _onSearchChanged() method.
+The fix overrides ControlsManager._onSearchChanged() on the instance. The override first calls the original bound method (so everything needed for results to render runs normally), then immediately counteracts the visual side effects. It applies zero-duration ease animations with IMMEDIATE mode on _appDisplay, _workspacesDisplay, _searchController, and _thumbnailsBox to override the fade transitions and restore the correct visual state.
 
-Stage key capture is still needed for when the popup is NOT visible — it consumes printable keys so typing in the overview does nothing. When the popup IS visible, it manually forwards keys to the entry via entry.event(event) because EVENT_STOP at capture phase prevents normal target-phase delivery.
+Root cause verified in actual GNOME Shell source code: js/ui/overviewControls.js _onSearchChanged() and _updateThumbnailsBox() methods.
 
 ## Black Screen Defense
 
-When the popup is open in the overview and the user types, the ControlsManager reacts to the search controller notify::search-active by calling _onSearchChanged(). This method calls _searchController.show() and _updateThumbnailsBox(true), then eases three actors: _appDisplay to opacity 0, _workspacesDisplay to opacity 0, and _searchController to opacity 255. Since the search controller widgets were permanently stolen, fading it in renders as empty black space.
+KNOWN ISSUE: When Spotlight opens in the overview/app grid and the user types, the ControlsManager reacts to the search controller notify::search-active by calling _onSearchChanged(). This method eases _appDisplay and _workspacesDisplay to opacity 0 and eases _searchController to opacity 255. Since the search controller widgets were permanently stolen, fading it in renders as empty black space behind the Spotlight popup. The overview wallpaper and workspace thumbnails are hidden by these fade animations.
 
-The fix overrides the ease() method individually on each of the three ControlsManager actors (_appDisplay, _workspacesDisplay, _searchController). Each override checks if the Spotlight popup is visible and returns early (no-op) if so, otherwise delegates to the original bound method. This blocks only the fade animations that cause the black screen while letting the rest of _onSearchChanged() run normally — including _searchController.show() and _updateThumbnailsBox(true) which are needed for search results to render properly.
+FAILED APPROACHES:
+1. Override _onSearchChanged() to return early when popup visible — skipped _searchController.show() which broke result rendering.
+2. Override ease() on _appDisplay/_workspacesDisplay/_searchController — too broad, blocked normal animations; also _updateThumbnailsBox() uses its own ease on _thumbnailsBox which was not blocked.
+3. Run original _onSearchChanged() then immediately counteract with zero-duration ease animations — the zero-duration animations did not properly override/replace the ongoing 250ms fade transitions; black screen remained.
 
-Root cause verified in actual GNOME Shell source code: js/ui/overviewControls.js _onSearchChanged() method.
+Root cause verified in actual GNOME Shell source code: js/ui/overviewControls.js. Still researching correct solution.
 
