@@ -35,21 +35,17 @@ The search controller continues running in the background regardless of where it
 
 ## Black Screen Defense
 
-The overview type-to-search handler connects to stage captured-event at shell startup, before any extension loads. Due to capture handler firing order, an extension handler can never prevent the overview handler from running first. The overview handler detects printable keys and activates the search controller, which triggers the ControlsManager to switch to search view. Since Spotlight permanently stole the search widgets, this view renders as empty black space.
-
-Defense in depth is required:
-
-1. **Proactive container hiding.** When stealing the entry and search controller, also hide their original parent containers. Even if the overview tries to show the search view, there is nothing visible to render.
-
-2. **Reactive notify::search-active.** Connect to the search controller's notify::search-active signal. When it becomes true while the popup is visible, immediately re-hide the parent containers. This counteracts the ControlsManager's view switch even though it fires after the fact.
-
-3. **Stage key capture.** Still useful for when the popup is NOT visible. Consumes printable keys so typing in the overview does nothing. When the popup IS visible, forwards keys to the entry manually since focus routing alone is not sufficient defense.
-
-## Black Screen Defense
-
 When the popup is open and the user types, the entry receives key events through focus routing or manual forwarding. The search controller activates and its notify::search-active signal fires. The ControlsManager reacts by calling _onSearchChanged() which fades out the app display and workspaces display (opacity to 0) and fades in the search controller. Since the search controller widgets were permanently stolen, fading it in renders as empty black space.
 
 The fix overrides ControlsManager._onSearchChanged() on the instance at Main.overview._overview._controls. The override checks if the popup is visible and returns early if so, skipping the fade animations entirely. When the popup is not visible, it delegates to the original bound method. Root cause verified in actual GNOME Shell source code: js/ui/overviewControls.js _onSearchChanged() method.
 
 Stage key capture is still needed for when the popup is NOT visible — it consumes printable keys so typing in the overview does nothing. When the popup IS visible, it manually forwards keys to the entry via entry.event(event) because EVENT_STOP at capture phase prevents normal target-phase delivery.
+
+## Black Screen Defense
+
+When the popup is open in the overview and the user types, the ControlsManager reacts to the search controller notify::search-active by calling _onSearchChanged(). This method calls _searchController.show() and _updateThumbnailsBox(true), then eases three actors: _appDisplay to opacity 0, _workspacesDisplay to opacity 0, and _searchController to opacity 255. Since the search controller widgets were permanently stolen, fading it in renders as empty black space.
+
+The fix overrides the ease() method individually on each of the three ControlsManager actors (_appDisplay, _workspacesDisplay, _searchController). Each override checks if the Spotlight popup is visible and returns early (no-op) if so, otherwise delegates to the original bound method. This blocks only the fade animations that cause the black screen while letting the rest of _onSearchChanged() run normally — including _searchController.show() and _updateThumbnailsBox(true) which are needed for search results to render properly.
+
+Root cause verified in actual GNOME Shell source code: js/ui/overviewControls.js _onSearchChanged() method.
 
