@@ -39,7 +39,27 @@ jobs:
             echo "ERROR: found spotlight@ninx references"; exit 1; fi
 
       - name: Metadata checks
-        run: python3 scripts/check-metadata.py
+        run: |
+          python3 << 'PYCHECK'
+          import json, sys, glob
+          m = json.load(open('metadata.json'))
+          schema = m['settings-schema']
+          schema_files = glob.glob('schemas/*.gschema.xml')
+          found = any(schema in open(sf).read() for sf in schema_files)
+          if not found:
+              print(f'ERROR: schema {schema} not found in schema files')
+              sys.exit(1)
+          version = m['version-name']
+          if len(version) > 16:
+              print(f'ERROR: version-name too long ({len(version)} > 16)')
+              sys.exit(1)
+          valid = {'45','46','47','48','49','50','51'}
+          for v in m['shell-version']:
+              if v not in valid:
+                  print(f'ERROR: invalid shell-version: {v}')
+                  sys.exit(1)
+          print(f'metadata OK: uuid={m["uuid"]} version={version} shell-version={m["shell-version"]}')
+          PYCHECK
 
       - name: Process isolation
         run: |
@@ -64,7 +84,33 @@ jobs:
             echo "WARNING: try/catch in shell code (review needed)"; fi
 
       - name: No GObject constructor JS-only properties
-        run: python3 scripts/check-gobject-constructors.py
+        run: |
+          python3 << 'PYCHECK'
+          import re, os, sys
+          violations = []
+          for root, dirs, files in os.walk('.'):
+              if '.git' in root:
+                  continue
+              for fn in files:
+                  if not fn.endswith('.js'):
+                      continue
+                  fp = os.path.join(root, fn)
+                  with open(fp, 'r', errors='replace') as f:
+                      c = f.read()
+                  for m in re.finditer(r'new (St|Clutter|Gio|Adw|Gtk|GObject|Meta|Shell)\.([A-Za-z]+)\(\{([^}]*)\}', c):
+                      params = m.group(3)
+                      for prop in re.findall(r'^\s*(_[a-zA-Z_][a-zA-Z0-9_]*)\s*:', params, re.MULTILINE):
+                          line_no = c[:m.start()].count('\n') + 1
+                          violations.append(f'  {fp}:{line_no}, {m.group(1)}.{m.group(2)}({{ {prop}: ... }})')
+          if violations:
+              print('ERROR: found JS-only properties in GObject constructors:')
+              for v in violations:
+                  print(v)
+              print('Fix: assign as item._prop = value AFTER construction, not inside constructor params')
+              sys.exit(1)
+          else:
+              print('No GObject constructor property violations found')
+          PYCHECK
 
       - name: AGENTS.md skill references exist
         run: |

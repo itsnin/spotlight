@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # Requires bash and will not run correctly under sh, zsh or fish.
 # Downloads and installs the latest Spotlight release from GitHub.
-# Usage: ./scripts/install.sh or ./scripts/build.sh for backward compatibility
-#    or: curl -sL https://raw.githubusercontent.com/itsnin/spotlight/main/scripts/build.sh | sh
+# Usage: ./scripts/install.sh
+#    or: curl -sL https://raw.githubusercontent.com/itsnin/spotlight/main/scripts/install.sh | sh
 set -e
 
 # Re-exec with bash if invoked through sh or another shell.
 if [ -z "$BASH_VERSION" ]; then
-    SCRIPT_URL="https://raw.githubusercontent.com/itsnin/spotlight/main/scripts/build.sh"
+    SCRIPT_URL="https://raw.githubusercontent.com/itsnin/spotlight/main/scripts/install.sh"
     if [ -f "$0" ]; then
         exec bash "$0" "$@"
     else
