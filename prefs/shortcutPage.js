@@ -45,24 +45,12 @@ export function buildShortcutPage(settings) {
             return true;
         }
 
-        let accelerator = '';
-        if (state & Gdk.ModifierType.SUPER_MASK)
-            accelerator += '<Super>';
-        if (state & Gdk.ModifierType.CONTROL_MASK)
-            accelerator += '<Control>';
-        if (state & Gdk.ModifierType.SHIFT_MASK)
-            accelerator += '<Shift>';
-        if (state & Gdk.ModifierType.MOD1_MASK)
-            accelerator += '<Alt>';
-        if (state & Gdk.ModifierType.META_MASK)
-            accelerator += '<Meta>';
-        const keyvalName = Gdk.keyval_name(keyval);
-        if (!keyvalName)
+        const mask = state & Gtk.accelerator_get_default_mod_mask();
+        const binding = Gtk.accelerator_name_with_keycode(null, keyval, keycode, mask);
+        if (!binding)
             return true;
-        accelerator += keyvalName.toLowerCase();
-
-        settings.set_strv('toggle-shortcut', [accelerator]);
-        shortcutLabel.label = formatShortcut([accelerator]);
+        settings.set_strv('toggle-shortcut', [binding]);
+        shortcutLabel.label = formatShortcut([binding]);
         capturing = false;
         return true;
     });
@@ -101,6 +89,7 @@ function formatShortcut(shortcutArray) {
     const shortcut = shortcutArray[0];
     return shortcut
         .replace(/<Super>/g, 'Super+')
+        .replace(/<Meta>/g, 'Meta+')
         .replace(/<Control>/g, 'Ctrl+')
         .replace(/<Shift>/g, 'Shift+')
         .replace(/<Alt>/g, 'Alt+');
