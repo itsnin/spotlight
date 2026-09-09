@@ -1,5 +1,7 @@
 # Popup Close Defense
 
+The multi-layer close defense lives in `lib/popup/behavior/defense.js` as `installCloseDefense()` and `uninstallCloseDefense()` functions. It installs on each popup open and uninstalls on each close.
+
 Spotlight uses a multi-layer defense to ensure the popup closes reliably when any result is activated. This solves the problem where some activations create new windows, some open URLs in browsers, and some copy to clipboard without any window creation.
 
 ## Layer 1: Mouse Click Capture

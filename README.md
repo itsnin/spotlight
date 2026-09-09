@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  <strong>Version:</strong> 2026.10
+  <strong>Version:</strong> 2026.11
   &nbsp;•&nbsp;
   <strong>Shortcut:</strong> <code>Ctrl + Space</code>
 </p>
@@ -71,9 +71,15 @@ This approach means Spotlight automatically benefits from every search provider 
 | File | Responsibility |
 |---|---|
 | `extension.js` | Entry point: constructs popup and keybinding manager, manages lifecycle |
-| `lib/ui/spotlightPopup.js` | Main search popup lifecycle: open/close/destroy |
-| `lib/ui/popupBackdrop.js` | Transparent click-outside detection via chrome layer |
-| `lib/ui/popupPositioner.js` | Sizes, centers, and shows popup on the correct monitor |
+| `lib/popup/widget/spotlightPopup.js` | Popup widget: orchestrates open/close lifecycle |
+| `lib/popup/components/backdrop.js` | Transparent click-outside detection via chrome layer |
+| `lib/popup/components/positioner.js` | Sizes, centers, and shows popup on the correct monitor |
+| `lib/popup/behavior/defense.js` | Multi-layer activation close defense handlers |
+| `lib/popup/behavior/theme.js` | Light/dark theme decision logic |
+| `lib/popup/behavior/lifecycle.js` | Idle scheduling and text visibility helpers |
+| `lib/popup/behavior/signals.js` | Global signal connections for window events and theme |
+| `lib/overview/searchStealer.js` | Steals/restores Overview search entry and controller |
+| `lib/overview/thumbnails.js` | Workspace thumbnail scale and wallpaper background |
 | `lib/core/keybinding.js` | Keybinding manager via grab_accelerator |
 | `prefs.js` | Preferences window entry point |
 | `prefs/shortcutPage.js` | Keyboard shortcut configuration |

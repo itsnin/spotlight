@@ -4,7 +4,9 @@ Spotlight permanently takes over the GNOME Overview search infrastructure on ena
 
 ## The Pattern
 
-On enable, stealOverviewSearch does the following once:
+The `OverviewSearchStealer` class in `lib/overview/searchStealer.js` encapsulates all stealing and restoration logic. Thumbnail modifications live separately in `ThumbnailEnhancer` at `lib/overview/thumbnails.js`.
+
+On enable, `steal()` does the following once:
 
 1. Takes `Main.overview.searchEntry` and its parent reference
 2. Takes `Main.overview._overview._controls._searchController` and its parent reference
@@ -43,12 +45,18 @@ Root cause verified in actual GNOME Shell source code: js/ui/overviewControls.js
 
 ## Black Screen Defense
 
-KNOWN ISSUE: When Spotlight opens in the overview/app grid and the user types, the ControlsManager reacts to the search controller notify::search-active by calling _onSearchChanged(). This method eases _appDisplay and _workspacesDisplay to opacity 0 and eases _searchController to opacity 255. Since the search controller widgets were permanently stolen, fading it in renders as empty black space behind the Spotlight popup. The overview wallpaper and workspace thumbnails are hidden by these fade animations.
+KNOWN ISSUE: When Spotlight opens in the overview/app grid and the user types, the ControlsManager reacts to the search controller notify::search-active by calling _onSearchChanged(). This method eases _appDisplay and _workspacesDisplay to opacity 0, calls _updateThumbnailsBox(true) which hides thumbnails, and eases _searchController to opacity 255. Since the search controller widgets were permanently stolen, fading it in renders as empty black space behind the Spotlight popup. The overview wallpaper and workspace thumbnails disappear.
+
+CRITICAL FINDING: _searchController.show() is essential. The controller gets hidden via this._search.hide() in stealOverviewSearch(). When the popup opens, the controller is reparented but never explicitly shown. Normally ControlsManager._onSearchChanged() calls _searchController.show() which makes the controller and its children visible. Blocking _onSearchChanged() without calling show() leaves results invisible.
 
 FAILED APPROACHES:
-1. Override _onSearchChanged() to return early when popup visible — skipped _searchController.show() which broke result rendering.
-2. Override ease() on _appDisplay/_workspacesDisplay/_searchController — too broad, blocked normal animations; also _updateThumbnailsBox() uses its own ease on _thumbnailsBox which was not blocked.
+1. Override _onSearchChanged() to return early when popup visible — skipped _searchController.show() which broke result rendering entirely.
+2. Override ease() on individual actors — too broad, blocked normal workspace thumbnail animations; also _updateThumbnailsBox() uses its own ease on _thumbnailsBox which was not covered.
 3. Run original _onSearchChanged() then immediately counteract with zero-duration ease animations — the zero-duration animations did not properly override/replace the ongoing 250ms fade transitions; black screen remained.
 
-Root cause verified in actual GNOME Shell source code: js/ui/overviewControls.js. Still researching correct solution.
+APPROACHES UNDER TEST:
+B. Override _onSearchChanged(), call only _searchController.show() when popup visible and searchActive true. Run cleanup calls when searchActive false. Skip all ease animations and _updateThumbnailsBox.
+A. Run original _onSearchChanged() fully, then call remove_transition('opacity') on each affected actor followed by direct property assignment. Also handle scale-x, scale-y, translation-y on _thumbnailsBox. Clutter.Actor.remove_transition(name) API verified via official Mutter docs.
+
+Root cause verified in actual GNOME Shell source code: js/ui/overviewControls.js.
 

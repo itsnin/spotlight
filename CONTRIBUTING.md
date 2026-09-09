@@ -26,10 +26,13 @@ flowchart TD
     A[extension.js<br/>Entry Point] --> B[KeybindingManager<br/>lib/core/keybinding.js]
     A --> C[SpotlightPopup<br/>lib/ui/spotlightPopup.js]
     
-    C --> D[PopupBackdrop<br/>lib/ui/popupBackdrop.js]
-    C --> E[PopupPositioner<br/>lib/ui/popupPositioner.js]
+    C --> D[Backdrop<br/>lib/popup/components]
+    C --> E[Positioner<br/>lib/popup/components]
+    C --> F[Defense<br/>lib/popup/behavior]
+    C --> G[Theme<br/>lib/popup/behavior]
     
-    C -->|steals from| F[GNOME Overview<br/>Search Entry + Controller]
+    H[SearchStealer<br/>lib/overview] -->|steals from| I[GNOME Overview<br/>Search Entry + Controller]
+    J[Thumbnails<br/>lib/overview] -->|enhances| K[Workspace<br/>Thumbnails]
     
     G[GNOME Shell Search Providers] -->|feed results| F
     
@@ -61,10 +64,20 @@ flowchart TD
 spotlight/
 ├── extension.js              # Entry point, lifecycle management
 ├── lib/
-│   ├── ui/
-│   │   ├── spotlightPopup.js    # Main popup widget, open/close/destroy
-│   │   ├── popupBackdrop.js     # Click-outside detection via chrome layer
-│   │   └── popupPositioner.js   # Sizing, centering, monitor selection
+│   ├── popup/
+│   │   ├── widget/
+│   │   │   └── spotlightPopup.js   # Popup widget, lifecycle orchestration
+│   │   ├── components/
+│   │   │   ├── backdrop.js         # Click-outside detection via chrome layer
+│   │   │   └── positioner.js       # Sizing, centering, monitor selection
+│   │   └── behavior/
+│   │       ├── defense.js          # Multi-layer activation close defense
+│   │       ├── theme.js            # Light/dark theme decision logic
+│   │       ├── lifecycle.js        # Idle scheduling helpers
+│   │       └── signals.js          # Global signal connections
+│   ├── overview/
+│   │   ├── searchStealer.js        # Steal/restore overview search widgets
+│   │   └── thumbnails.js           # Thumbnail scale and wallpaper background
 │   └── core/
 │       └── keybinding.js        # Accelerator grab via Mutter
 ├── prefs.js                     # Preferences window entry point

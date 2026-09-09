@@ -18,4 +18,4 @@ Plain connect is safe for short-lived widgets because GObject auto-disconnects o
 
 ## In Spotlight
 
-`connectObject` is used throughout `spotlightPopup.js` for signals on `global.display`, `this._ifaceSettings`, and the backdrop actor. The owner is `this` for popup signals and the actor itself for backdrop signals. All get cleaned up automatically in `destroy()`. For `global.stage` captured-event handlers, plain `connect` with explicit ID tracking is used because these signals must persist across open and close cycles and only disconnect in `returnOverviewSearch`.
+`connectObject` is used throughout `lib/popup/behavior/` and `lib/popup/widget/` for signals on `global.display`, `this._ifaceSettings`, and the backdrop actor. The popup widget itself is at `lib/popup/widget/spotlightPopup.js`. The owner is `this` for popup signals and the actor itself for backdrop signals. All get cleaned up automatically in `destroy()`. For `global.stage` captured-event handlers, plain `connect` with explicit ID tracking is used because these signals must persist across open and close cycles and only disconnect in `returnOverviewSearch`.

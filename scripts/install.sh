@@ -20,7 +20,7 @@ fi
 REPO_OWNER="itsnin"
 REPO_NAME="spotlight"
 UUID="spotlight@nin"
-ASSET_NAME="${UUID}.shell-extension.zip"
+ASSET_NAME="${UUID}.zip"
 API_URL="https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases/latest"
 
 echo "Fetching latest release from GitHub..."

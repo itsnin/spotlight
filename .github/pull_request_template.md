@@ -23,6 +23,7 @@ Briefly describe what this PR changes and why.
 - [ ] Prefs files don't import `St`/`Clutter`/`Meta`/`Shell`
 - [ ] No JS-only properties (like `_entry`, `_data`) in GObject constructors : assign with `item._prop = value` after construction
 - [ ] Tested on GNOME Shell 45-51 Wayland
+- [ ] Tested opening Spotlight inside Overview and App Grid, no black screen when typing
 - [ ] All JS files parse as ES modules
 
 ## Testing

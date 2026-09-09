@@ -1,7 +1,7 @@
 // Spotlight: a compact launcher for GNOME Shell
 // SPDX-License-Identifier: GPL-3.0-or-later
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
-import {SpotlightPopup} from './lib/ui/spotlightPopup.js';
+import {SpotlightPopup} from './lib/popup/widget/spotlightPopup.js';
 import {KeybindingManager} from './lib/core/keybinding.js';
 
 // Entry point. Keeping enable and disable adjacent makes the cleanup symmetry obvious at a glance.

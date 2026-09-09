@@ -37,10 +37,24 @@ Wayland only. X11 is not supported. GNOME Shell 50 removed X11 entirely.
 
 One popup permanently steals the Overview search entry and controller. Widgets get stolen once in enable and returned once in disable. Open and close only reparent widgets between our content box and a hidden state. They never return to the Overview while the extension remains enabled.
 
-File layout:
+File layout follows single responsibility and domain grouping. Each module stays under 155 lines.
 - extension.js: entry point
-- lib/ui/: user interface components
+- lib/popup/: popup domain, split by responsibility
+  - widget/: the main popup widget class
+    - spotlightPopup.js: orchestrates open/close lifecycle
+  - components/: UI building blocks
+    - backdrop.js: click-outside detection via chrome layer
+    - positioner.js: sizing, centering, monitor selection
+  - behavior/: logic and capabilities
+    - defense.js: multi-layer activation close defense
+    - theme.js: light/dark theme decision logic
+    - lifecycle.js: idle scheduling helpers
+    - signals.js: global signal connections
+- lib/overview/: overview integration domain
+  - searchStealer.js: steals/restores overview search widgets
+  - thumbnails.js: thumbnail scale and wallpaper background
 - lib/core/: core infrastructure
+  - keybinding.js: keybinding manager
 - prefs.js: preferences entry point
 - prefs/: preference pages
 - schemas/: GSettings schema
@@ -73,11 +87,11 @@ GNOME Shell uses a solid grey color for workspace thumbnails by default. Spotlig
 
 ## Overview Type-to-Search Interception
 
-The GNOME overview has a start-typing-to-search feature. When Spotlight's popup is open and the user types, the entry receives keys through focus routing, the search controller activates, and the ControlsManager reacts to notify::search-active by calling _onSearchChanged(). This method fades out the app display and workspaces display (opacity to 0) and fades in the search controller. Since the search controller widgets were permanently stolen, fading it in renders as empty black space.
+The GNOME overview has a start-typing-to-search feature. When Spotlight's popup is open and the user types, the entry receives keys through focus routing, the search controller activates, and the ControlsManager reacts to notify::search-active by calling _onSearchChanged(). This method fades out the app display and workspaces display (opacity to 0) and fades in the search controller. Since the search controller widgets were permanently stolen, fading it in renders as empty black space behind the Spotlight popup. The overview wallpaper and workspace thumbnails disappear.
 
-The fix overrides ControlsManager._onSearchChanged() on the instance at Main.overview._overview._controls. The override checks if the popup is visible and returns early if so, skipping the fade animations entirely. When the popup is not visible, it delegates to the original bound method. Root cause verified in actual GNOME Shell source: js/ui/overviewControls.js _onSearchChanged().
+Stage key capture handles when the popup is NOT visible — it consumes printable keys so typing in the overview does nothing. When the popup IS visible, it manually forwards keys to the entry because EVENT_STOP at capture phase prevents normal target-phase delivery.
 
-Stage key capture is still needed for when the popup is NOT visible — it consumes printable keys so typing in the overview does nothing. When the popup IS visible, it manually forwards keys to the entry because EVENT_STOP at capture phase prevents normal target-phase delivery.
+The black screen issue is currently being researched. Approaches tested: returning early from _onSearchChanged (broke result rendering because _searchController.show() was never called, leaving the stolen controller hidden), overriding ease() on individual actors (too broad, blocked normal thumbnail animations; also missed _updateThumbnailsBox which uses its own ease on _thumbnailsBox), and running original then counteracting with zero-duration ease (did not properly override ongoing 250ms transitions). New approaches under test: calling only _searchController.show() from the override, and remove_transition + direct property assignment after the original runs. Root cause verified in actual GNOME Shell source: js/ui/overviewControls.js _onSearchChanged().
 
 ## Popup Close Mechanisms
 

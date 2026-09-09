@@ -1,53 +1,134 @@
 # Contributing to Spotlight
 
-## Coding Standards
+## Prerequisites
 
-Read these before submitting:
-- **AGENTS.md** — project rules and architecture
-- **skills/extension-best-practices/SKILL.md**
-- **skills/extension-lifecycle/SKILL.md**
-- **skills/extension-signal-cleanup/SKILL.md**
-- **skills/extension-gsettings/SKILL.md**
-- **skills/extension-prefs/SKILL.md**
-- **skills/extension-esm-imports/SKILL.md**
-- **skills/extension-review-guidelines/SKILL.md**
-- **skills/extension-writing-standards/SKILL.md**
+GNOME Shell 45 or later, working knowledge of JavaScript and the GNOME Shell extension API, and a Wayland session for testing since X11 is not supported.
 
-## Architecture Overview
+## Getting Started
+
+```bash
+git clone https://github.com/itsnin/spotlight.git
+cd spotlight
+```
+
+Install for testing:
+```bash
+scripts/build.sh
+gnome-extensions enable spotlight@nin
+```
+
+Log out and back in on Wayland before enabling.
+
+## Architecture
 
 ```mermaid
 flowchart TD
-    A[extension.js] --> B[KeybindingManager]
-    A --> C[SpotlightPopup]
-    C --> D[PopupBackdrop]
-    C --> E[PopupPositioner]
-    C -->|steals| F[GNOME Overview Search]
-    G[Search Providers] --> F
+    A[extension.js<br/>Entry Point] --> B[KeybindingManager<br/>lib/core/keybinding.js]
+    A --> C[SpotlightPopup<br/>lib/ui/spotlightPopup.js]
+    
+    C --> D[Backdrop<br/>lib/popup/components]
+    C --> E[Positioner<br/>lib/popup/components]
+    C --> F[Defense<br/>lib/popup/behavior]
+    C --> G[Theme<br/>lib/popup/behavior]
+    
+    H[SearchStealer<br/>lib/overview] -->|steals from| I[GNOME Overview<br/>Search Entry + Controller]
+    J[Thumbnails<br/>lib/overview] -->|enhances| K[Workspace<br/>Thumbnails]
+    
+    G[GNOME Shell Search Providers] -->|feed results| F
+    
+    H[prefs.js<br/>Prefs Window] --> I[shortcutPage.js]
+    H --> J[appearancePage.js]
+    H --> K[aboutPage.js]
+    
+    L[GSettings Schema<br/>schemas/*.gschema.xml] -.-> A
+    L -.-> H
+    
+    style A fill:#4a90d9,stroke:#1c71d8,color:#fff
+    style C fill:#4a90d9,stroke:#1c71d8,color:#fff
+    style F fill:#e5a50a,stroke:#c64600,color:#fff
+    style G fill:#9141ac,stroke:#613583,color:#fff
 ```
 
-Spotlight permanently steals the GNOME Overview search widgets on enable. The popup reparents them when opened. This gives Spotlight access to all GNOME search providers with zero custom code.
+### Data Flow
 
-## Before Submitting
+1. **Enable:** `extension.js` creates `SpotlightPopup` and `KeybindingManager`. The popup permanently steals the GNOME Overview search entry and controller.
+2. **Shortcut pressed:** `KeybindingManager` catches the accelerator, toggles the popup.
+3. **Popup opens:** Stolen widgets are reparented into the popup. Backdrop and positioner handle placement.
+4. **User types:** GNOME search providers feed results into the stolen controller, which renders inside our popup.
+5. **Result activated:** Popup closes. Result launches in the appropriate application.
+6. **Disable:** Widgets returned to the Overview. All signals disconnected.
+
+## Project Structure
+
+```
+spotlight/
+├── extension.js              # Entry point, lifecycle management
+├── lib/
+│   ├── popup/
+│   │   ├── widget/
+│   │   │   └── spotlightPopup.js   # Popup widget, lifecycle orchestration
+│   │   ├── components/
+│   │   │   ├── backdrop.js         # Click-outside detection via chrome layer
+│   │   │   └── positioner.js       # Sizing, centering, monitor selection
+│   │   └── behavior/
+│   │       ├── defense.js          # Multi-layer activation close defense
+│   │       ├── theme.js            # Light/dark theme decision logic
+│   │       ├── lifecycle.js        # Idle scheduling helpers
+│   │       └── signals.js          # Global signal connections
+│   ├── overview/
+│   │   ├── searchStealer.js        # Steal/restore overview search widgets
+│   │   └── thumbnails.js           # Thumbnail scale and wallpaper background
+│   └── core/
+│       └── keybinding.js        # Accelerator grab via Mutter
+├── prefs.js                     # Preferences window entry point
+├── prefs/
+│   ├── shortcutPage.js          # Keyboard shortcut configuration
+│   ├── appearancePage.js        # Visual theme preference
+│   └── aboutPage.js             # About section
+├── schemas/
+│   └── *.gschema.xml            # GSettings schema definitions
+├── scripts/
+│   ├── build.sh -> install.sh   # Installer symlink
+│   ├── install.sh               # Download and install latest release
+│   ├── check-metadata.py        # CI metadata validation
+│   └── check-gobject-constructors.py  # CI constructor validation
+├── stylesheet.css               # All styling
+├── metadata.json                # Extension manifest
+└── AGENTS.md                    # Project rules and architecture reference
+```
+
+## Code Style
+
+Comments explain the reasons rather than just stating the facts. Written in the style of an experienced but lazy senior engineer, using natural rather than forced grammar and employing capital letters when appropriate. Light punctuation only. No banners, no JSDoc, no references to other projects. No LLM phrases. Maximum two consecutive comment lines without intervening code.
+
+Read `AGENTS.md` and the `skills/` directory for the full rules.
+
+## Testing
 
 ```bash
-# JS syntax
+# JS syntax check
 for f in $(find . -name "*.js" -not -path "./.git/*" -not -path "./skills/*"); do node --check "$f"; done
 
-# Schema
-glib-compile-schemas --strict schemas/
+# Schema compilation
+glib-compile-schemas schemas/
+
+# Full CI checks
+python3 scripts/check-metadata.py
+python3 scripts/check-gobject-constructors.py
 ```
 
-Verify the PR template checklist. Test on GNOME Shell 45-51 Wayland.
+Test manually on GNOME Shell 45-51 Wayland.
 
-## Crash Reports
+## Submitting
 
-```bash
-journalctl -b /usr/bin/gnome-shell | grep spotlight
-```
+1. Test locally
+2. Run CI checks
+3. Open a pull request against the `develop` branch
 
-## Commit Messages
+## Reporting Bugs
 
-Imperative mood. Reference the component. Examples:
-- `Popup: fix activation close on middle click`
-- `Docs: update architecture diagram`
-- `CI: add shellcheck validation`
+Open an issue on GitHub with:
+- GNOME Shell version
+- Linux distribution
+- Steps to reproduce
+- `journalctl -b /usr/bin/gnome-shell | grep spotlight`

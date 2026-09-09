@@ -17,4 +17,6 @@ Alt+F2, type `lg`. Inspect objects and signals live.
 
 ## In Spotlight
 
-For black screen issues when typing in the overview, the problem is usually the overview type-to-search handler firing before Spotlight stage capture. Check that `_overviewKeyCaptureId` is connected and that the condition `!Main.overview.visible` correctly intercepts printable keys. For popup not closing on activation, verify all three defense layers are connected: button-press-event on results, Enter/Space key capture, and `notify::focus-window` on `global.display`. Journalctl command: `journalctl -b /usr/bin/gnome-shell | grep spotlight`.
+For black screen issues when typing in the overview: the ControlsManager reacts to notify::search-active by calling _onSearchChanged() which fades out app display and workspaces display while fading in the now-empty search controller. Stage key capture cannot prevent this because the overview handler connects earlier and fires first in the capture chain. The fix must intercept at the _onSearchChanged() level. Critical: _searchController.show() must be called somewhere or results stay invisible since the controller gets hidden in stealOverviewSearch().
+
+For popup not closing on activation, verify all three defense layers are connected: button-press-event on results, Enter/Space key capture, and notify::focus-window on global.display. Journalctl command: journalctl -b /usr/bin/gnome-shell | grep spotlight.

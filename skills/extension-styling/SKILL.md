@@ -34,4 +34,4 @@ The -st-icon-style values, verified through official GNOME St documentation, are
 
 ## In Spotlight
 
-All styling lives in `stylesheet.css`. Only `/* */` comments are used, never `//`. The popup uses a translucent glass design: dark `rgba(28, 28, 30, 0.85)`, light `rgba(255, 255, 255, 0.88)`. The container is 520px wide with 36px rounded corners. Icons use `-st-icon-style: requested` so each icon keeps its natural style instead of being forced symbolic. The `theme-light` style class toggles the light color scheme on the content container.
+All styling lives in `stylesheet.css`. Only `/* */` comments are used, never `//`. The popup widget at `lib/popup/widget/spotlightPopup.js` uses a translucent glass design: dark `rgba(28, 28, 30, 0.85)`, light `rgba(255, 255, 255, 0.88)`. The container is 520px wide with 36px rounded corners. Icons use `-st-icon-style: requested` so each icon keeps its natural style instead of being forced symbolic. The `theme-light` style class toggles the light color scheme on the content container.

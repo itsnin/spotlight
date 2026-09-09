@@ -74,7 +74,7 @@ in enable and restore them in disable.
 
 ## Overview Type-to-Search Interception
 
-The GNOME overview has a start-typing-to-search feature that activates on any printable key press at the stage level. When an extension permanently steals the overview search widgets, this feature causes a black screen because it tries to render results in widgets that no longer exist in the overview hierarchy. The fix requires intercepting printable keys at the stage captured-event level. However, the overview handler connects earlier and fires first in the capture chain. Simply consuming the event works when the popup is closed, but when the popup is open the entry needs to receive the key. The solution is to always intercept printable keys when the overview is visible, and when the popup is open, manually forward the event to the entry via entry.event(event) before returning EVENT_STOP. This prevents the overview handler from ever seeing the key while ensuring the popup entry still receives it.
+The GNOME overview has a start-typing-to-search feature that activates on any printable key press at the stage level. When an extension permanently steals the overview search widgets, this feature causes two problems. First, the overview handler fires before any extension-connected handler because it connected earlier in the capture chain, so EVENT_STOP from an extension cannot prevent it. Second, the ControlsManager reacts to the resulting notify::search-active by calling _onSearchChanged() which fades out the app display and workspaces display while fading in the now-empty search controller, causing a black screen. Stage key capture intercepts printable keys at the captured-event level. When the popup is closed it returns EVENT_STOP which prevents later handlers but not the overview handler. When the popup is open it manually forwards the event to the entry via entry.event(event) before returning EVENT_STOP. The ControlsManager black screen reaction requires a separate fix at the _onSearchChanged() level.
 
 ## GNOME 51 Porting Notes
 
@@ -82,7 +82,7 @@ GNOME 51 introduces SearchEntry in ui/search.js which replaces St.Entry in Contr
 
 ## In Spotlight
 
-Key Spotlight patterns: never pass custom underscore-prefixed properties through GObject constructors, assign after construction. `enable()` and `disable()` are adjacent. Use `connectObject` for signal cleanup. Use `notify_keyval` not `notify_key`. Use `-st-icon-style: requested` instead of forcing symbolic globally. For activation close, override both `activateDefault` AND `activate` on search results. Use three-layer defense: button-press-event, Enter/Space key capture, and `global.display notify::focus-window`.
+Key Spotlight patterns: never pass custom underscore-prefixed properties through GObject constructors, assign after construction. `enable()` and `disable()` are adjacent. Use `connectObject` for signal cleanup. Use `notify_keyval` not `notify_key`. Use `-st-icon-style: requested` instead of forcing symbolic globally. Code is split by single responsibility into focused modules under 155 lines each. Overview search stealing lives in its own class. Activation close defense is a separate module with install/uninstall functions. Thumbnail enhancements are encapsulated. Theme logic is pure functions.
 
 ## Workspace Thumbnail Background
 
