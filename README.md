@@ -27,7 +27,9 @@
 
 ```bash
 curl -sL https://raw.githubusercontent.com/itsnin/spotlight/main/scripts/build.sh | sh
+```
 # Log out and back in on Wayland before enabling.
+```bash
 gnome-extensions enable spotlight@nin
 ```
 
