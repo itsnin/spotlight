@@ -116,7 +116,7 @@ jobs:
         run: |
           MISSING=0
           for skill in extension-getting-started extension-esm-imports extension-lifecycle extension-signal-cleanup extension-gsettings extension-prefs extension-styling extension-debugging extension-review-guidelines extension-best-practices extension-metadata extension-guideline extension-writing-standards extension-overview-search-stealing extension-popup-close-defense; do
-            if [ ! -d "skills/$skill" ]; then echo "MISSING: skills/$skill"; MISSING=$((MISSING+1)); fi
+            if [ ! -d ".agent/skills/$skill" ]; then echo "MISSING: skills/$skill"; MISSING=$((MISSING+1)); fi
           done
           if [ "$MISSING" -gt 0 ]; then exit 1; fi
           echo "All AGENTS.md skill references exist"
@@ -136,6 +136,6 @@ jobs:
       - name: Summary
         run: |
           echo "=== CI Summary ==="
-          echo "JS files: $(find . -name "*.js" -not -path "./.git/*" -not -path "./skills/*" | wc -l)"
+          echo "JS files: $(find . -name "*.js" -not -path "./.git/*" -not -path "./.agent/skills/*" | wc -l)"
           echo "Total files: $(find . -type f -not -path './.git/*' | wc -l)"
           echo "All checks passed"

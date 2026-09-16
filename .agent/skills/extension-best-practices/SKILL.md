@@ -8,6 +8,10 @@ Use lib for library code organized by concern, such as lib/ui, lib/core and lib/
 
 Never pass underscore-prefixed properties through GObject constructors. Assign them after construction instead.
 
+## Layout Managers
+
+`St.BinLayout` is not available as a constructor from `gi://St`. Use `new Clutter.BinLayout()` from `gi://Clutter` instead. Verified against actual GNOME Shell source in js/ui/modalDialog.js. `St.BoxLayout` and `St.Table` are available directly from `St`.
+
 ## Enable and Disable
 
 Enable and disable must be adjacent in extension.js. Every object created in enable should be destroyed in disable, in reverse dependency order.
@@ -87,4 +91,8 @@ Key Spotlight patterns: never pass custom underscore-prefixed properties through
 ## Workspace Thumbnail Background
 
 GNOME Shell uses a solid grey color for workspace thumbnails by default. To show the actual wallpaper instead, override WorkspaceThumbnail.prototype._init to create a BackgroundManager with the thumbnail's _contents container and vignette disabled. Also override _onDestroy to clean up the BackgroundManager and its signal connections. Connect to the BackgroundManager's 'loaded' and 'changed' signals to queue_relayout on the background actor, working around a Shell 50 bug where thumbnails stay blank until a relayout is forced.
+
+## Multi-Monitor Thumbnail Safety
+
+When overriding WorkspaceThumbnail.prototype._init or SecondaryMonitorDisplay prototype methods, guard against edge cases that appear in vertical monitor configurations. Validate that `_contents` exists before creating a BackgroundManager. Clamp `monitorIndex` to the valid range of `Main.layoutManager.monitors`. In `_getThumbnailsHeight` overrides, fall back to the private `_maxThumbnailScale` field if the public getter is unavailable, and guard the return value with `Number.isFinite()` — returning `NaN` from layout methods breaks the overview.
 

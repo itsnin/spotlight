@@ -115,7 +115,7 @@ spotlight/
 ├── stylesheet.css               # All styling
 ├── metadata.json                # Extension manifest
 ├── AGENTS.md                    # Project rules and architecture reference
-├── skills/                      # Focused reference docs per topic
+├── .agent/skills/               # Focused reference docs per topic
 └── .github/                     # CI workflows, issue templates, policies
 ```
 
@@ -136,7 +136,7 @@ GLib.idle_add(...);
 - Em dashes used as arrow separators
 - Unnecessary quotation marks around terms
 
-Read `AGENTS.md` and the `skills/` directory for the full rules.
+Read `AGENTS.md` and the `.agent/skills/` directory for the full rules.
 
 ## Module Design Rules
 
@@ -153,7 +153,7 @@ Read `AGENTS.md` and the `skills/` directory for the full rules.
 
 ```bash
 # JS syntax check (every file)
-for f in $(find . -name "*.js" -not -path "./.git/*" -not -path "./skills/*"); do node --check "$f"; done
+for f in $(find . -name "*.js" -not -path "./.git/*" -not -path "./.agent/skills/*"); do node --check "$f"; done
 
 # Schema compilation
 glib-compile-schemas --strict schemas/

@@ -21,3 +21,7 @@ Plain connect is safe for short-lived widgets because GObject auto-disconnects o
 ## In Spotlight
 
 `connectObject` is used throughout `lib/popup/behavior/` and `lib/popup/widget/` for signals on `global.stage`, `this._ifaceSettings`, and the search actor. The persistent `window-created` and `app-state-changed` on `global.display` use plain `connect` with explicit IDs because they share the same owner as the ephemeral defense-layer `notify::focus-window` signal and would otherwise get wiped on every close. The popup widget itself is at `lib/popup/widget/spotlightPopup.js`. For `global.stage` captured-event handlers in the overview key capture, plain `connect` with explicit ID tracking is used because those signals persist across open and close cycles and only disconnect in `returnOverviewSearch`.
+
+## Scope Safety in Cleanup Functions
+
+Never reference module imports or closure variables in cleanup functions that may be called from a different scope. If a signal needs a settings object for cleanup, store it on the owner (e.g. `popup._ifaceSettings`) and access it through the owner parameter, or pass it as an explicit argument. A bare `ifaceSettings` reference inside a cleanup function that does not import or receive it will throw `ReferenceError` at disable time.
