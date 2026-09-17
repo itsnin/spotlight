@@ -71,7 +71,11 @@ Use connectObject with this as the owner. Calling disconnectObject on this in de
 
 ## Popup Positioning
 
-Positioned once at open based on the empty-state height. Grows downward from a fixed anchor. Never reposition on size changes because it causes visible drift.
+Positioned once at open based on the empty-state height, with its vertical center at 25 percent of the monitor height from the top. Clamped with a minimum top margin so the popup never goes off-screen. Grows downward from a fixed anchor. Never reposition on size changes because it causes visible drift.
+
+## Animations
+
+Uses `actor.ease()` with `Clutter.AnimationMode.EASE_OUT_QUAD`, matching the pattern GNOME Shell itself uses in `overviewControls.js`. Open animates opacity 0 to 255 and scale 0.96 to 1.0 over 180ms. Close animates opacity 255 to 0 over 150ms. Respects `St.Settings.get().enable_animations` — if the user disables animations globally, everything stays instant. In-flight animations are cancelled on rapid toggle to prevent conflicts.
 
 ## Click-Outside Detection
 
@@ -129,7 +133,7 @@ Keys:
 
 ## Design
 
-Translucent glass. Dark rgba(28, 28, 30, 0.85), light rgba(255, 255, 255, 0.88). Compact. 520 px wide, 380 px max height. Min resolution 1366 by 768. 36 px rounded corners. Fixed anchor. Positioned once at open, grows downward. No drift. Instant. No animations. Live theme. Default mode follows system dark and light changes live.
+Translucent glass. Dark rgba(28, 28, 30, 0.85), light rgba(255, 255, 255, 0.88). Compact. 520 px wide, 570 px max height (150 percent of previous 380 px cap). Min resolution 1366 by 768. 36 px rounded corners. Fixed anchor. Vertical center at 25 percent from top, positioned once at open, grows downward. No drift. Subtle 180ms ease on open, 150ms on close. Matches GNOME EASE_OUT_QUAD. Respects global enable-animations setting. Live theme. Default mode follows system dark and light changes live.
 
 ## Appearance Theme
 

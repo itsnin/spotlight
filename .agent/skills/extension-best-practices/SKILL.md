@@ -12,6 +12,12 @@ Never pass underscore-prefixed properties through GObject constructors. Assign t
 
 `St.BinLayout` is not available as a constructor from `gi://St`. Use `new Clutter.BinLayout()` from `gi://Clutter` instead. Verified against actual GNOME Shell source in js/ui/modalDialog.js. `St.BoxLayout` and `St.Table` are available directly from `St`.
 
+## Popup Positioning and Sizing
+Position the popup once at open time, never reposition as results come in. Vertical center at 25 percent of monitor height from the top, clamped with a minimum top margin of 20 px so the popup never goes off-screen. Width fixed at 520 px capped at 85 percent of monitor width. Max height cap is 570 px (150 percent of the previous 380 px cap). Results grow naturally within this limit.
+
+## Animations
+Use `actor.ease()` with `Clutter.AnimationMode.EASE_OUT_QUAD` — this matches GNOME Shell's own pattern in `overviewControls.js _onSearchChanged()`. Open: opacity 0→255 and scale 0.96→1.0 over 180ms. Close: opacity 255→0 over 150ms. Always check `St.Settings.get().enable_animations` first and skip easing entirely if false. Cancel in-flight transitions with `actor.remove_transition(name)` before starting new ones to handle rapid toggling.
+
 ## Enable and Disable
 
 Enable and disable must be adjacent in extension.js. Every object created in enable should be destroyed in disable, in reverse dependency order.

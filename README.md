@@ -45,7 +45,7 @@ gnome-extensions prefs spotlight@nin
 
 - Reuses GNOME's built-in search infrastructure
 - Results from apps, calculator, files, system actions, settings, web search
-- Centered popup, grows downward, never drifts
+- Positioned 25% from top, grows downward, never drifts. Subtle ease on open and close matching GNOME conventions.
 - Translucent glass appearance, dark and light modes
 - Live system theme following when set to Default
 
@@ -73,7 +73,7 @@ This approach means Spotlight automatically benefits from every search provider 
 | `extension.js` | Entry point: constructs popup and keybinding manager, manages lifecycle |
 | `lib/popup/widget/spotlightPopup.js` | Popup widget: orchestrates open/close lifecycle |
 | `lib/popup/components/backdrop.js` | Transparent click-outside detection via chrome layer |
-| `lib/popup/components/positioner.js` | Sizes, centers, and shows popup on the correct monitor |
+| `lib/popup/components/positioner.js` | Sizes, positions 25% from top, and shows popup with subtle ease animation |
 | `lib/popup/behavior/defense.js` | Multi-layer activation close defense handlers |
 | `lib/popup/behavior/theme.js` | Light/dark theme decision logic |
 | `lib/popup/behavior/lifecycle.js` | Idle scheduling and text visibility helpers |

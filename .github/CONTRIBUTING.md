@@ -76,7 +76,7 @@ flowchart TD
 
 1. **Enable:** `extension.js` creates `SpotlightPopup` and `KeybindingManager`. The popup permanently steals the GNOME Overview search entry and controller.
 2. **Shortcut pressed:** `KeybindingManager` catches the accelerator via Mutter's `grab_accelerator`, toggles the popup.
-3. **Popup opens:** Stolen widgets are reparented into the popup. Backdrop covers the target monitor. Positioner centers the popup based on empty-state height.
+3. **Popup opens:** Stolen widgets are reparented into the popup. Backdrop covers the target monitor. Positioner places the popup 25% from the top of the monitor with a subtle ease animation.
 4. **User types:** GNOME search providers feed results into the stolen controller, which renders inside the popup.
 5. **Result activated:** Multi-layer close defense fires. Result launches in the appropriate application.
 6. **Disable:** Widgets returned to the Overview. All signals disconnected. All main loop sources removed.
@@ -92,7 +92,7 @@ spotlight/
 │   │   │   └── spotlightPopup.js   # Main widget, open/close orchestration
 │   │   ├── components/
 │   │   │   ├── backdrop.js         # Click-outside detection via chrome layer
-│   │   │   └── positioner.js       # Sizing, centering, monitor selection
+│   │   │   └── positioner.js       # Sizing, positioning 25% from top, monitor selection, open animation
 │   │   └── behavior/
 │   │       ├── defense.js          # Multi-layer activation close defense
 │   │       ├── theme.js            # Light/dark theme decision logic
@@ -173,7 +173,7 @@ yamllint .github/ -c .yamllint
 Test on at least one supported GNOME Shell version (preferably 50 or 51):
 
 - [ ] Extension enables without errors in journal
-- [ ] `Ctrl+Space` opens the popup centered on the correct monitor
+- [ ] `Ctrl+Space` opens the popup positioned 25% from top on the correct monitor
 - [ ] Typing shows results from at least apps and system actions
 - [ ] `Enter` activates a result and closes the popup
 - [ ] `Esc` closes the popup
