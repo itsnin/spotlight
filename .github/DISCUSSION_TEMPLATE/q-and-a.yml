@@ -1,0 +1,21 @@
+title: "[Q&A] "
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for asking a question! Please provide as much context as possible.
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+      description: What would you like to know?
+      placeholder: I'm wondering how...
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: GNOME Shell version, distribution, relevant setup details
+      placeholder: GNOME Shell 50, Fedora 41, Wayland...

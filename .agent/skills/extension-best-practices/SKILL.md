@@ -13,7 +13,7 @@ Never pass underscore-prefixed properties through GObject constructors. Assign t
 `St.BinLayout` is not available as a constructor from `gi://St`. Use `new Clutter.BinLayout()` from `gi://Clutter` instead. Verified against actual GNOME Shell source in js/ui/modalDialog.js. `St.BoxLayout` and `St.Table` are available directly from `St`.
 
 ## Popup Positioning and Sizing
-Position the popup once at open time, never reposition as results come in. Vertical center at 25 percent of monitor height from the top, clamped with a minimum top margin of 20 px so the popup never goes off-screen. Width fixed at 520 px capped at 85 percent of monitor width. Max height cap is 570 px (150 percent of the previous 380 px cap). Results grow naturally within this limit.
+Position the popup once at open time, never reposition as results come in. Vertical center at 25 percent of monitor height from the top, clamped with a minimum top margin of 20 px so the popup never goes off-screen. Width fixed at 520 px capped at 85 percent of monitor width. Max height cap is 540 px. Results grow naturally within this limit.
 
 ## Animations
 Use `actor.ease()` with `Clutter.AnimationMode.EASE_OUT_QUAD` — this matches GNOME Shell's own pattern in `overviewControls.js _onSearchChanged()`. Open: opacity 0→255 and scale 0.96→1.0 over 180ms. Close: opacity 255→0 over 150ms. Always check `St.Settings.get().enable_animations` first and skip easing entirely if false. Cancel in-flight transitions with `actor.remove_transition(name)` before starting new ones to handle rapid toggling.
@@ -90,10 +90,6 @@ The GNOME overview has a start-typing-to-search feature that activates on any pr
 
 GNOME 51 introduces SearchEntry in ui/search.js which replaces St.Entry in ControlsManager. The new class likely extends St.Entry and adds an activate-new-instance signal on Ctrl+Enter. Basic St.Widget and St.Entry methods should continue to work. The old way of connecting event signals directly to actors still works but is deprecated in favor of Clutter event controllers (Clutter.KeyController, Clutter.ClickGesture etc). Shell.GLSLEffect was removed, use Clutter.ShaderEffect instead. Clutter.get_default_backend() was removed, use global.stage.context.get_backend() or actor.get_context().get_backend() instead. The ui/pointerWatcher.js module was removed, use global.backend.get_cursor_tracker() for cursor tracking needs. PopupMenu open() and close() now accept a parameters object like {animate: false} instead of a single animation argument.
 
-## In Spotlight
-
-Key Spotlight patterns: never pass custom underscore-prefixed properties through GObject constructors, assign after construction. `enable()` and `disable()` are adjacent. Use `connectObject` for signal cleanup. Use `notify_keyval` not `notify_key`. Use `-st-icon-style: requested` instead of forcing symbolic globally. Code is split by single responsibility into focused modules under 155 lines each. Overview search stealing lives in its own class. Activation close defense is a separate module with install/uninstall functions. Thumbnail enhancements are encapsulated. Theme logic is pure functions.
-
 ## Workspace Thumbnail Background
 
 GNOME Shell uses a solid grey color for workspace thumbnails by default. To show the actual wallpaper instead, override WorkspaceThumbnail.prototype._init to create a BackgroundManager with the thumbnail's _contents container and vignette disabled. Also override _onDestroy to clean up the BackgroundManager and its signal connections. Connect to the BackgroundManager's 'loaded' and 'changed' signals to queue_relayout on the background actor, working around a Shell 50 bug where thumbnails stay blank until a relayout is forced.
@@ -101,4 +97,3 @@ GNOME Shell uses a solid grey color for workspace thumbnails by default. To show
 ## Multi-Monitor Thumbnail Safety
 
 When overriding WorkspaceThumbnail.prototype._init or SecondaryMonitorDisplay prototype methods, guard against edge cases that appear in vertical monitor configurations. Validate that `_contents` exists before creating a BackgroundManager. Clamp `monitorIndex` to the valid range of `Main.layoutManager.monitors`. In `_getThumbnailsHeight` overrides, fall back to the private `_maxThumbnailScale` field if the public getter is unavailable, and guard the return value with `Number.isFinite()` — returning `NaN` from layout methods breaks the overview.
-

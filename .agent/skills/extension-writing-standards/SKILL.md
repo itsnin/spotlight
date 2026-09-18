@@ -2,20 +2,15 @@
 
 ## Comment Style
 
-Comments should explain the reasons rather than just state the facts. They should be written in the style of an experienced but lazy senior engineer, using natural rather than forced grammar and employing capital letters when appropriate. Use only light punctuation and don't include any banners, JSDoc, or references to other projects. Avoid phrases commonly associated with large language models such as "here we", "let's", and "note that". Also, don't have three comment lines in a row without any code.
+Comments should explain why a decision exists, not restate what the code does. Use natural grammar, sentence case, and light punctuation. Do not add banners, JSDoc, references to other projects, or phrases such as "here we", "let's", and "note that". Keep comment blocks short and adjacent to the code they explain.
 
 ## Documentation Style
 
-Write like you're explaining something to a colleague across the table. Flowing sentences rather than choppy bullet points. Skip unnecessary quotation marks around terms unless they're actual string literals or code. Don't use "example" followed by trivial demonstrations. Let the code speak for itself where it can.
+Write documentation as clear prose for a colleague. Prefer complete sentences over fragments, avoid decorative quotation marks, and let the code speak for itself where it can.
 
 ## What to Avoid
 
-- Short choppy sentence fragments posing as complete thoughts
-- Overuse of quotation marks for emphasis
-- Arrow-like em dashes used as separators everywhere
-- Bullet-point lists that read like a specification document
-- Phrases that sound like they came from a language model
-
-## In Spotlight
-
-Comments explain the reasons behind decisions, not just what the code does. Tone is that of an experienced but lazy senior engineer. Natural grammar, capital letters when appropriate, light punctuation only. No banners, no JSDoc, no references to other extensions. Avoid phrases like "here we", "let us", "note that". Maximum two consecutive comment lines without intervening code. This applies to code comments, AGENTS.md, skills, .github files, scripts, and documentation.
+- Repeated file inventories or implementation snapshots
+- Historical notes about previous agent attempts
+- Bullet lists that restate rules already defined in another skill
+- Language that criticizes another project, tool, or approach

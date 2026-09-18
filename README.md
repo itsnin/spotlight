@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  <strong>Version:</strong> 2026.11
+  <strong>Version:</strong> 2026.01
   &nbsp;•&nbsp;
   <strong>Shortcut:</strong> <code>Ctrl + Space</code>
 </p>
@@ -67,25 +67,6 @@ gnome-extensions prefs spotlight@nin
 Spotlight permanently takes over GNOME Overview's search infrastructure. On enable, it steals the Overview's search entry and search controller widgets and hides them. When the popup opens, these already-stolen widgets are reparented into the popup. When the popup closes, they're removed from the popup but kept stolen and hidden. They're only returned to the Overview on disable.
 
 This approach means Spotlight automatically benefits from every search provider registered with GNOME Shell, with zero custom provider code.
-
-| File | Responsibility |
-|---|---|
-| `extension.js` | Entry point: constructs popup and keybinding manager, manages lifecycle |
-| `lib/popup/widget/spotlightPopup.js` | Popup widget: orchestrates open/close lifecycle |
-| `lib/popup/components/backdrop.js` | Transparent click-outside detection via chrome layer |
-| `lib/popup/components/positioner.js` | Sizes, positions 25% from top, and shows popup with subtle ease animation |
-| `lib/popup/behavior/defense.js` | Multi-layer activation close defense handlers |
-| `lib/popup/behavior/theme.js` | Light/dark theme decision logic |
-| `lib/popup/behavior/lifecycle.js` | Idle scheduling and text visibility helpers |
-| `lib/popup/behavior/signals.js` | Global signal connections for window events and theme |
-| `lib/overview/searchStealer.js` | Steals/restores Overview search entry and controller |
-| `lib/overview/thumbnails.js` | Workspace thumbnail scale and wallpaper background |
-| `lib/core/keybinding.js` | Keybinding manager via grab_accelerator |
-| `prefs.js` | Preferences window entry point |
-| `prefs/shortcutPage.js` | Keyboard shortcut configuration |
-| `prefs/appearancePage.js` | Visual theme preference |
-| `prefs/aboutPage.js` | About section |
-| `schemas/*.gschema.xml` | GSettings schema definitions |
 
 ## Contributing
 

@@ -1,0 +1,24 @@
+name: Welcome new contributors
+on:
+  issues:
+    types: [opened]
+  pull_request_target:
+    types: [opened]
+permissions:
+  issues: write
+  pull-requests: write
+jobs:
+  welcome:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/first-interaction@1c4688942c71f71d4f5502a26ea67c331730fa4 # v3.1.0
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          issue-message: >
+            Thank you for opening your first issue in Spotlight! We appreciate you taking
+            the time to report this. Please make sure you've included your GNOME Shell
+            version, distribution, and any relevant log output. A maintainer will review
+            this shortly.
+          pr-message: >
+            Thank you for your first contribution to Spotlight! Please make sure your
+            changes pass all CI checks. A maintainer will review your pull request shortly.

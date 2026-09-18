@@ -1,148 +1,120 @@
 # Agents Guide for Spotlight
 
-Read this file before touching any code. It covers architecture, design decisions, code style and EGO review constraints.
+This is the entrypoint for agents working on Spotlight. Read it before touching code, then read the relevant skill files under `.agent/skills/`. The implementation and skills are the source of truth for details; this file keeps only the project contract, behavior rules, and routing.
 
-## Supplementary Skills
+## Behavioral Guidelines
 
-The skills directory contains focused, single-topic skill files extracted from the official gjs.guide documentation. These serve as reference material while this file remains the single source of truth for project-specific rules.
+### 1. Think Before Coding
 
-Available skills:
-- extension-getting-started
-- extension-esm-imports
-- extension-lifecycle
-- extension-signal-cleanup
-- extension-gsettings
-- extension-prefs
-- extension-styling
-- extension-debugging
-- extension-review-guidelines
-- extension-best-practices
-- extension-metadata
-- extension-guideline
-- extension-writing-standards
-- extension-overview-search-stealing
-- extension-popup-close-defense
+Don't assume. Don't hide confusion. Surface tradeoffs.
 
-## What This Extension Is
+Before implementing:
 
-Spotlight is a compact launcher for GNOME Shell. Press a shortcut, a centered translucent glass popup appears, type something and results show up in real time. It permanently steals the Overview search widgets. The Overview itself stays functional, only its search UI gets replaced.
+- State your assumptions explicitly. If uncertain, ask.
+- If multiple interpretations exist, present them — don't pick silently.
+- If a simpler approach exists, say so. Push back when warranted.
+- If something is unclear, stop. Name what's confusing. Ask.
 
-## Supported Versions
+### 2. Simplicity First
 
-GNOME Shell 45, 46, 47, 48, 49, 50 and 51, listed in metadata.json under shell-version. The minimum is 45 because that is when GNOME Shell switched to ES modules.
+Minimum code that solves the problem. Nothing speculative.
 
-Wayland only. X11 is not supported. GNOME Shell 50 removed X11 entirely.
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- No error handling for impossible scenarios.
+- If you write 200 lines and it could be 50, rewrite it.
 
-## Architecture
+### 3. Surgical Changes
 
-One popup permanently steals the Overview search entry and controller. Widgets get stolen once in enable and returned once in disable. Open and close only reparent widgets between our content box and a hidden state. They never return to the Overview while the extension remains enabled.
+Touch only what you must. Clean up only your own mess.
 
-File layout follows single responsibility and domain grouping. Each module stays under 155 lines.
-- extension.js: entry point
-- lib/popup/: popup domain, split by responsibility
-  - widget/: the main popup widget class
-    - spotlightPopup.js: orchestrates open/close lifecycle
-  - components/: UI building blocks
-    - backdrop.js: click-outside detection via chrome layer
-    - positioner.js: sizing, centering, monitor selection
-  - behavior/: logic and capabilities
-    - defense.js: multi-layer activation close defense
-    - theme.js: light/dark theme decision logic
-    - lifecycle.js: idle scheduling helpers
-    - signals.js: global signal connections
-- lib/overview/: overview integration domain
-  - searchStealer.js: steals/restores overview search widgets
-  - thumbnails.js: thumbnail scale and wallpaper background
-- lib/core/: core infrastructure
-  - keybinding.js: keybinding manager
-- prefs.js: preferences entry point
-- prefs/: preference pages
-- schemas/: GSettings schema
-- scripts/: installer
-- stylesheet.css: styling
+When editing existing code:
 
-## Process Isolation
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- If you notice unrelated dead code, mention it — don't delete it.
 
-The shell process runs extension.js and the lib files. It must not import Gtk, Gdk or Adw. The prefs process runs prefs.js and the prefs files. It must not import St, Clutter, Meta or Shell. EGO review rejects violations.
+When your changes create orphans:
 
-## Signal Management
+- Remove imports/variables/functions that YOUR changes made unused.
+- Don't remove pre-existing dead code unless asked.
 
-Use connectObject with this as the owner. Calling disconnectObject on this in destroy or disable cleans all handlers at once. Use plain connect with explicit ID tracking only for signals that must persist across open and close cycles.
+Every changed line should trace directly to the user's request.
 
-## Popup Positioning
+### 4. Goal-Driven Execution
 
-Positioned once at open based on the empty-state height, with its vertical center at 25 percent of the monitor height from the top. Clamped with a minimum top margin so the popup never goes off-screen. Grows downward from a fixed anchor. Never reposition on size changes because it causes visible drift.
+Define success criteria. Loop until verified.
 
-## Animations
+Transform tasks into verifiable goals:
 
-Uses `actor.ease()` with `Clutter.AnimationMode.EASE_OUT_QUAD`, matching the pattern GNOME Shell itself uses in `overviewControls.js`. Open animates opacity 0 to 255 and scale 0.96 to 1.0 over 180ms. Close animates opacity 255 to 0 over 150ms. Respects `St.Settings.get().enable_animations` — if the user disables animations globally, everything stays instant. In-flight animations are cancelled on rapid toggle to prevent conflicts.
+- "Add validation" → "Write tests for invalid inputs, then make them pass"
+- "Fix the bug" → "Reproduce it, then make the fix, then verify it stays fixed"
 
-## Click-Outside Detection
+For multi-step tasks, state a brief plan:
 
-A transparent full-screen St widget sits in the chrome layer behind the popup. The backdrop covers the target monitor and listens for button-release events. The popup sits above the backdrop in the stacking order so clicks on the popup work normally.
+```
+1. [Step] → verify: [check]
+2. [Step] → verify: [check]
+3. [Step] → verify: [check]
+```
 
-## Workspace Thumbnail Scale
+## Project Contract
 
-Workspace thumbnails in the overview are intentionally small by default. Spotlight increases _maxThumbnailScale from its default to 0.1, effectively doubling the maximum available size so thumbnails are actually usable on modern high-resolution displays. Applied to both the primary monitor thumbnails box and the SecondaryMonitorDisplay prototype method _getThumbnailsHeight for multi-monitor setups. Original values are backed up in stealOverviewSearch and restored in returnOverviewSearch.
+Spotlight is a compact launcher for GNOME Shell. Press a shortcut, a translucent glass popup appears positioned 25 percent from the top of the monitor, type something and results show up in real time. It permanently steals the Overview search widgets — the Overview itself stays functional, only its search UI gets replaced.
 
-## Workspace Thumbnail Background
+Supported versions: GNOME Shell 45 through 51. Wayland only.
 
-GNOME Shell uses a solid grey color for workspace thumbnails by default. Spotlight overrides WorkspaceThumbnail.prototype._init to create a BackgroundManager for each thumbnail's contents container, which shows the actual wallpaper instead. Also overrides _onDestroy to clean up the BackgroundManager and its signal connections. Connects to loaded and changed signals on the BackgroundManager to queue relayout, working around a Shell 50 bug where thumbnails stay blank until something else forces a relayout.
+Version format: `YYYY.PATCH` where patch resets to `01` each calendar year. Examples: `2026.01`, `2026.99`, `2026.100`, then `2027.01`.
 
-## Overview Type-to-Search Interception
+The durable architecture, popup behavior, overview search stealing, and animation approach live in the relevant skills listed below.
 
-The GNOME overview has a start-typing-to-search feature. When Spotlight's popup is open and the user types, the entry receives keys through focus routing, the search controller activates, and the ControlsManager reacts to notify::search-active by calling _onSearchChanged(). This method fades out the app display and workspaces display (opacity to 0) and fades in the search controller. Since the search controller widgets were permanently stolen, fading it in renders as empty black space behind the Spotlight popup. The overview wallpaper and workspace thumbnails disappear.
+## Skill Routing
 
-Stage key capture handles when the popup is NOT visible — it consumes printable keys so typing in the overview does nothing. When the popup IS visible, it manually forwards keys to the entry because EVENT_STOP at capture phase prevents normal target-phase delivery.
+Read these first for every non-trivial change:
 
-The black screen issue is currently being researched. Approaches tested: returning early from _onSearchChanged (broke result rendering because _searchController.show() was never called, leaving the stolen controller hidden), overriding ease() on individual actors (too broad, blocked normal thumbnail animations; also missed _updateThumbnailsBox which uses its own ease on _thumbnailsBox), and running original then counteracting with zero-duration ease (did not properly override ongoing 250ms transitions). New approaches under test: calling only _searchController.show() from the override, and remove_transition + direct property assignment after the original runs. Root cause verified in actual GNOME Shell source: js/ui/overviewControls.js _onSearchChanged().
+- [`extension-best-practices`](.agent/skills/extension-best-practices/SKILL.md) for popup positioning, animations, keybinding, multi-monitor behavior, and core design decisions.
+- [`guidance-maintenance`](.agent/skills/guidance-maintenance/SKILL.md) for what belongs in agent guidance and what must stay out of it.
+- [`verification-discipline`](.agent/skills/verification-discipline/SKILL.md) for evidence, scope, testing, and reporting claims.
+- [`writing-tone`](.agent/skills/writing-tone/SKILL.md) for how to write docs, comments, commit messages, and explanations.
+- [`code-review-checklist`](.agent/skills/code-review-checklist/SKILL.md) for the mandatory review criteria.
 
-## Popup Close Mechanisms
+Then read the focused skill for the code being changed:
 
-The popup closes on toggle shortcut, Escape or click outside, plus a comprehensive activation-close defense. First, button-press-event on the search results catches mouse clicks on any result. Second, Enter or Space key capture when focus sits on result buttons rather than the entry. Third, global.display notify::focus-window tracks external app focus at the window manager level.
+- Extension structure and entry points: [`extension-getting-started`](.agent/skills/extension-getting-started/SKILL.md)
+- ESM imports: [`extension-esm-imports`](.agent/skills/extension-esm-imports/SKILL.md)
+- Enable/disable lifecycle: [`extension-lifecycle`](.agent/skills/extension-lifecycle/SKILL.md)
+- Signal cleanup: [`extension-signal-cleanup`](.agent/skills/extension-signal-cleanup/SKILL.md)
+- GSettings: [`extension-gsettings`](.agent/skills/extension-gsettings/SKILL.md)
+- Preferences: [`extension-prefs`](.agent/skills/extension-prefs/SKILL.md)
+- Styling and CSS: [`extension-styling`](.agent/skills/extension-styling/SKILL.md)
+- Debugging: [`extension-debugging`](.agent/skills/extension-debugging/SKILL.md)
+- EGO review: [`extension-review-guidelines`](.agent/skills/extension-review-guidelines/SKILL.md)
+- Metadata: [`extension-metadata`](.agent/skills/extension-metadata/SKILL.md)
+- General guidelines: [`extension-guideline`](.agent/skills/extension-guideline/SKILL.md)
+- Writing standards: [`extension-writing-standards`](.agent/skills/extension-writing-standards/SKILL.md)
+- Overview search stealing: [`extension-overview-search-stealing`](.agent/skills/extension-overview-search-stealing/SKILL.md)
+- Popup close defense: [`extension-popup-close-defense`](.agent/skills/extension-popup-close-defense/SKILL.md)
+- Defensive programming: [`defensive-programming`](.agent/skills/defensive-programming/SKILL.md)
+- Security anti-patterns: [`security-anti-patterns`](.agent/skills/security-anti-patterns/SKILL.md)
+- Testing and linting: [`testing-and-linting`](.agent/skills/testing-and-linting/SKILL.md)
 
-## Object Lifecycle
+The `.agent/skills/` directory is the source of truth for the available skills.
 
-Every object created in enable gets destroyed in disable. Every widget added to chrome gets removed. Every main loop source gets removed. Every signal gets disconnected. If you add something, add cleanup for it. EGO review rejects leaks.
+## Working Rules
 
-## Module-Scope Restrictions
+- Keep the entry point as wiring; component logic belongs in its module under `lib/`.
+- Keep process isolation strict: shell process never imports `Gtk`, `Gdk`, or `Adw`. Prefs process never imports `St`, `Clutter`, `Meta`, or `Shell`.
+- Keep `enable()` and `disable()` adjacent in `extension.js`.
+- Every object created in `enable()` is destroyed in `disable()`. Every signal connected is disconnected. Every widget added to chrome is removed.
+- Explain why in comments, not what the code already says. Avoid LLM-smell wording and unrelated cleanup.
+- Inspect all callers and search for the same bug pattern elsewhere before fixing a bug.
+- Read every changed line before reporting completion.
+- Update guidance only when a durable contract or working standard changes. Do not add inventories, version snapshots, provider URLs, one-off fixes, or history.
+- Do not modify README content beyond the smallest requested user-facing detail.
+- Never name other extensions anywhere in the repo. Describe generically if a comparison is genuinely needed.
 
-No objects, no signals, no main loop sources at the top level of any JS file. Only static data structures like arrays, objects, Maps, Sets and RegExps are allowed.
+## Minimum Verification
 
-## Code Style
-
-Comments should explain the reasons rather than just state the facts. They should be written in the style of an experienced but lazy senior engineer, using natural rather than forced grammar and employing capital letters when appropriate. Use only light punctuation and do not include any banners, JSDoc or references to other projects. Avoid phrases commonly associated with large language models such as here we, let us and note that. Also, do not have three comment lines in a row without any intervening code.
-
-Enable and disable are adjacent in extension.js. Split logic into small files each with a single responsibility. No TypeScript. Plain JavaScript with no build step.
-
-## EGO Verified Rules
-
-No imports.gi, use ESM import gi://Name instead. Console API with appropriate levels like debug, warn and error rather than bare log. No run_dispose unless absolutely necessary. Optional chaining only for genuinely potentially-null objects, never for guaranteed objects. No try-catch around standard API calls, only for file I/O, JSON parsing and external data. CSS uses only block comments, never line comments. No defensive null checks that mask bugs.
-
-## Keybinding
-
-Default shortcut is Ctrl+Space, stored as Control+Space. Super+Space gets grabbed by GNOME Shell for input source switching on some setups. Uses global.display.grab_accelerator rather than Main.wm.addKeybinding because addKeybinding can fail if the schema is not ready at enable time.
-
-## GSettings Schema
-
-Schema ID is org.gnome.shell.extensions.spotlight. Path is /org/gnome/shell/extensions/spotlight/. The gschemas.compiled file is not shipped because GNOME Shell 44 and later compiles automatically on install.
-
-Keys:
-- toggle-shortcut of type as, default Control+Space
-- theme-preference of type s, default default. Values are default, dark and light.
-
-## Design
-
-Translucent glass. Dark rgba(28, 28, 30, 0.85), light rgba(255, 255, 255, 0.88). Compact. 520 px wide, 570 px max height (150 percent of previous 380 px cap). Min resolution 1366 by 768. 36 px rounded corners. Fixed anchor. Vertical center at 25 percent from top, positioned once at open, grows downward. No drift. Subtle 180ms ease on open, 150ms on close. Matches GNOME EASE_OUT_QUAD. Respects global enable-animations setting. Live theme. Default mode follows system dark and light changes live.
-
-## Appearance Theme
-
-Three modes controlled by the theme-preference GSettings key. Dark by default with background rgba(28,28,30,0.85) and text #f5f5f7. Light uses background rgba(255,255,255,0.88) and text #1d1d1f. The theme-light class gets added to the content container for light mode. Applied in _applyTheme which gets called from _doOpen before showing. When the preference is set to default, the code listens to org.gnome.desktop.interface changed::color-scheme and updates live while the popup is open.
-
-## Multi-Monitor
-
-The popup opens on the monitor where the cursor currently sits. getTargetMonitor calls global.get_pointer and checks which monitor rectangle contains the cursor coordinates. Falls back to the primary monitor. The backdrop covers only the target monitor so users on other monitors can interact normally.
-
-## Testing
-
-Every JS file must parse as an ES module. The schema must compile with glib-compile-schemas. Test on GNOME Shell 50 Wayland first.
+Run `node --check` on every modified JavaScript file and `glib-compile-schemas --strict` when the schema changes. Use the smallest focused test that proves the requested behavior. Run broader checks when the change affects popup behavior, overview integration, or shared infrastructure. Report missing tools or unrun tests plainly.

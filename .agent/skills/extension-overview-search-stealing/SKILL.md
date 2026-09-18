@@ -37,14 +37,6 @@ The search controller continues running in the background regardless of where it
 
 ## Black Screen Defense
 
-When the popup is open in the overview and the user types, the ControlsManager reacts to the search controller notify::search-active by calling _onSearchChanged(). This method calls _searchController.show() and _updateThumbnailsBox(true), then eases three actors to opacity 0 (_appDisplay, _workspacesDisplay) while easing _searchController to opacity 255. Since the search controller widgets were permanently stolen, fading it in renders as empty black space. The _updateThumbnailsBox(true) call also hides the workspace thumbnails via its own ease call.
-
-The fix overrides ControlsManager._onSearchChanged() on the instance. The override first calls the original bound method (so everything needed for results to render runs normally), then immediately counteracts the visual side effects. It applies zero-duration ease animations with IMMEDIATE mode on _appDisplay, _workspacesDisplay, _searchController, and _thumbnailsBox to override the fade transitions and restore the correct visual state.
-
-Root cause verified in actual GNOME Shell source code: js/ui/overviewControls.js _onSearchChanged() and _updateThumbnailsBox() methods.
-
-## Black Screen Defense
-
 KNOWN ISSUE: When Spotlight opens in the overview/app grid and the user types, the ControlsManager reacts to the search controller notify::search-active by calling _onSearchChanged(). This method eases _appDisplay and _workspacesDisplay to opacity 0, calls _updateThumbnailsBox(true) which hides thumbnails, and eases _searchController to opacity 255. Since the search controller widgets were permanently stolen, fading it in renders as empty black space behind the Spotlight popup. The overview wallpaper and workspace thumbnails disappear.
 
 CRITICAL FINDING: _searchController.show() is essential. The controller gets hidden via this._search.hide() in stealOverviewSearch(). When the popup opens, the controller is reparented but never explicitly shown. Normally ControlsManager._onSearchChanged() calls _searchController.show() which makes the controller and its children visible. Blocking _onSearchChanged() without calling show() leaves results invisible.

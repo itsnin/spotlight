@@ -1,0 +1,10 @@
+{
+  "recommendations": [
+    "esbenp.prettier-vscode",
+    "EditorConfig.EditorConfig",
+    "redhat.vscode-yaml",
+    "eamodio.gitlens",
+    "mhutchie.git-graph"
+  ],
+  "unwantedRecommendations": []
+}

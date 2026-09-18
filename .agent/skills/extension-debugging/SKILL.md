@@ -15,8 +15,12 @@ Alt+F2, type `lg`. Inspect objects and signals live.
 ## Schema Reload
 `glib-compile-schemas schemas/` after schema changes.
 
-## In Spotlight
+## Overview Search Diagnostics
 
-For black screen issues when typing in the overview: the ControlsManager reacts to notify::search-active by calling _onSearchChanged() which fades out app display and workspaces display while fading in the now-empty search controller. Stage key capture cannot prevent this because the overview handler connects earlier and fires first in the capture chain. The fix must intercept at the _onSearchChanged() level. Critical: _searchController.show() must be called somewhere or results stay invisible since the controller gets hidden in stealOverviewSearch().
+If typing while the Overview is visible causes blanking, inspect the
+ControlsManager `_onSearchChanged()` path. Stage-level capture cannot prevent
+the earlier Overview handler from running, and the stolen search controller
+must be shown when it is reparented.
 
-For popup not closing on activation, verify all three defense layers are connected: button-press-event on results, Enter/Space key capture, and notify::focus-window on global.display. Journalctl command: journalctl -b /usr/bin/gnome-shell | grep spotlight.
+For popup activation issues, verify the mouse, keyboard, and external-window
+focus defenses together.

@@ -17,6 +17,5 @@
 - Code and assets must be compatible with the declared license
 - No trademark or copyright violations
 
-## In Spotlight
-
-Before submitting to EGO, verify: no `Gtk`/`Gdk`/`Adw` imports in shell process files, no `St`/`Clutter`/`Meta`/`Shell` imports in prefs files, no module-scope instances or signals, all objects created in `enable()` are destroyed in `disable()`, `try`/`catch` only wraps file I/O or JSON parsing, optional chaining only for genuinely nullable objects, comments explain reasons not facts, maximum two consecutive comment lines without code. The CI workflow validates most of these automatically.
+## EGO Verified Rules
+No `imports.gi` — use ESM `import gi://Name` instead. Console API with appropriate levels like `debug`, `warn` and `error` rather than bare `log`. No `run_dispose` unless absolutely necessary. Optional chaining only for genuinely potentially-null objects, never for guaranteed objects. No `try`/`catch` around standard API calls, only for file I/O, JSON parsing, and genuinely external data. CSS uses only `/* */` block comments, never `//` line comments. No defensive null checks that mask bugs.

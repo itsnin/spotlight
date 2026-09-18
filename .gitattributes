@@ -1,0 +1,13 @@
+# Text files — force LF line endings
+*.js text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.xml text eol=lf
+*.css text eol=lf
+*.sh text eol=lf
+
+# Shell diff highlighting
+*.sh diff=shell

@@ -1,72 +1,68 @@
-# Logs and temp files
-*.log
-*.tmp
+# Operating system generated files
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+# Linux
+*~
+
+# Editor and IDE files
+# Vim / Neovim
 *.swp
-
-# GNOME extension build artifacts
-schemas/gschemas.compiled
-
-# Environment
-.env
-.env.local
-.env.*
-
-# Editors
-.vscode/
+*.swo
+*.swn
+# VS Code — ignore everything except shared settings and extensions
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+# Other editors
+*.code-workspace
+.atom/
+.sublime-project
+.sublime-workspace
 .idea/
 
-# System files
-.DS_Store
-Thumbs.db
+# Backup and temporary files
+*.bak
+*.backup
+*.tmp
+*.temp
+*.old
+*.orig
+*.rej
 
-# Dependencies
-node_modules/
+# Log files
+*.log
+logs/
+
+# Archives and large binaries
+*.tar.gz
+*.tgz
+*.zip
+*.shell-extension.zip
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+secrets/
+*.key
+*.pem
+*.p12
+
+# Compiled schema
+schemas/gschemas.compiled
+
+# Python (if any local tooling)
+__pycache__/
+*.pyc
 venv/
 .venv/
-__pycache__/
-.mypy_cache/
-.pytest_cache/
-dist/
-build/
-target/
-.gradle/
 
-# Compiled files
-*.pyc
-*.class
-*.o
-*.exe
-*.dll
-*.so
-*.a
-*.obj
-*.out
-
-# Coverage
-coverage/
-htmlcov/
-.coverage
-
-# Compressed files
-*.zip
-*.gz
-*.tar
-*.tgz
-*.bz2
-*.xz
-*.7z
-*.rar
-*.zst
-*.lz4
-*.lzh
-*.cab
-*.arj
-*.rpm
-*.deb
-*.Z
-*.lz
-*.lzo
-*.tar.gz
-*.tar.bz2
-*.tar.xz
-*.tar.zst
+# Node (if any local tooling)
+node_modules/

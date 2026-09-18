@@ -50,6 +50,10 @@ jobs:
               print(f'ERROR: schema {schema} not found in schema files')
               sys.exit(1)
           version = m['version-name']
+          import re
+          if not re.match(r'^[0-9]{4}\.(0[1-9]|[1-9][0-9]*)$', version):
+              print(f'ERROR: version-name must use YYYY.PATCH format, got: {version}')
+              sys.exit(1)
           if len(version) > 16:
               print(f'ERROR: version-name too long ({len(version)} > 16)')
               sys.exit(1)
@@ -115,7 +119,7 @@ jobs:
       - name: AGENTS.md skill references exist
         run: |
           MISSING=0
-          for skill in extension-getting-started extension-esm-imports extension-lifecycle extension-signal-cleanup extension-gsettings extension-prefs extension-styling extension-debugging extension-review-guidelines extension-best-practices extension-metadata extension-guideline extension-writing-standards extension-overview-search-stealing extension-popup-close-defense; do
+          for skill in extension-getting-started extension-esm-imports extension-lifecycle extension-signal-cleanup extension-gsettings extension-prefs extension-styling extension-debugging extension-review-guidelines extension-best-practices extension-metadata extension-guideline extension-writing-standards extension-overview-search-stealing extension-popup-close-defense writing-tone verification-discipline guidance-maintenance code-review-checklist defensive-programming security-anti-patterns testing-and-linting; do
             if [ ! -d ".agent/skills/$skill" ]; then echo "MISSING: skills/$skill"; MISSING=$((MISSING+1)); fi
           done
           if [ "$MISSING" -gt 0 ]; then exit 1; fi

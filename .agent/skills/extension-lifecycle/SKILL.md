@@ -17,7 +17,3 @@ Never call `run_dispose()` unless absolutely necessary. `destroy()` is sufficien
 
 ## Async Resources
 Async initializers must have matching destroy that cancels pending operations.
-
-## In Spotlight
-
-`enable()` and `disable()` are adjacent in `extension.js`. In `enable()` we create the popup from `lib/popup/widget/spotlightPopup.js`, which internally creates OverviewSearchStealer (`lib/overview/searchStealer.js`) and ThumbnailEnhancer (`lib/overview/thumbnails.js`) instances, set up the keybinding manager, and connect to GSettings. In `disable()` we disconnect all signals via `disconnectObject`, disable the keybinding manager, return the stolen search widgets to the overview via `returnOverviewSearch()`, destroy the popup, and null out all references. The popup has its own sub-lifecycle: `stealOverviewSearch` runs once (delegates to stealer and enhancer), `open`/`close` run many times, `destroy` runs once. Close defense installs on each open and uninstalls on each close.

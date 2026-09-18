@@ -7,36 +7,34 @@ overview integration:
   - changed-files:
       - any-glob-to-any-file:
           - lib/overview/**
-black screen:
+core infrastructure:
   - changed-files:
       - any-glob-to-any-file:
-          - lib/popup/widget/spotlightPopup.js
-          - lib/overview/searchStealer.js
+          - lib/core/**
+          - extension.js
 preferences:
   - changed-files:
       - any-glob-to-any-file:
           - prefs.js
           - prefs/**
-keybinding:
+settings:
   - changed-files:
       - any-glob-to-any-file:
-          - lib/core/keybinding.js
-
+          - schemas/**
+installer:
+  - changed-files:
+      - any-glob-to-any-file:
+          - scripts/**
 documentation:
   - changed-files:
       - any-glob-to-any-file:
           - "**/*.md"
-ci and github config:
+github config:
   - changed-files:
       - any-glob-to-any-file:
           - .github/**
-build scripts:
+agent guidance:
   - changed-files:
       - any-glob-to-any-file:
-          - scripts/**
-
-dependencies:
-  - changed-files:
-      - any-glob-to-any-file:
-          - .github/workflows/**
-          - .github/dependabot.yml
+          - .agent/skills/**
+          - AGENTS.md
