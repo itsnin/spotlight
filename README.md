@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  <strong>Version:</strong> 2026.01
+  <strong>Version:</strong> 2026.15
   &nbsp;•&nbsp;
   <strong>Shortcut:</strong> <code>Ctrl + Space</code>
 </p>
